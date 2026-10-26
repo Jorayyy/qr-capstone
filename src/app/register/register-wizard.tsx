@@ -24,6 +24,7 @@ import IdScan from "./id-scan";
 import { registerPublicAction, type PublicRegistrationState } from "@/lib/actions/public-registration";
 import { todayIso } from "@/lib/registration";
 import type { OcrResult } from "@/lib/registration";
+import { PRIVACY_NOTICE } from "@/lib/site-info";
 
 type Department = { id: string; name: string; building: string | null };
 
@@ -932,11 +933,33 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                 </p>
               </div>
 
+              <div className="rounded-xl border border-[var(--border)] p-4">
+                <p className="flex items-center gap-2 text-sm font-bold">
+                  <ShieldCheck className="h-4 w-4 text-[var(--brand)]" />
+                  Privacy notice
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
+                  {PRIVACY_NOTICE}{" "}
+                  <Link
+                    href="/privacy"
+                    target="_blank"
+                    className="font-semibold text-[var(--brand)] hover:underline"
+                  >
+                    Read the full privacy notice
+                  </Link>
+                  .
+                </p>
+              </div>
+
               <label className="flex items-start gap-2 text-sm">
                 <input type="checkbox" className="mt-0.5" checked={agree} onChange={(event) => setAgree(event.target.checked)} />
                 <span>
-                  I confirm that all information provided is true and correct, and I agree to the
-                  university&apos;s visitor privacy notice.
+                  I confirm that the information is true and correct, and I consent to EVSU
+                  processing my personal data as described in the{" "}
+                  <Link href="/privacy" target="_blank" className="font-semibold text-[var(--brand)] hover:underline">
+                    Privacy Notice
+                  </Link>
+                  .
                 </span>
               </label>
             </div>

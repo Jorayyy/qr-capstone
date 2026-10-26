@@ -93,9 +93,12 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             <Link href="/checkin" className="font-semibold text-white/85 hover:text-white">
               Self check-in / check-out
             </Link>
-            <Link href="/#guidelines" className="font-semibold text-white/85 hover:text-white">
-              Visitor guidelines
-            </Link>
+              <Link href="/#guidelines" className="font-semibold text-white/85 hover:text-white">
+                Visitor guidelines
+              </Link>
+              <Link href="/privacy" className="font-semibold text-white/85 hover:text-white">
+                Privacy notice
+              </Link>
             <Link href="/login" className="font-semibold text-white/85 hover:text-white">
               Staff sign in
             </Link>

@@ -227,6 +227,11 @@ export default async function VisitorDetailPage({
 
                   <div className="mt-1 text-xs text-[var(--muted)]">
                     Pass valid {formatDate(v.validFrom)} — {formatDate(v.qrExpiresAt)}
+                    {v.consentedAt && (
+                      <span className="ml-2">
+                        · Privacy consent v{v.consentVersion ?? "1.0"} on {formatDate(v.consentedAt)}
+                      </span>
+                    )}
                   </div>
 
                   {/* Check-in/out + duration */}

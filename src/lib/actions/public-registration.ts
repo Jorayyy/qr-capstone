@@ -9,6 +9,7 @@ import { emailEnabled, sendQrEmail } from "@/lib/email";
 import { LIMITS, WINDOWS, rateLimit } from "@/lib/rate-limit";
 import { isUniqueViolation, nextReferenceCode } from "@/lib/reference";
 import { resolveVisitWindow } from "@/lib/registration";
+import { PRIVACY_VERSION } from "@/lib/site-info";
 import { publicRegistrationSchema } from "@/lib/validation";
 
 export type PublicRegistrationState = {
@@ -147,6 +148,8 @@ export async function registerPublicAction(input: unknown): Promise<PublicRegist
               validFrom: window.window.validFrom,
               qrCode,
               qrExpiresAt: window.window.validUntil,
+              consentVersion: PRIVACY_VERSION,
+              consentedAt: new Date(),
               hostName: primary.hostName,
               vehicleType: data.vehicleType,
               vehicleModel: data.vehicleModel,
@@ -185,7 +188,7 @@ export async function registerPublicAction(input: unknown): Promise<PublicRegist
       ip: ctx.ip,
       userAgent: ctx.userAgent,
       requestId: ctx.requestId,
-      meta: { referenceCode, offices: data.offices.length, channel: "public" },
+      meta: { referenceCode, offices: data.offices.length, channel: "public", consentVersion: PRIVACY_VERSION },
     });
 
     revalidatePath("/dashboard");

@@ -219,6 +219,8 @@ model Visit {
   validFrom          DateTime?
   qrExpiresAt        DateTime?
   qrRevokedAt        DateTime?
+  consentVersion     String?
+  consentedAt        DateTime?
   checkedInById       String?
   checkedOutById      String?
   notes              String?

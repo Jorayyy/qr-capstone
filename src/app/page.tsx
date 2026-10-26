@@ -362,6 +362,13 @@ export default async function Home() {
               Privacy notice
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">{PRIVACY_NOTICE}</p>
+            <Link
+              href="/privacy"
+              className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[var(--brand)] hover:underline"
+            >
+              Read the full privacy notice
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </section>
         </div>
 

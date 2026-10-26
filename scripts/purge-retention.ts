@@ -26,13 +26,24 @@ function daysFromEnv(name: string, fallback: number): number {
 async function main() {
   const auditDays = daysFromEnv("AUDIT_RETENTION_DAYS", 365);
   const sessionDays = daysFromEnv("SESSION_RETENTION_DAYS", 30);
+  const visitDays = daysFromEnv("VISIT_RETENTION_DAYS", 365);
   const now = new Date();
 
   const auditCutoff = new Date(now.getTime() - auditDays * 86_400_000);
   const sessionCutoff = new Date(now.getTime() - sessionDays * 86_400_000);
+  const visitCutoff = new Date(now.getTime() - visitDays * 86_400_000);
   const rateCutoff = new Date(now.getTime() - 86_400_000);
 
   const audit = await prisma.auditLog.deleteMany({ where: { createdAt: { lt: auditCutoff } } });
+  const visits = await prisma.visit.deleteMany({
+    where: {
+      status: { in: ["CHECKED_OUT", "CANCELLED", "PENDING"] },
+      updatedAt: { lt: visitCutoff },
+    },
+  });
+  const visitors = await prisma.visitor.deleteMany({
+    where: { updatedAt: { lt: visitCutoff }, visits: { none: {} } },
+  });
   const sessions = await prisma.session.deleteMany({
     where: {
       OR: [
@@ -49,11 +60,14 @@ async function main() {
       level: "info",
       event: "RETENTION_PURGE",
       auditDeleted: audit.count,
+      visitsDeleted: visits.count,
+      visitorsDeleted: visitors.count,
       sessionsDeleted: sessions.count,
       rateLimitsDeleted: rate.count,
       photosDeleted,
       auditDays,
       sessionDays,
+      visitDays,
     })
   );
 }
