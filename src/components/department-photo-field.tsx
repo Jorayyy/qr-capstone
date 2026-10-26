@@ -23,6 +23,18 @@ export function DepartmentPhotoField({ initialPath }: { initialPath?: string | n
       return;
     }
 
+    try {
+      const bitmap = await createImageBitmap(file);
+      const tooSmall = bitmap.width < 1000 || bitmap.height < 600;
+      bitmap.close();
+      if (tooSmall) {
+        setError("Use a sharper photo, at least 1000 × 600 px, so the preview stays clear.");
+        return;
+      }
+    } catch {
+      // Browsers without createImageBitmap still upload; the server validates type and size.
+    }
+
     setBusy(true);
     setError("");
     try {
@@ -43,6 +55,7 @@ export function DepartmentPhotoField({ initialPath }: { initialPath?: string | n
   return (
     <div>
       <label className="label">Department Photo (Optional)</label>
+      <p className="mb-2 text-xs text-[var(--muted)]">Landscape photo, at least 1000 × 600 px.</p>
       <input type="hidden" name="photoPath" value={path} />
 
       <div className="relative h-40 overflow-hidden rounded-xl border border-dashed border-[var(--border)] bg-slate-50">

@@ -41,13 +41,6 @@ const H2 = "mt-2 font-display text-3xl font-bold tracking-tight text-[var(--bran
 
 const BAND = "border-y border-[var(--brand)]/10 bg-white";
 
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 export default async function Home() {
   const user = await getSession();
@@ -179,23 +172,29 @@ export default async function Home() {
           ) : (
             <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {departments.map((d) => (
-                <article
+                <Link
                   key={d.id}
-                  className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-sm"
+                  href={`/departments/${d.id}`}
+                  className="group block overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <div className="relative h-36 bg-gradient-to-br from-[var(--brand)] to-[var(--brand-strong)]">
-                    <div
-                      aria-hidden
-                      className="absolute inset-0 bg-cover bg-center"
-                      style={{
-                        backgroundImage: d.photoPath
-                          ? `url('/api/department-photo?path=${encodeURIComponent(d.photoPath)}')`
-                          : `url('/departments/${slugify(d.name)}.jpg')`,
-                      }}
-                    />
+                  <div className="relative h-36 overflow-hidden bg-gradient-to-br from-[var(--brand)] to-[var(--brand-strong)]">
+                    {d.photoPath ? (
+                      <img
+                        src={`/api/department-photo?path=${encodeURIComponent(d.photoPath)}`}
+                        alt={`${d.name} building`}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <Landmark
+                        aria-hidden
+                        className="absolute inset-0 m-auto h-10 w-10 text-white/30"
+                      />
+                    )}
                     <Landmark
                       aria-hidden
-                      className="absolute right-4 top-4 h-8 w-8 text-white/25"
+                      className="absolute right-4 top-4 h-8 w-8 text-white/30"
                     />
                   </div>
                   <div className="relative px-5 pb-5">
@@ -208,8 +207,12 @@ export default async function Home() {
                         {d.building}
                       </p>
                     ) : null}
+                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
+                      View office
+                      <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+                    </span>
                   </div>
-                </article>
+                </Link>
               ))}
             </div>
           )}
