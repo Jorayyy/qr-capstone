@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { buttonClass } from "@/components/ui";
 import { PublicShell, ACCENT_BUTTON } from "@/components/public-shell";
+import CampusMap from "@/components/campus-map";
 import {
   SITE,
   ABOUT,
@@ -140,24 +141,19 @@ export default async function Home() {
                 Front Desk to register and receive your QR pass.
               </p>
             </div>
-            <a
-              href={SITE.campusMap}
-              target="_blank"
-              rel="noreferrer"
-              className={buttonClass("primary", "mt-6")}
-            >
+            <CampusMap className={buttonClass("primary", "mt-6")}>
               <MapPin className="h-4 w-4" />
               View Full Map
-            </a>
+            </CampusMap>
           </div>
 
-          <a href={SITE.campusMap} target="_blank" rel="noreferrer" className="group block">
+          <CampusMap className="group block w-full text-left">
             <img
               src={SITE.campusMap}
               alt="EVSU campus map showing numbered buildings, roads and the main gate"
               className="w-full rounded-2xl border border-[var(--brand)]/10 bg-white shadow-sm transition group-hover:shadow-md"
             />
-          </a>
+          </CampusMap>
         </div>
       </section>
 

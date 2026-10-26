@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button, Input, Select, cx } from "@/components/ui";
 import PhotoCapture from "@/components/photo-capture";
+import CampusMap from "@/components/campus-map";
 import IdScan from "./id-scan";
 import { registerPublicAction, type PublicRegistrationState } from "@/lib/actions/public-registration";
 import { todayIso } from "@/lib/registration";
@@ -495,12 +496,9 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                     <Button type="button" variant="secondary" onClick={() => setMethod("PRE_REGISTERED")}>
                       Pre-register instead
                     </Button>
-                    <Link
-                      href="/#map"
-                      className="inline-flex min-h-11 items-center rounded-lg border border-amber-300 bg-white px-4 py-2.5 text-sm font-semibold text-amber-900"
-                    >
+                    <CampusMap className="inline-flex min-h-11 items-center rounded-lg border border-amber-300 bg-white px-4 py-2.5 text-sm font-semibold text-amber-900">
                       View campus map
-                    </Link>
+                    </CampusMap>
                   </div>
                 </div>
               )}
