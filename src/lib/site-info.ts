@@ -31,32 +31,32 @@ export const QUICK_LINKS = [
 
 export const ENTRY_STEPS = [
   {
-    title: "Scan the entry QR",
-    body: "Point your phone camera at the QR code posted at the gate to open this page.",
+    title: "Pre-register online",
+    body: "Scan your ID, choose the offices you need, and set the dates you are visiting. No account needed.",
   },
   {
-    title: "Go to the Front Desk",
-    body: "Present a valid ID to the guard or receptionist so they can register your visit and take your photo.",
+    title: "Receive your QR pass",
+    body: "We email a visitor pass with a scannable QR code and a reference number. You can also open or print it from this site.",
   },
   {
-    title: "Get your QR pass",
-    body: "We email you a personal pass — a scannable QR image plus a pass code. No email? The Front Desk can print a copy.",
+    title: "Present it at the gate",
+    body: "Show the pass together with the same physical ID you registered. The guard scans you in.",
   },
   {
-    title: "Scan to enter",
-    body: "Scan your pass at the entrance, or check in on this page with just your pass code. Passes are valid for 7 days.",
+    title: "Visit each office",
+    body: "Every office on your pass records its own entry, so you only register once for the whole trip.",
   },
   {
-    title: "Scan to exit",
-    body: "Scan your pass again on the way out, or check out on this same page, so the system records that you have left.",
+    title: "Check out on the way out",
+    body: "Scan the pass again at the exit, or use self check-in with your pass code, so the system records that you left.",
   },
 ] as const;
 
 export const ENTRY_REQUIREMENTS = [
-  "A valid ID — SSS, TIN, Passport, or Student ID (we photograph it and you for your pass)",
+  "A valid ID — National ID, passport, driver's license, UMID, PRC, student ID, or company ID (front side photo)",
   "The name of the person or office you are visiting",
   "The purpose of your visit",
-  "An email address to receive your QR pass (optional — the Front Desk can print a copy instead)",
+  "An email address to receive your QR pass",
 ] as const;
 
 export const PRIVACY_NOTICE =

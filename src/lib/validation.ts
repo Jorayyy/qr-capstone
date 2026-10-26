@@ -1,7 +1,49 @@
 import { z } from "zod";
 
-export const ID_TYPES = ["SSS", "TIN", "PASSPORT", "STUDENT_ID", "OTHER"] as const;
+export const ID_TYPES = [
+  "NATIONAL_ID",
+  "PASSPORT",
+  "DRIVERS_LICENSE",
+  "UMID",
+  "PRC",
+  "POSTAL_ID",
+  "STUDENT_ID",
+  "SSS",
+  "TIN",
+  "COMPANY_ID",
+  "OTHER",
+] as const;
 export const PURPOSES = ["ATTENDANCE", "DELIVERY", "INTERVIEW", "MEETING", "SCHOOL_VISIT", "OTHER"] as const;
+export const AFFILIATIONS = [
+  "VISITOR",
+  "STUDENT",
+  "FACULTY",
+  "STAFF",
+  "ALUMNI",
+  "PARENT",
+  "SUPPLIER",
+  "GOVERNMENT",
+  "OTHER",
+] as const;
+export const VISIT_TYPES = ["ONE_DAY", "MULTIPLE"] as const;
+export const HOST_PREFERENCES = ["SPECIFIC", "ANY"] as const;
+
+const isoDate = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use a valid date.")
+  .refine((value) => {
+    const [y, m, d] = value.split("-").map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d));
+    return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+  }, "Use a valid date.");
+
+const optionalIsoDate = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value === "" ? undefined : value))
+  .pipe(isoDate.optional());
 
 /** Optional text field: trims, converts empty → undefined, enforces max length. */
 const optionalText = (max: number) =>
@@ -72,10 +114,13 @@ export const loginSchema = z
 export const registerVisitorSchema = z
   .object({
     firstName: requiredText(100, "First name"),
+    middleName: optionalText(100),
     lastName: requiredText(100, "Last name"),
     email: optionalEmail,
     phone: optionalText(32),
     company: optionalText(120),
+    affiliation: z.enum(AFFILIATIONS).optional(),
+    dateOfBirth: optionalIsoDate,
     idType: z.enum(ID_TYPES),
     idNumber: optionalText(64),
     photoUrl: optionalPhotoPath,
@@ -92,6 +137,50 @@ export const registerVisitorSchema = z
   .strict();
 
 export type RegisterVisitorInput = z.infer<typeof registerVisitorSchema>;
+
+export const officeStopSchema = z
+  .object({
+    departmentId: z.string().uuid("Invalid office."),
+    purpose: z.enum(PURPOSES),
+    hostName: optionalText(120),
+    hostPreference: z.enum(HOST_PREFERENCES).default("ANY"),
+    notes: optionalText(300),
+  })
+  .strict();
+
+/**
+ * Public pre-registration. Email and phone are required because the pass is
+ * delivered by email and the guard needs a callback number.
+ */
+export const publicRegistrationSchema = z
+  .object({
+    firstName: requiredText(100, "First name"),
+    middleName: optionalText(100),
+    lastName: requiredText(100, "Last name"),
+    dateOfBirth: optionalIsoDate,
+    email: emailField,
+    phone: requiredText(32, "Contact number"),
+    idType: z.enum(ID_TYPES),
+    idNumber: optionalText(64),
+    affiliation: z.enum(AFFILIATIONS),
+    photoUrl: optionalPhotoPath,
+    idPhotoUrl: optionalPhotoPath,
+    offices: z
+      .array(officeStopSchema)
+      .min(1, "Choose at least one office to visit.")
+      .max(6, "Choose up to 6 offices."),
+    vehicleType: optionalText(64),
+    vehicleModel: optionalText(64),
+    vehicleColor: optionalText(32),
+    vehiclePlateNumber: optionalText(64),
+    visitType: z.enum(VISIT_TYPES),
+    validFrom: isoDate,
+    validUntil: optionalIsoDate,
+    agree: z.literal("on", { message: "Please confirm that the details are correct." }),
+  })
+  .strict();
+
+export type PublicRegistrationInput = z.infer<typeof publicRegistrationSchema>;
 
 export const departmentSchema = z
   .object({

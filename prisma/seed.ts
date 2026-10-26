@@ -204,10 +204,13 @@ async function main() {
         ...v,
         visits: {
           create: {
+            referenceCode: `EVSU-${new Date().getFullYear()}-${String(9000 + i).padStart(5, "0")}`,
             departmentId: departments[deptNames[i % deptNames.length]],
             purpose: purposeValues[i % purposeValues.length],
             status: statuses[i % statuses.length],
+            visitType: i % 2 === 0 ? "ONE_DAY" : "MULTIPLE",
             expectedArrival: new Date(Date.now() + (i + 1) * 86400000),
+            validFrom: new Date(Date.now() + (i + 1) * 86400000),
             actualArrival: i % 3 === 0 ? new Date() : null,
             hostName: `Host ${i + 1}`,
             hostDepartment: deptNames[i % deptNames.length],

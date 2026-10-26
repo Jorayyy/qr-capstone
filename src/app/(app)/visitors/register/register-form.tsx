@@ -9,10 +9,15 @@ import Link from "next/link";
 import QRCode from "qrcode";
 
 const ID_TYPES = [
+  { value: "NATIONAL_ID", label: "National ID (PhilSys)" },
+  { value: "PASSPORT", label: "Passport" },
+  { value: "DRIVERS_LICENSE", label: "Driver's License" },
+  { value: "UMID", label: "UMID" },
+  { value: "PRC", label: "PRC ID" },
+  { value: "STUDENT_ID", label: "Student ID" },
+  { value: "COMPANY_ID", label: "Company ID" },
   { value: "SSS", label: "SSS" },
   { value: "TIN", label: "TIN" },
-  { value: "PASSPORT", label: "Passport" },
-  { value: "STUDENT_ID", label: "Student ID" },
   { value: "OTHER", label: "Other" },
 ] as const;
 

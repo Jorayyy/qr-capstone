@@ -9,6 +9,7 @@ import { recordAudit } from "@/lib/audit";
 import { emailEnabled, sendQrEmail } from "@/lib/email";
 import { can, type Permission } from "@/lib/rbac";
 import { LIMITS, WINDOWS, rateLimit } from "@/lib/rate-limit";
+import { isUniqueViolation, nextReferenceCode } from "@/lib/reference";
 import { formString, registerVisitorSchema, uuidSchema } from "@/lib/validation";
 
 export type ActionState = {
@@ -175,7 +176,7 @@ export async function registerVisitorAction(
   try {
     const department = await db.department.findUnique({
       where: { id: input.departmentId },
-      select: { id: true, name: true, isActive: true },
+      select: { id: true, name: true, building: true, isActive: true },
     });
     if (!department || !department.isActive) {
       return { success: false, message: "The selected department is unavailable." };
@@ -218,22 +219,54 @@ export async function registerVisitorAction(
       });
     }
 
-    const visit = await db.visit.create({
-      data: {
-        visitorId: visitor.id,
-        departmentId: input.departmentId,
-        purpose: input.purpose,
-        status: "PENDING",
-        qrCode,
-        qrExpiresAt: qrExpiryDate(null),
-        hostName: input.hostName,
-        hostDepartment: input.hostDepartment,
-        vehicleType: input.vehicleType,
-        vehicleModel: input.vehicleModel,
-        vehiclePlateNumber: input.vehiclePlateNumber,
-        notes: input.notes,
-      },
-    });
+    const validatedAt = new Date();
+    let visit: { id: string; referenceCode: string; validFrom: Date | null; qrExpiresAt: Date | null } | null = null;
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const referenceCode = await nextReferenceCode();
+      try {
+        visit = await db.$transaction(async (tx) => {
+          const created = await tx.visit.create({
+            data: {
+              referenceCode,
+              visitorId: visitor.id,
+              departmentId: input.departmentId,
+              purpose: input.purpose,
+              status: "PENDING",
+              method: "WALK_IN",
+              visitType: "ONE_DAY",
+              expectedArrival: validatedAt,
+              validFrom: validatedAt,
+              qrCode,
+              qrExpiresAt: qrExpiryDate(null),
+              hostName: input.hostName,
+              hostDepartment: input.hostDepartment,
+              vehicleType: input.vehicleType,
+              vehicleModel: input.vehicleModel,
+              vehiclePlateNumber: input.vehiclePlateNumber,
+              notes: input.notes,
+            },
+          });
+          await tx.visitStop.create({
+            data: {
+              visitId: created.id,
+              departmentId: input.departmentId,
+              building: department.building,
+              purpose: input.purpose,
+              hostName: input.hostName,
+            },
+          });
+          return created;
+        });
+        break;
+      } catch (error) {
+        if (!isUniqueViolation(error) || attempt === 4) throw error;
+      }
+    }
+
+    if (!visit) {
+      return { success: false, message: "Could not allocate a reference number. Please retry." };
+    }
 
     await recordAudit({
       actorId: user?.userId,
@@ -262,9 +295,14 @@ export async function registerVisitorAction(
         to: emailTo,
         visitorName: `${visitor.firstName} ${visitor.lastName}`,
         qrCode,
+        referenceCode: visit.referenceCode,
+        visitType: "ONE_DAY",
+        offices: [department.name],
         departmentName: department.name,
         purpose: input.purpose,
+        validFrom: visit.validFrom,
         expiresAt: visit.qrExpiresAt,
+        passUrl: `/pass/${qrCode}`,
       });
       await recordAudit({
         actorId: user?.userId,

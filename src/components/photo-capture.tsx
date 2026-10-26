@@ -12,11 +12,13 @@ export default function PhotoCapture({
   label,
   kind,
   facing = "user",
+  endpoint = "/api/uploads",
   onPath,
 }: {
   label: string;
   kind: Kind;
   facing?: "user" | "environment";
+  endpoint?: string;
   onPath: (pathname: string | null) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -58,7 +60,7 @@ export default function PhotoCapture({
       const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
       form.append("file", file);
       form.append("kind", kind);
-      const res = await fetch("/api/uploads", { method: "POST", body: form });
+      const res = await fetch(endpoint, { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Upload failed.");
       if (preview) URL.revokeObjectURL(preview);

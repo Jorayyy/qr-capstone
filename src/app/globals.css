@@ -82,3 +82,9 @@ body {
 @media print {
   .no-print { display: none !important; }
 }
+
+@media print {
+  body { background: #fff !important; }
+  .pass-card { box-shadow: none !important; border-color: #cbd5e1 !important; }
+  @page { margin: 12mm; }
+}

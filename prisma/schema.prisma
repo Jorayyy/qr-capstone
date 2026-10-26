@@ -17,11 +17,44 @@ enum UserRole {
 }
 
 enum IdType {
+  NATIONAL_ID
+  PASSPORT
+  DRIVERS_LICENSE
+  UMID
+  PRC
+  POSTAL_ID
+  STUDENT_ID
   SSS
   TIN
-  PASSPORT
-  STUDENT_ID
+  COMPANY_ID
   OTHER
+}
+
+enum Affiliation {
+  VISITOR
+  STUDENT
+  FACULTY
+  STAFF
+  ALUMNI
+  PARENT
+  SUPPLIER
+  GOVERNMENT
+  OTHER
+}
+
+enum VisitType {
+  ONE_DAY
+  MULTIPLE
+}
+
+enum RegistrationMethod {
+  PRE_REGISTERED
+  WALK_IN
+}
+
+enum HostPreference {
+  SPECIFIC
+  ANY
 }
 
 enum VisitPurpose {
@@ -141,18 +174,21 @@ model Department {
 }
 
 model Visitor {
-  id        String   @id @default(uuid())
-  firstName String
-  lastName  String
-  email     String?
-  phone     String?
-  company   String?
-  idType    IdType
-  idNumber  String?
-  photoUrl  String?
-  idPhotoUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String      @id @default(uuid())
+  firstName   String
+  middleName  String?
+  lastName    String
+  email       String?
+  phone       String?
+  company     String?
+  affiliation Affiliation @default(VISITOR)
+  dateOfBirth DateTime?
+  idType      IdType
+  idNumber    String?
+  photoUrl    String?
+  idPhotoUrl  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   visits Visit[]
 
@@ -163,10 +199,13 @@ model Visitor {
 
 model Visit {
   id                 String      @id @default(uuid())
+  referenceCode      String      @unique
   visitorId          String
   departmentId       String
   purpose            VisitPurpose
   status             VisitStatus @default(PENDING)
+  method             RegistrationMethod @default(WALK_IN)
+  visitType          VisitType  @default(ONE_DAY)
   expectedArrival    DateTime?
   actualArrival      DateTime?
   actualDeparture    DateTime?
@@ -174,8 +213,10 @@ model Visit {
   hostDepartment     String?
   vehicleType        String?
   vehicleModel       String?
+  vehicleColor       String?
   vehiclePlateNumber String?
   qrCode             String      @unique
+  validFrom          DateTime?
   qrExpiresAt        DateTime?
   qrRevokedAt        DateTime?
   checkedInById       String?
@@ -196,11 +237,14 @@ model Visit {
 }
 
 model VisitStop {
-  id             String   @id @default(uuid())
+  id             String          @id @default(uuid())
   visitId        String
   departmentId   String
   building       String?
-  checkedInAt    DateTime @default(now())
+  purpose        VisitPurpose?
+  hostName       String?
+  hostPreference HostPreference  @default(ANY)
+  checkedInAt    DateTime?
   checkedOutAt   DateTime?
   notes          String?
 
@@ -208,6 +252,7 @@ model VisitStop {
   department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
 
   @@index([visitId])
+  @@index([departmentId])
   @@map("visit_stops")
 }
 

@@ -112,9 +112,9 @@ export default async function Home() {
               Visitor Registration
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-              Log your visit, verify your identity, and get your QR code pass from the Front Desk.
+              Pre-register online, scan your ID, and get your QR pass by email before you arrive.
             </p>
-            <Link href="#steps" className={buttonClass("primary", "mt-5 w-full py-3")}>
+            <Link href="/register" className={buttonClass("primary", "mt-5 w-full py-3")}>
               Start Registration
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -226,13 +226,18 @@ export default async function Home() {
             <p className={EYEBROW}>Registration</p>
             <h2 className={H2}>How to enter</h2>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-[var(--muted)]">
-              Five simple steps from the gate to your destination — registration happens at the
-              Front Desk, no online form needed.
+              Pre-register online for a QR pass, or register at the Front Desk when you arrive.
             </p>
-            <Link href="/checkin" className={buttonClass("secondary", "mt-6")}>
-              <LogIn className="h-4 w-4" />
-              I already have a pass
-            </Link>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/register" className={buttonClass("primary")}>
+                Register as a visitor
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/checkin" className={buttonClass("secondary")}>
+                <LogIn className="h-4 w-4" />
+                I already have a pass
+              </Link>
+            </div>
           </div>
 
           <div className="relative">

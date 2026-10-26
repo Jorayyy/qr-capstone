@@ -47,11 +47,11 @@ function NavLinks({ className }: { className?: string }) {
 export function PublicShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-[var(--paper)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-white/95 backdrop-blur print:hidden">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Brand />
           <NavLinks className="hidden items-center lg:flex" />
-          <Link href="/#steps" className={`${ACCENT_BUTTON} shrink-0`}>
+          <Link href="/register" className={`${ACCENT_BUTTON} shrink-0`}>
             <ShieldCheck className="h-4 w-4" />
             <span className="sm:hidden">Register</span>
             <span className="hidden sm:inline">Register as Visitor</span>
@@ -64,7 +64,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1">{children}</main>
 
-      <footer id="contact" className="bg-[var(--brand-strong)] text-white">
+      <footer id="contact" className="bg-[var(--brand-strong)] text-white print:hidden">
         <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-3">
           <div className="flex items-start gap-3">
             <img src="/logo.png" alt="" className="h-12 w-12 shrink-0 object-contain" />

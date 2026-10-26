@@ -33,10 +33,12 @@ function staffProjection(visit: {
     photoUrl: string | null;
     idPhotoUrl: string | null;
   };
+  referenceCode: string;
+  validFrom: Date | null;
   department: { id: string; name: string; building: string | null };
   stops: Array<{
     id: string;
-    checkedInAt: Date;
+    checkedInAt: Date | null;
     checkedOutAt: Date | null;
     building: string | null;
     department: { name: string };
@@ -44,9 +46,11 @@ function staffProjection(visit: {
 }) {
   return {
     id: visit.id,
+    referenceCode: visit.referenceCode,
     status: visit.status,
     purpose: visit.purpose,
     qrCode: visit.qrCode,
+    validFrom: visit.validFrom,
     qrExpiresAt: visit.qrExpiresAt,
     hostName: visit.hostName,
     actualArrival: visit.actualArrival,
@@ -97,8 +101,8 @@ export async function GET(req: NextRequest) {
       return rateLimitResponse(retry, requestId);
     }
 
-    const visit = await db.visit.findUnique({
-      where: { qrCode: qr },
+    const visit = await db.visit.findFirst({
+      where: { OR: [{ qrCode: qr }, { referenceCode: qr.toUpperCase() }] },
       include: {
         visitor: {
           select: {

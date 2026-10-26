@@ -219,9 +219,14 @@ export default async function VisitorDetailPage({
                   {/* Header row: date, dept, purpose, status */}
                   <div className="flex flex-wrap items-center gap-4 text-sm">
                     <span className="font-medium">{formatDate(v.createdAt)}</span>
+                    <span className="font-mono text-xs font-semibold text-[var(--brand)]">{v.referenceCode}</span>
                     <span className="text-[var(--muted)]">{v.department.name}</span>
                     <span className="text-[var(--muted)]">{v.purpose.replace("_", " ")}</span>
                     <Badge tone={STATUS_BADGE[v.status]?.tone}>{v.status.replace("_", " ")}</Badge>
+                  </div>
+
+                  <div className="mt-1 text-xs text-[var(--muted)]">
+                    Pass valid {formatDate(v.validFrom)} — {formatDate(v.qrExpiresAt)}
                   </div>
 
                   {/* Check-in/out + duration */}
@@ -248,10 +253,10 @@ export default async function VisitorDetailPage({
                           {v.hostDepartment && ` (${v.hostDepartment})`}
                         </span>
                       )}
-                      {(v.vehicleType || v.vehicleModel || v.vehiclePlateNumber) && (
+                      {(v.vehicleType || v.vehicleModel || v.vehicleColor || v.vehiclePlateNumber) && (
                         <span className="flex items-center gap-1 text-[var(--muted)]">
                           <Car className="h-3 w-3" />
-                          Vehicle: {[v.vehicleType, v.vehicleModel, v.vehiclePlateNumber].filter(Boolean).join(" — ")}
+                          Vehicle: {[v.vehicleType, v.vehicleModel, v.vehicleColor, v.vehiclePlateNumber].filter(Boolean).join(" — ")}
                         </span>
                       )}
                     </div>
@@ -288,6 +293,15 @@ export default async function VisitorDetailPage({
                           Download QR
                         </a>
                       )}
+                      <a
+                        href={`/pass/${v.qrCode}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={buttonClass("secondary", "min-h-0 w-fit px-2.5 py-1 text-xs")}
+                      >
+                        <QrCode className="h-3.5 w-3.5" />
+                        Open pass
+                      </a>
                     </div>
                   </div>
 
