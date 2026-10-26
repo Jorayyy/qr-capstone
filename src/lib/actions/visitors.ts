@@ -419,7 +419,7 @@ export async function checkOutAction(visitId: string): Promise<VisitActionState>
       },
     });
     await db.visitStop.updateMany({
-      where: { visitId: visit.id, checkedOutAt: null },
+      where: { visitId: visit.id, checkedInAt: { not: null }, checkedOutAt: null },
       data: { checkedOutAt: transition.at },
     });
 
@@ -546,6 +546,7 @@ export async function addVisitStopAction(
         visitId: parsed.data.visitId,
         departmentId: parsed.data.departmentId,
         building: parsed.data.building,
+        checkedInAt: new Date(),
         notes: parsed.data.notes,
       },
     });

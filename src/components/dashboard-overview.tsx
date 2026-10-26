@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { Card, CardHeader, EmptyState, Avatar, Metric, cx } from "@/components/ui";
+import { Card, CardHeader, EmptyState, Avatar, cx } from "@/components/ui";
 import { RelativeTime } from "@/components/relative-time";
 import { manilaMidnight, manilaParts } from "@/lib/ph-time";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Building2, CalendarClock, CheckCircle2, Users } from "lucide-react";
 
 const DAY_START_HOUR = 7;
 const DAY_END_HOUR = 19;
@@ -77,22 +77,29 @@ function ArrivalsChart({
 export async function DashboardOverview() {
   const nowParts = manilaParts(new Date());
   const today = manilaMidnight(nowParts.year, nowParts.month, nowParts.day);
-  const yesterday = manilaMidnight(nowParts.year, nowParts.month, nowParts.day - 1);
   const tomorrow = manilaMidnight(nowParts.year, nowParts.month, nowParts.day + 1);
 
-  const [totalToday, yesterdayTotal, enteredToday, exitedToday, pending, todaysVisits, openStops, recentVisits] =
-    await Promise.all([
+  const [
+    totalToday,
+    pending,
+    totalAll,
+    inCampus,
+    visited,
+    todaysVisits,
+    openStops,
+    recentVisits,
+  ] = await Promise.all([
       db.visit.count({ where: { createdAt: { gte: today } } }),
-      db.visit.count({ where: { createdAt: { gte: yesterday, lt: today } } }),
-      db.visit.count({ where: { actualArrival: { gte: today, lt: tomorrow } } }),
-      db.visit.count({ where: { actualDeparture: { gte: today, lt: tomorrow } } }),
       db.visit.count({ where: { status: "PENDING" } }),
+      db.visit.count(),
+      db.visit.count({ where: { status: "CHECKED_IN" } }),
+      db.visit.count({ where: { status: "CHECKED_OUT" } }),
       db.visit.findMany({
         where: { createdAt: { gte: today, lt: tomorrow } },
         select: { actualArrival: true, createdAt: true },
       }),
       db.visitStop.findMany({
-        where: { checkedOutAt: null },
+        where: { checkedInAt: { not: null }, checkedOutAt: null },
         select: { department: { select: { name: true } } },
       }),
       db.visit.findMany({
@@ -101,8 +108,6 @@ export async function DashboardOverview() {
         include: { visitor: true, department: true },
       }),
     ]);
-
-  const delta = yesterdayTotal > 0 ? Math.round(((totalToday - yesterdayTotal) / yesterdayTotal) * 100) : null;
 
   const buckets = Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => ({
     hour: DAY_START_HOUR + i,
@@ -133,11 +138,51 @@ export async function DashboardOverview() {
   return (
     <>
       <Card className="mb-6 overflow-hidden">
-        <div className="flex flex-col divide-y divide-[var(--border)] sm:flex-row sm:divide-x sm:divide-y-0">
-          <Metric label="Expected today" value={totalToday} delta={delta} hint="registered passes" />
-          <Metric label="Entered" value={enteredToday} hint="checked in today" />
-          <Metric label="Exited" value={exitedToday} hint="checked out today" />
-          <Metric label="Waiting" value={pending} hint="passes not yet scanned in" />
+        <div className="grid grid-cols-1 gap-px bg-[var(--border)] sm:grid-cols-2 lg:grid-cols-4">
+          <div className="bg-white p-5">
+            <div className="flex items-start justify-between gap-2">
+              <Users className="h-5 w-5 text-[var(--muted)]" />
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                All registrations
+              </span>
+            </div>
+            <p className="mt-3 font-display text-3xl font-bold tabular-nums text-[var(--brand)]">{totalAll}</p>
+            <p className="mt-1 text-sm font-semibold">Registered Visitors</p>
+            <p className="mt-0.5 text-xs text-[var(--muted)]">All visitor registrations to date.</p>
+          </div>
+          <div className="bg-white p-5">
+            <div className="flex items-start justify-between gap-2">
+              <Building2 className="h-5 w-5 text-[var(--muted)]" />
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                Active
+              </span>
+            </div>
+            <p className="mt-3 font-display text-3xl font-bold tabular-nums text-[var(--brand)]">{inCampus}</p>
+            <p className="mt-1 text-sm font-semibold">In Campus</p>
+            <p className="mt-0.5 text-xs text-[var(--muted)]">Visitors who have checked in but not yet checked out.</p>
+          </div>
+          <div className="bg-white p-5">
+            <div className="flex items-start justify-between gap-2">
+              <CheckCircle2 className="h-5 w-5 text-[var(--muted)]" />
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                Completed
+              </span>
+            </div>
+            <p className="mt-3 font-display text-3xl font-bold tabular-nums text-[var(--brand)]">{visited}</p>
+            <p className="mt-1 text-sm font-semibold">Visited</p>
+            <p className="mt-0.5 text-xs text-[var(--muted)]">Visits that have been completed.</p>
+          </div>
+          <div className="bg-white p-5">
+            <div className="flex items-start justify-between gap-2">
+              <CalendarClock className="h-5 w-5 text-[var(--muted)]" />
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                Pending
+              </span>
+            </div>
+            <p className="mt-3 font-display text-3xl font-bold tabular-nums text-[var(--brand)]">{pending}</p>
+            <p className="mt-1 text-sm font-semibold">To Visit</p>
+            <p className="mt-0.5 text-xs text-[var(--muted)]">Expected visitors who have not yet checked in.</p>
+          </div>
         </div>
       </Card>
 

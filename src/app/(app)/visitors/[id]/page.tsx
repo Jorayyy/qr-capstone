@@ -324,15 +324,15 @@ export default async function VisitorDetailPage({
                             <span className="font-medium">{stop.department.name}</span>
                             {stop.building && <span className="text-[var(--muted)]">({stop.building})</span>}
                             <span className="text-[var(--muted)]">{formatDate(stop.checkedInAt)}</span>
-                            {stop.checkedOutAt ? (
+                            {!stop.checkedInAt ? (
+                              <Badge tone="gray">Not yet visited</Badge>
+                            ) : stop.checkedOutAt ? (
                               <span className="text-emerald-600">
                                 → {formatDate(stop.checkedOutAt)}
                                 <span className="ml-1 text-[var(--muted)]">
                                   ({formatDuration(stop.checkedInAt, stop.checkedOutAt)})
                                 </span>
                               </span>
-                            ) : v.status === "CHECKED_OUT" ? (
-                              <span className="text-[var(--muted)]">→ Left with visit</span>
                             ) : (
                               <Badge tone="green">Currently here</Badge>
                             )}

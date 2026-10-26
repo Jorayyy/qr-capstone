@@ -146,6 +146,7 @@ describe("publicRegistrationSchema", () => {
     phone: "0917 123 4567",
     idType: "NATIONAL_ID",
     affiliation: "VISITOR",
+    idPhotoUrl: "visitors/abc/ID.jpg",
     offices: [
       { departmentId: "3f1f6b0e-1c2d-4e5f-8a9b-0c1d2e3f4a5b", purpose: "MEETING", hostPreference: "ANY" },
     ],
@@ -156,6 +157,12 @@ describe("publicRegistrationSchema", () => {
 
   it("accepts a complete pre-registration", () => {
     expect(publicRegistrationSchema.safeParse(base).success).toBe(true);
+  });
+
+  it("requires the ID photo", () => {
+    const { idPhotoUrl: _id, ...withoutId } = base;
+    expect(publicRegistrationSchema.safeParse(withoutId).success).toBe(false);
+    expect(publicRegistrationSchema.safeParse({ ...base, idPhotoUrl: "other/x.jpg" }).success).toBe(false);
   });
 
   it("requires at least one office", () => {

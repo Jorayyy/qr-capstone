@@ -175,6 +175,9 @@ export default function RegisterWizard({ departments }: { departments: Departmen
   }
 
   function validateStep(index: number): string {
+    if (index === 1) {
+      if (!idPhotoPath) return "Upload or scan the front of your ID to continue.";
+    }
     if (index === 2) {
       if (!form.firstName.trim() || !form.lastName.trim()) return "Enter your first and last name.";
       if (!EMAIL.test(form.email.trim())) return "Enter a valid email address — the pass is emailed there.";
@@ -506,10 +509,10 @@ export default function RegisterWizard({ departments }: { departments: Departmen
           {step === 1 && (
             <div className="space-y-5">
               <div>
-                <h3 className="text-sm font-bold">Upload or scan your ID</h3>
+                <h3 className="text-sm font-bold">Upload or scan your ID *</h3>
                 <p className="mt-1 text-xs text-[var(--muted)]">
-                  We read the front side automatically and fill in your details. You can correct
-                  everything on the next step.
+                  Front side required. We read it automatically and fill in your details. You can
+                  correct everything on the next step.
                 </p>
               </div>
               <IdScan onPath={setIdPhotoPath} onExtract={applyOcr} />

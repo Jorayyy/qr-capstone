@@ -62,6 +62,16 @@ const requiredText = (max: number, label: string) =>
     .max(max, `${label} must be at most ${max} characters.`);
 
 /** Reference to a privately stored photo: a blob pathname under `visitors/`. */
+const requiredPhotoPath = z
+  .string()
+  .trim()
+  .min(1, "Upload the front of your ID.")
+  .max(300)
+  .refine(
+    (value) => /^visitors\/[A-Za-z0-9._/-]+$/.test(value),
+    "Invalid photo reference."
+  );
+
 const optionalPhotoPath = z
   .string()
   .trim()
@@ -164,7 +174,7 @@ export const publicRegistrationSchema = z
     idNumber: optionalText(64),
     affiliation: z.enum(AFFILIATIONS),
     photoUrl: optionalPhotoPath,
-    idPhotoUrl: optionalPhotoPath,
+    idPhotoUrl: requiredPhotoPath,
     offices: z
       .array(officeStopSchema)
       .min(1, "Choose at least one office to visit.")

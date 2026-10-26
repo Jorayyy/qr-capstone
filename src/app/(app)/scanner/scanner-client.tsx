@@ -443,7 +443,9 @@ export default function ScannerPage() {
                             {stop.building && <span className="text-xs text-[var(--muted)]">({stop.building})</span>}
                             <span className="text-xs text-[var(--muted)]">{formatDate(stop.checkedInAt)}</span>
                           </div>
-                          {!stop.checkedOutAt ? (
+                          {!stop.checkedInAt ? (
+                            <span className="text-xs text-[var(--muted)]">Not yet visited</span>
+                          ) : !stop.checkedOutAt ? (
                             <button onClick={() => handleCheckoutStop(stop.id)} className="text-xs text-red-600 hover:underline">
                               Check Out
                             </button>
