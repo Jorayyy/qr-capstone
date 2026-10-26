@@ -174,7 +174,7 @@ export default async function Home() {
               {departments.map((d) => (
                 <Link
                   key={d.id}
-                  href={`/departments/${d.id}`}
+                  href={`/office/${d.id}`}
                   className="group block overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
                   <div className="relative h-36 overflow-hidden bg-gradient-to-br from-[var(--brand)] to-[var(--brand-strong)]">
