@@ -4,6 +4,7 @@ import { Card, Badge, Button, PageHeader, EmptyState, iconActionClass } from "@/
 import { Plus, Pencil, Landmark } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { ToggleForm, DeleteForm } from "./actions-client";
+import { departmentPhotoSrc } from "@/lib/photos";
 
 export default async function DepartmentsPage() {
   await requirePermission("department:manage");
@@ -45,7 +46,7 @@ export default async function DepartmentsPage() {
               >
                 {d.photoPath ? (
                   <img
-                    src={`/api/department-photo?path=${encodeURIComponent(d.photoPath)}`}
+                    src={departmentPhotoSrc(d.photoPath) ?? undefined}
                     alt=""
                     className="h-full w-full object-cover"
                   />

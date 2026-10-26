@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Upload, X } from "lucide-react";
+import { ImagePlus, Link2, Loader2, Upload, X } from "lucide-react";
 import { buttonClass } from "@/components/ui";
+import { departmentPhotoSrc } from "@/lib/photos";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -11,6 +12,7 @@ export function DepartmentPhotoField({ initialPath }: { initialPath?: string | n
   const [path, setPath] = useState(initialPath ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [link, setLink] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
@@ -52,6 +54,17 @@ export function DepartmentPhotoField({ initialPath }: { initialPath?: string | n
     }
   }
 
+  function useLink() {
+    const value = link.trim();
+    if (!/^https:\/\/[^\s]+$/i.test(value)) {
+      setError("Paste a full https image link.");
+      return;
+    }
+    setPath(value);
+    setLink("");
+    setError("");
+  }
+
   return (
     <div>
       <label className="label">Department Photo (Optional)</label>
@@ -61,7 +74,7 @@ export function DepartmentPhotoField({ initialPath }: { initialPath?: string | n
       <div className="relative h-40 overflow-hidden rounded-xl border border-dashed border-[var(--border)] bg-slate-50">
         {path ? (
           <img
-            src={`/api/department-photo?path=${encodeURIComponent(path)}`}
+            src={departmentPhotoSrc(path) ?? undefined}
             alt="Department photo"
             className="h-full w-full object-cover"
           />
@@ -109,9 +122,29 @@ export function DepartmentPhotoField({ initialPath }: { initialPath?: string | n
         className="hidden"
       />
 
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+        <input
+          type="url"
+          value={link}
+          onChange={(event) => setLink(event.target.value)}
+          placeholder="or paste an image link (https://…)"
+          className="field min-h-9 py-1.5 text-xs"
+          aria-label="Department photo image link"
+        />
+        <button
+          type="button"
+          onClick={useLink}
+          disabled={busy || !link.trim()}
+          className={buttonClass("secondary", "min-h-9 shrink-0 px-3 py-1.5 text-xs")}
+        >
+          <Link2 className="h-3.5 w-3.5" />
+          Use link
+        </button>
+      </div>
+
       {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : null}
       <p className="mt-1 text-xs text-[var(--muted)]">
-        JPEG, PNG or WebP, up to 5 MB. Shown on the visitor landing page.
+        Upload a file or paste a link. JPEG, PNG or WebP up to 5 MB; use at least 1000 × 600 px.
       </p>
     </div>
   );

@@ -9,7 +9,8 @@ import {
   resolveVisitWindow,
   todayIso,
 } from "@/lib/registration";
-import { publicRegistrationSchema } from "@/lib/validation";
+import { departmentSchema, publicRegistrationSchema } from "@/lib/validation";
+import { departmentPhotoSrc } from "@/lib/photos";
 
 describe("formatReference", () => {
   it("pads the sequence to five digits", () => {
@@ -194,5 +195,32 @@ describe("passState", () => {
     expect(passState({ ...base, qrExpiresAt: new Date("2026-03-09T02:00:00Z") }, now)).toBe("EXPIRED");
     expect(passState({ ...base, qrRevokedAt: new Date(now) }, now)).toBe("REVOKED");
     expect(passState({ ...base, status: "CANCELLED" }, now)).toBe("CANCELLED");
+  });
+});
+
+describe("departmentPhotoSrc", () => {
+  it("serves blob uploads through the photo API", () => {
+    expect(departmentPhotoSrc("departments/a1.jpg")).toBe(
+      "/api/department-photo?path=departments%2Fa1.jpg"
+    );
+  });
+
+  it("passes https links straight through and ignores empty values", () => {
+    expect(departmentPhotoSrc("https://example.edu/building.jpg")).toBe(
+      "https://example.edu/building.jpg"
+    );
+    expect(departmentPhotoSrc(null)).toBeNull();
+  });
+});
+
+describe("departmentSchema photo link", () => {
+  const base = { name: "Registrar" };
+
+  it("accepts an https image link", () => {
+    expect(departmentSchema.safeParse({ ...base, photoPath: "https://example.edu/a.jpg" }).success).toBe(true);
+  });
+
+  it("rejects non-https links", () => {
+    expect(departmentSchema.safeParse({ ...base, photoPath: "http://example.edu/a.jpg" }).success).toBe(false);
   });
 });

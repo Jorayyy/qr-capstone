@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Building2, Clock, Landmark, Mail, User } from "lucide-react";
 import { db } from "@/lib/db";
 import { PublicShell } from "@/components/public-shell";
+import { departmentPhotoSrc } from "@/lib/photos";
 import { buttonClass } from "@/components/ui";
 import { SITE } from "@/lib/site-info";
 
@@ -38,9 +39,7 @@ export default async function DepartmentPreviewPage({ params }: Props) {
   const department = await loadDepartment(id);
   if (!department) notFound();
 
-  const photo = department.photoPath
-    ? `/api/department-photo?path=${encodeURIComponent(department.photoPath)}`
-    : null;
+  const photo = departmentPhotoSrc(department.photoPath);
 
   return (
     <PublicShell>

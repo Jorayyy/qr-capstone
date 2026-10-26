@@ -7,7 +7,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
+      "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
       "worker-src 'self' blob:",
       "connect-src 'self' ws: wss: https://cdn.jsdelivr.net https://tessdata.projectnaptha.com",

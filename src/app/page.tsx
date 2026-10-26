@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth";
 import { buttonClass } from "@/components/ui";
 import { PublicShell, ACCENT_BUTTON } from "@/components/public-shell";
 import CampusMap from "@/components/campus-map";
+import { departmentPhotoSrc } from "@/lib/photos";
 import {
   SITE,
   ABOUT,
@@ -180,7 +181,7 @@ export default async function Home() {
                   <div className="relative h-36 overflow-hidden bg-gradient-to-br from-[var(--brand)] to-[var(--brand-strong)]">
                     {d.photoPath ? (
                       <img
-                        src={`/api/department-photo?path=${encodeURIComponent(d.photoPath)}`}
+                        src={departmentPhotoSrc(d.photoPath) ?? undefined}
                         alt={`${d.name} building`}
                         loading="lazy"
                         decoding="async"

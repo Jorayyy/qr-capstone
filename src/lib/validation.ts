@@ -83,16 +83,19 @@ const optionalPhotoPath = z
     "Invalid photo reference."
   );
 
-/** Department photos live in their own Blob prefix and are served publicly. */
+/** Department photos are a Blob path or an admin-pasted https image link. */
 const optionalDepartmentPhotoPath = z
   .string()
   .trim()
-  .max(300)
+  .max(500)
   .optional()
   .transform((value) => (value === "" ? undefined : value))
   .refine(
-    (value) => value === undefined || /^departments\/[A-Za-z0-9._-]+$/.test(value),
-    "Invalid photo reference."
+    (value) =>
+      value === undefined ||
+      /^departments\/[A-Za-z0-9._-]+$/.test(value) ||
+      /^https:\/\/[^\s]+$/i.test(value),
+    "Use an uploaded photo or an https image link."
   );
 
 export const emailField = z
