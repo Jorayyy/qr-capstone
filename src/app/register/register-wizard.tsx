@@ -149,6 +149,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
       middleName: fields.middleName || current.middleName,
       lastName: fields.lastName || current.lastName,
       dateOfBirth: fields.dateOfBirth || current.dateOfBirth,
+      idType: fields.idType || current.idType,
       idNumber: fields.idNumber || current.idNumber,
     }));
   }

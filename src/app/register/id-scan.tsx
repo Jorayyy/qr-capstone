@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, Loader2, ScanLine, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui";
-import { parseIdCardText, type OcrResult } from "@/lib/registration";
+import { filterOcrTextByConfidence, parseIdCardText, type OcrResult } from "@/lib/registration";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
@@ -63,8 +63,9 @@ export default function IdScan({
         },
       });
       try {
-        const { data } = await worker.recognize(file);
-        onExtract(parseIdCardText(data.text));
+        const { data } = await worker.recognize(file, {}, { text: true, tsv: true });
+        const confident = parseIdCardText(filterOcrTextByConfidence(data.tsv));
+        onExtract({ ...parseIdCardText(data.text), ...confident });
         setStatus("done");
         setMessage("We filled in what we could read. Please check every field.");
       } finally {

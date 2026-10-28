@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  filterOcrTextByConfidence,
   formatReference,
   manilaDayBounds,
   maskIdNumber,
@@ -104,9 +105,70 @@ describe("parseIdCardText", () => {
       lastName: "Dela Cruz",
       firstName: "Maria",
       middleName: "Santos",
+      idType: "NATIONAL_ID",
       idNumber: "1234 5678 9012",
       dateOfBirth: "2000-01-15",
     });
+  });
+
+  it("reads a 16-digit PhilSys card number", () => {
+    const result = parseIdCardText(`
+      PHILIPPINE IDENTIFICATION CARD
+      DELA CRUZ, MARIA SANTOS
+      1234 5678 9012 3456
+      Date of Birth: Jan 15, 2000
+    `);
+    expect(result.idType).toBe("NATIONAL_ID");
+    expect(result.idNumber).toBe("1234 5678 9012 3456");
+  });
+
+  it("reads a driver's licence without picking up background clutter", () => {
+    const result = parseIdCardText(`
+      . «i . -,
+      h Te HER ' ba , .
+      REPUBLIC OF THE PHILIPPINES
+      LAND TRANSPORTATION OFFICE
+      DRIVER'S LICENSE
+      Last Name. First Name. Middle Name
+      ANDRADE, MARK JORY ABELLA ]
+      Nationality Sex Date of Birth Weight (kg) Height(m)
+      PHL M 2001/05/05 65 1.64
+      Address
+      PLEASANTVILLE, BARANGAY 63, TACLOBAN
+      CITY (CAPITAL), LEYTE, 6500
+      License No. Expiration Date Agency Code
+      H02-26-00055¢ 2030/05/05 H02
+    `);
+    expect(result).toEqual({
+      lastName: "Andrade",
+      firstName: "Mark Jory",
+      middleName: "Abella",
+      dateOfBirth: "2001-05-05",
+      idType: "DRIVERS_LICENSE",
+      idNumber: "H02-26-000556",
+    });
+  });
+
+  it("never treats an expiration date as the birth date", () => {
+    const result = parseIdCardText(`
+      DRIVER'S LICENSE
+      Date of Birth 2001/05/05
+      Expiration Date 2030/05/05
+    `);
+    expect(result.dateOfBirth).toBe("2001-05-05");
+  });
+
+  it("filters faint OCR lines before parsing", () => {
+    const tsv = [
+      "5\t1\t0\t0\t0\t0\t0\t0\t0\t0\t40\tJUNK",
+      "5\t1\t0\t0\t0\t1\t0\t0\t0\t0\t45\tTEXT",
+      "5\t1\t0\t0\t1\t0\t0\t0\t0\t0\t95\tANDRADE,",
+      "5\t1\t0\t0\t1\t10\t0\t0\t0\t0\t96\tMARK",
+      "5\t1\t0\t0\t1\t20\t0\t0\t0\t0\t91\tJORY",
+      "5\t1\t0\t0\t1\t30\t0\t0\t0\t0\t96\tABELLA",
+    ].join("\n");
+
+    expect(filterOcrTextByConfidence(tsv)).toBe("ANDRADE, MARK JORY ABELLA");
   });
 
   it("reads a labelled layout", () => {

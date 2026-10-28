@@ -74,12 +74,35 @@ export function resolveVisitWindow(input: {
   return { ok: true, window: { validFrom: from.start, validUntil: until.end } };
 }
 
+export type OcrIdType = "NATIONAL_ID" | "PASSPORT" | "DRIVERS_LICENSE" | "UMID";
+
 export type OcrResult = {
   firstName?: string;
   middleName?: string;
   lastName?: string;
   dateOfBirth?: string;
+  idType?: OcrIdType;
   idNumber?: string;
+};
+
+const NAME_PARTICLES = new Set([
+  "de", "del", "dela", "delas", "delos", "la", "las", "los", "san", "santa", "sta", "van", "von", "da", "dos", "y",
+]);
+
+const NAME_STOPWORDS = new Set([
+  "last", "first", "middle", "name", "surname", "given", "full", "date", "birth", "address",
+  "nationality", "sex", "weight", "height", "blood", "type", "eyes", "color", "conditions",
+  "license", "expiration", "agency", "code", "signature", "republic", "department",
+  "transportation", "office", "driver", "card", "identification", "philippines", "philippine",
+  "number", "no", "street", "avenue", "ave", "road", "barangay", "brgy", "city", "province",
+  "municipality", "leyte", "tacloban", "visitor", "passport", "umid", "capital",
+]);
+
+const DIGIT_CONFUSIONS: Record<string, string> = {
+  O: "0", o: "0", Q: "0", q: "0",
+  I: "1", l: "1", i: "1", "|": "1", "!": "1",
+  S: "5", s: "5", B: "8", Z: "2", z: "2", G: "6",
+  "¢": "6", "©": "6", "$": "5",
 };
 
 function titleCase(value: string): string {
@@ -93,8 +116,27 @@ function two(n: number): string {
   return String(n).padStart(2, "0");
 }
 
+function fixDigits(value: string): string {
+  return value.replace(/[OoQqIliSsBbZzG¢©$|!]/g, (char) => DIGIT_CONFUSIONS[char] ?? char);
+}
+
 function normalizeDate(day: number, month: number, year: number): string | undefined {
-  if (year < 1900 || year > 2100 || month < 1 || month > 12 || day < 1 || day > 31) return undefined;
+  const now = new Date();
+  if (year < 1900 || year > now.getFullYear()) return undefined;
+  if (month < 1 || month > 12 || day < 1 || day > 31) return undefined;
+  if (now.getFullYear() - year > 120) return undefined;
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return undefined;
+  }
+  if (year === now.getFullYear() && month - 1 > now.getMonth()) return undefined;
+  if (year === now.getFullYear() && month - 1 === now.getMonth() && day > now.getDate()) return undefined;
+
   return `${year}-${two(month)}-${two(day)}`;
 }
 
@@ -113,7 +155,10 @@ function parseDateToken(token: string): string | undefined {
     return month ? normalizeDate(Number(dayFirst[1]), month, Number(dayFirst[3])) : undefined;
   }
 
-  const numeric = cleaned.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  const iso = cleaned.match(/^(\d{4})[/.-](\d{1,2})[/.-](\d{1,2})$/);
+  if (iso) return normalizeDate(Number(iso[3]), Number(iso[2]), Number(iso[1]));
+
+  const numeric = cleaned.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
   if (numeric) {
     const a = Number(numeric[1]);
     const b = Number(numeric[2]);
@@ -123,10 +168,252 @@ function parseDateToken(token: string): string | undefined {
     return normalizeDate(day, month, Number(numeric[3]));
   }
 
-  const iso = cleaned.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
-  if (iso) return normalizeDate(Number(iso[3]), Number(iso[2]), Number(iso[1]));
+  return undefined;
+}
+
+const DATE_NUMBER_RE = /(?:^|[^0-9A-Za-z])([\dOoQqIliSsBbZzG¢©]{1,4}[/.-][\dOoQqIliSsBbZzG¢©]{1,2}[/.-][\dOoQqIliSsBbZzG¢©]{1,4})(?:$|[^0-9A-Za-z])/g;
+const MONTH_NAME_RE = /(?:^|[^A-Za-z])([A-Za-z]{3,9})\.?\s+(\d{1,2}),?\s+(\d{4})(?:$|[^0-9])/;
+const DAY_MONTH_RE = /(?:^|[^A-Za-z0-9])(\d{1,2})\s+([A-Za-z]{3,9})\.?,?\s+(\d{4})(?:$|[^0-9])/;
+
+function extractDate(value: string): string | undefined {
+  for (const match of value.matchAll(DATE_NUMBER_RE)) {
+    const parsed = parseDateToken(fixDigits(match[1]));
+    if (parsed) return parsed;
+  }
+
+  const monthName = value.match(MONTH_NAME_RE);
+  if (monthName) {
+    const month = MONTHS[monthName[1].toLowerCase()];
+    if (month) {
+      const parsed = normalizeDate(Number(monthName[2]), month, Number(monthName[3]));
+      if (parsed) return parsed;
+    }
+  }
+
+  const dayMonth = value.match(DAY_MONTH_RE);
+  if (dayMonth) {
+    const month = MONTHS[dayMonth[2].toLowerCase()];
+    if (month) {
+      const parsed = normalizeDate(Number(dayMonth[1]), month, Number(dayMonth[3]));
+      if (parsed) return parsed;
+    }
+  }
 
   return undefined;
+}
+
+function splitNameTokens(value: string): string[] {
+  return value
+    .replace(/[^A-Za-zÑñ'.\-\s]/g, " ")
+    .replace(/\./g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean);
+}
+
+function isNameToken(token: string, index: number): boolean {
+  if (!/^[A-Za-zÑñ]+(?:['-][A-Za-zÑñ]+)*$/.test(token)) return false;
+  if (token.length === 1) return index > 0;
+  return !NAME_STOPWORDS.has(token.toLowerCase());
+}
+
+function isNamePart(tokens: string[]): boolean {
+  return tokens.length > 0 && tokens.length <= 4 && tokens.every((token, index) => isNameToken(token, index));
+}
+
+function splitGivenNames(tokens: string[]): { first: string; middle?: string } {
+  if (tokens.length === 1) return { first: tokens[0] };
+
+  let split = tokens.length - 1;
+  while (split > 1 && NAME_PARTICLES.has(tokens[split - 1].toLowerCase())) split -= 1;
+
+  return {
+    first: tokens.slice(0, split).join(" "),
+    middle: tokens.slice(split).join(" "),
+  };
+}
+
+type ParsedName = Pick<OcrResult, "firstName" | "middleName" | "lastName">;
+
+function trimNameNoise(tokens: string[]): string[] {
+  const isUpper = (token: string) => /^[A-ZÑ]+(?:['-][A-ZÑ]+)*$/.test(token);
+  if (!tokens.some(isUpper)) return tokens;
+
+  let start = 0;
+  while (start < tokens.length - 1) {
+    const token = tokens[start];
+    if (isUpper(token) || NAME_PARTICLES.has(token.toLowerCase())) break;
+    start += 1;
+  }
+  return tokens.slice(start);
+}
+
+function parseCommaName(line: string): ParsedName | null {
+  const cleaned = line.replace(/[^A-Za-zÑñ'.,\-\s]/g, " ").replace(/\s+/g, " ").trim();
+  const parts = cleaned.split(",");
+  if (parts.length !== 2) return null;
+
+  const lastTokens = trimNameNoise(splitNameTokens(parts[0]));
+  const givenTokens = trimNameNoise(splitNameTokens(parts[1]));
+  if (!isNamePart(lastTokens) || !isNamePart(givenTokens)) return null;
+
+  const { first, middle } = splitGivenNames(givenTokens);
+  return {
+    lastName: titleCase(lastTokens.join(" ")),
+    firstName: titleCase(first),
+    ...(middle ? { middleName: titleCase(middle) } : {}),
+  };
+}
+
+const FULL_NAME_HEADER = /(?:last\s*name|surname)[.,:\s]+(?:first\s*name|given\s*name)/i;
+const SURNAME_LABEL = /^(?:surname|last\s*name|apelyido)\b/i;
+const GIVEN_LABEL = /^(?:given\s*name|first\s*name|pangalan)\b/i;
+const MIDDLE_LABEL = /^(?:middle\s*name|gitnang\s*apelyido)\b/i;
+
+function isLabelLike(value: string): boolean {
+  return (
+    FULL_NAME_HEADER.test(value) ||
+    /^(?:surname|last\s*name|given\s*name|first\s*name|middle\s*name|apelyido|pangalan|date\s+of\s+birth|birth\s+date|address|nationality|sex|weight|height|blood\s+type|eyes\s+color|license\s+no|expiration\s+date|agency\s+code|conditions|signature)\b/i.test(
+      value
+    )
+  );
+}
+
+function findCommaName(lines: string[]): ParsedName | null {
+  const headerIndex = lines.findIndex((line) => FULL_NAME_HEADER.test(line));
+
+  if (headerIndex >= 0) {
+    const inline = lines[headerIndex].replace(FULL_NAME_HEADER, "");
+    if (inline.includes(",")) {
+      const parsed = parseCommaName(inline);
+      if (parsed) return parsed;
+    }
+    for (let i = headerIndex + 1; i <= Math.min(headerIndex + 3, lines.length - 1); i += 1) {
+      const parsed = parseCommaName(lines[i]);
+      if (parsed) return parsed;
+    }
+    return null;
+  }
+
+  for (const line of lines) {
+    const parsed = parseCommaName(line);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+
+function valueAfterLabel(lines: string[], label: RegExp): string | undefined {
+  for (let i = 0; i < lines.length; i += 1) {
+    const match = lines[i].match(label);
+    if (!match) continue;
+
+    const inline = lines[i].slice((match.index ?? 0) + match[0].length).replace(/^[.,:\s]+/, "").trim();
+    if (inline && !isLabelLike(inline)) return inline;
+
+    for (let j = i + 1; j <= Math.min(i + 2, lines.length - 1); j += 1) {
+      const next = lines[j].trim();
+      if (!next || isLabelLike(next)) break;
+      return next;
+    }
+  }
+  return undefined;
+}
+
+function parseLabelledName(lines: string[]): ParsedName | null {
+  const lastValue = valueAfterLabel(lines, SURNAME_LABEL);
+  const givenValue = valueAfterLabel(lines, GIVEN_LABEL);
+  if (!lastValue || !givenValue) return null;
+
+  const lastTokens = splitNameTokens(lastValue);
+  const givenTokens = splitNameTokens(givenValue);
+  if (!isNamePart(lastTokens) || !isNamePart(givenTokens)) return null;
+
+  const middleValue = valueAfterLabel(lines, MIDDLE_LABEL);
+  if (middleValue) {
+    const middleTokens = splitNameTokens(middleValue);
+    if (middleTokens.length > 0 && middleTokens.length <= 4 && middleTokens.every((token, i) => isNameToken(token, i))) {
+      return {
+        lastName: titleCase(lastTokens.join(" ")),
+        firstName: titleCase(givenTokens.join(" ")),
+        middleName: titleCase(middleTokens.join(" ")),
+      };
+    }
+  }
+
+  const { first, middle } = splitGivenNames(givenTokens);
+  return {
+    lastName: titleCase(lastTokens.join(" ")),
+    firstName: titleCase(first),
+    ...(middle ? { middleName: titleCase(middle) } : {}),
+  };
+}
+
+function detectIdType(text: string): OcrIdType | undefined {
+  const normalized = text.replace(/\s+/g, " ");
+  if (/driver'?s?\s+licen[cs]e|land\s+transportation\s+office|\blto\b/i.test(normalized)) {
+    return "DRIVERS_LICENSE";
+  }
+  if (/unified\s+multi[- ]?purpose|\bumid\b/i.test(normalized)) return "UMID";
+  if (/philippine\s+identification\s+card|philsys|\bpsn\b|philippine\s+identification\s+(?:system|number)/i.test(normalized)) {
+    return "NATIONAL_ID";
+  }
+  if (/\bpassport\b|paseport/i.test(normalized)) return "PASSPORT";
+  return undefined;
+}
+
+function parseLicenseNumber(text: string): string | undefined {
+  for (const token of text.split(/\s+/)) {
+    const cleaned = token.replace(/^[^A-Za-z0-9¢©$]+|[^A-Za-z0-9¢©$]+$/g, "");
+    if (!/^[A-Za-z]/.test(cleaned)) continue;
+
+    const fixed = cleaned[0].toUpperCase() + fixDigits(cleaned.slice(1));
+    const compact = fixed.replace(/[^A-Z0-9]/g, "");
+    if (/^[A-Z]\d{10}$/.test(compact)) {
+      return `${compact.slice(0, 3)}-${compact.slice(3, 5)}-${compact.slice(5)}`;
+    }
+  }
+  return undefined;
+}
+
+function parsePassportNumber(text: string): string | undefined {
+  const labelled = text.match(
+    /passport\s*(?:no\.?|number)?[^A-Za-z0-9]{0,20}([A-Z]{1,2}\d{7})(?:[^A-Z0-9]|$)/i
+  );
+  if (labelled) return labelled[1].toUpperCase();
+
+  const candidate = text.match(/(?:^|[^A-Z0-9])([A-Z]{1,2}\d{7})(?:$|[^A-Z0-9])/);
+  return candidate ? candidate[1].toUpperCase() : undefined;
+}
+
+function extractIdNumber(text: string, type?: OcrIdType): { value: string; type: OcrIdType } | undefined {
+  if (type === "DRIVERS_LICENSE" || /driver'?s?\s+licen[cs]e|licen[cs]e\s*(?:no\.?|number)/i.test(text)) {
+    const license = parseLicenseNumber(text);
+    if (license) return { value: license, type: "DRIVERS_LICENSE" };
+  }
+
+  if (type === "PASSPORT" || /\bpassport\b/i.test(text)) {
+    const passport = parsePassportNumber(text);
+    if (passport) return { value: passport, type: "PASSPORT" };
+  }
+
+  if (type === "UMID") {
+    const umid = fixDigits(text).match(/(?:^|[^0-9])(\d{4})-?(\d{7})-?(\d)(?:$|[^0-9])/);
+    if (umid) return { value: `${umid[1]}-${umid[2]}-${umid[3]}`, type: "UMID" };
+  }
+
+  const pcn = fixDigits(text).match(/(?:^|[^0-9])(\d{4})[ -]?(\d{4})[ -]?(\d{4})[ -]?(\d{4})(?:$|[^0-9])/);
+  if (pcn) {
+    return { value: `${pcn[1]} ${pcn[2]} ${pcn[3]} ${pcn[4]}`, type: "NATIONAL_ID" };
+  }
+
+  const philSys = fixDigits(text).match(/(?:^|[^0-9])(\d{4})[ -]?(\d{4})[ -]?(\d{4})(?:$|[^0-9])/);
+  if (philSys) {
+    return { value: `${philSys[1]} ${philSys[2]} ${philSys[3]}`, type: "NATIONAL_ID" };
+  }
+
+  const license = parseLicenseNumber(text);
+  return license ? { value: license, type: "DRIVERS_LICENSE" } : undefined;
 }
 
 /**
@@ -141,46 +428,67 @@ export function parseIdCardText(raw: string): OcrResult {
     .filter(Boolean);
 
   const result: OcrResult = {};
+  const idType = detectIdType(text);
+  if (idType) result.idType = idType;
 
-  const idMatch = text.match(/\b(\d{4})[ -]?(\d{4})[ -]?(\d{4})\b/);
-  if (idMatch) result.idNumber = `${idMatch[1]} ${idMatch[2]} ${idMatch[3]}`;
-
-  const dobMatch = text.match(
-    /(?:date\s+of\s+birth|birth\s+date|petsa\s+ng\s+kapanganakan|kapanganakan)[^0-9A-Za-z]*([A-Za-z]{3,9}\.?\s+\d{1,2},?\s+\d{4}|\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4}|\d{4}[\/.-]\d{1,2}[\/.-]\d{1,2})/i
-  );
-  if (dobMatch) {
-    const parsed = parseDateToken(dobMatch[1]);
-    if (parsed) result.dateOfBirth = parsed;
+  const idNumber = extractIdNumber(text, idType);
+  if (idNumber) {
+    result.idType = idNumber.type;
+    result.idNumber = idNumber.value;
   }
 
-  const isLabel = (line: string) =>
-    /^(surname|last\s*name|given\s*name|first\s*name|middle\s*name|apelyido|pangalan|date\s+of\s+birth|birth\s+date|address|sex|nationality|blood\s+type|signature|philippine|republika|identification|card\s+no)/i.test(
-      line
-    );
+  const dobLabel = /(?:date\s+of\s+birth|birth\s+date|petsa\s+ng\s+kapanganakan|kapanganakan|\bdob\b)/i;
+  for (let i = 0; i < lines.length; i += 1) {
+    const label = lines[i].match(dobLabel);
+    if (!label) continue;
 
-  let nameLine = lines.find(
-    (line) => line.includes(",") && /^[A-Za-zÑñ' .-]+,\s*[A-Za-zÑñ' .-]+$/.test(line)
-  );
-
-  if (!nameLine) {
-    const surnameIndex = lines.findIndex((line) => /^(surname|last\s*name|apelyido)$/i.test(line));
-    if (surnameIndex >= 0 && lines[surnameIndex + 1] && !isLabel(lines[surnameIndex + 1])) {
-      const last = lines[surnameIndex + 1];
-      const givenIndex = lines.findIndex((line, i) => i > surnameIndex && /^(given\s*name|first\s*name|pangalan)$/i.test(line));
-      const first = givenIndex >= 0 ? lines[givenIndex + 1] : undefined;
-      if (first && !isLabel(first)) nameLine = `${last}, ${first}`;
+    const windows = [
+      lines[i].slice((label.index ?? 0) + label[0].length),
+      lines[i + 1],
+      lines[i + 2],
+    ];
+    const date = windows.map((window) => (window ? extractDate(window) : undefined)).find(Boolean);
+    if (date) {
+      result.dateOfBirth = date;
+      break;
     }
   }
 
-  if (nameLine) {
-    const [lastPart, restPart] = nameLine.split(",", 2);
-    const rest = restPart.trim().split(/\s+/);
-    result.lastName = titleCase(lastPart.trim());
-    if (rest[0]) result.firstName = titleCase(rest[0]);
-    if (rest.length > 1) result.middleName = titleCase(rest.slice(1).join(" "));
-  }
+  const hasHeader = lines.some((line) => FULL_NAME_HEADER.test(line));
+  const name = findCommaName(lines) ?? (hasHeader ? null : parseLabelledName(lines));
+  if (name) Object.assign(result, name);
 
   return result;
+}
+
+/**
+ * Drops Tesseract lines below a confidence floor so background clutter and
+ * faint sticker text cannot leak into the autofilled fields.
+ */
+export function filterOcrTextByConfidence(tsv: string | null, minLineConfidence = 55): string {
+  if (!tsv) return "";
+
+  const lines = new Map<string, { words: string[]; total: number; count: number }>();
+  for (const row of tsv.split(/\r?\n/)) {
+    const cols = row.split("\t");
+    if (cols[0] !== "5") continue;
+
+    const word = cols[11]?.trim();
+    const confidence = Number(cols[10]);
+    if (!word || !Number.isFinite(confidence) || confidence < 30) continue;
+
+    const key = `${cols[1]}:${cols[2]}:${cols[3]}:${cols[4]}`;
+    const line = lines.get(key) ?? { words: [], total: 0, count: 0 };
+    line.words.push(word);
+    line.total += confidence;
+    line.count += 1;
+    lines.set(key, line);
+  }
+
+  return [...lines.values()]
+    .filter((line) => line.count > 0 && line.total / line.count >= minLineConfidence)
+    .map((line) => line.words.join(" "))
+    .join("\n");
 }
 
 /** Keeps the printed pass useful while hiding most of the ID number. */
