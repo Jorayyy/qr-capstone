@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { db } from "@/lib/db";
+import { PH_TZ } from "@/lib/ph-time";
 import { getRequestContext, requirePermission } from "@/lib/auth";
 import { recordAudit } from "@/lib/audit";
 import { Card, CardHeader, Badge, EmptyState, PageHeader, Avatar, buttonClass } from "@/components/ui";
@@ -21,7 +22,8 @@ import {
 
 function formatDate(d: Date | null) {
   if (!d) return "—";
-  return new Date(d).toLocaleString("en-US", {
+  return new Date(d).toLocaleString("en-PH", {
+    timeZone: PH_TZ,
     month: "short",
     day: "numeric",
     year: "numeric",
