@@ -71,7 +71,7 @@ export function DepartmentPhotoField({ initialPath }: { initialPath?: string | n
       <p className="mb-2 text-xs text-[var(--muted)]">Landscape photo, at least 1000 × 600 px.</p>
       <input type="hidden" name="photoPath" value={path} />
 
-      <div className="relative h-40 overflow-hidden rounded-xl border border-dashed border-[var(--border)] bg-slate-50">
+      <div className="relative h-40 overflow-hidden rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface-muted)]">
         {path ? (
           <img
             src={departmentPhotoSrc(path) ?? undefined}
@@ -85,7 +85,7 @@ export function DepartmentPhotoField({ initialPath }: { initialPath?: string | n
           </div>
         )}
         {busy ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--surface)]/70">
             <Loader2 className="h-5 w-5 animate-spin text-[var(--brand)]" />
           </div>
         ) : null}
@@ -106,7 +106,7 @@ export function DepartmentPhotoField({ initialPath }: { initialPath?: string | n
             type="button"
             onClick={() => setPath("")}
             disabled={busy}
-            className={buttonClass("ghost", "min-h-9 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50")}
+            className={buttonClass("ghost", "min-h-9 px-3 py-1.5 text-xs text-[var(--danger)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]")}
           >
             <X className="h-3.5 w-3.5" />
             Remove
@@ -142,7 +142,7 @@ export function DepartmentPhotoField({ initialPath }: { initialPath?: string | n
         </button>
       </div>
 
-      {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : null}
+      {error ? <p className="mt-1 text-xs text-[var(--danger)]">{error}</p> : null}
       <p className="mt-1 text-xs text-[var(--muted)]">
         Upload a file or paste a link. JPEG, PNG or WebP up to 5 MB; use at least 1000 × 600 px.
       </p>

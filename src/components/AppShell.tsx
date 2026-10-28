@@ -36,9 +36,9 @@ export function AppShell({ children, userName, userRole }: Props) {
   }, [open]);
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[var(--paper)] print:block print:h-auto print:overflow-visible lg:flex-row">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[var(--background)] print:block print:h-auto print:overflow-visible lg:flex-row">
       {/* Phone/tablet header */}
-      <header className="flex h-14 shrink-0 items-center gap-3 bg-[var(--brand)] px-4 text-white print:hidden lg:hidden">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[var(--accent)]/50 bg-[var(--brand-strong)] px-4 text-white print:hidden lg:hidden">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -52,9 +52,9 @@ export function AppShell({ children, userName, userRole }: Props) {
           alt=""
           className="h-8 w-8 shrink-0 rounded-md bg-white object-contain p-0.5"
         />
-        <span className="truncate font-display text-sm font-bold tracking-tight">Visitor Management</span>
+        <span className="truncate text-sm font-semibold tracking-tight">Visitor Management</span>
         {userRole ? (
-          <span className="ml-auto rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em]">
+          <span className="ml-auto rounded-md bg-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] ring-1 ring-inset ring-white/15">
             {userRole}
           </span>
         ) : null}
@@ -69,12 +69,12 @@ export function AppShell({ children, userName, userRole }: Props) {
       {open && (
         <div className="fixed inset-0 z-50 print:hidden lg:hidden">
           <div
-            className="absolute inset-0 bg-slate-900/50"
+            className="absolute inset-0 bg-[var(--foreground)]/40 backdrop-blur-sm"
             onClick={() => setOpen(false)}
             aria-hidden
           />
           <div
-            className="absolute inset-y-0 left-0 flex w-64 max-w-[85vw] shadow-2xl"
+            className="absolute inset-y-0 left-0 flex w-64 max-w-[85vw] shadow-[var(--shadow-pop)]"
             onClickCapture={(e) => {
               // Any navigation inside the drawer closes it.
               if ((e.target as HTMLElement).closest("a")) setOpen(false);
@@ -84,7 +84,7 @@ export function AppShell({ children, userName, userRole }: Props) {
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close navigation"
-              className="absolute -right-12 top-3 flex h-11 w-11 items-center justify-center rounded-lg bg-white/90 text-slate-600 shadow"
+              className="absolute -right-12 top-3 flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--surface)] text-[var(--muted)] shadow-xs ring-1 ring-black/5"
             >
               <X className="h-5 w-5" />
             </button>

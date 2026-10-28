@@ -33,14 +33,14 @@ export const metadata: Metadata = {
     "Visitor entry, campus map, departments and visitor guidelines for Eastern Visayas State University.",
 };
 
-const SECTION = "scroll-mt-28 mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:py-20";
+const SECTION = "scroll-mt-28 mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:py-24";
 
 const EYEBROW =
-  "text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--brand)]/55";
+  "text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--brand)]/65";
 
-const H2 = "mt-2 font-display text-3xl font-bold tracking-tight text-[var(--brand)] sm:text-4xl";
+const H2 = "mt-2 font-display text-3xl font-semibold tracking-tight text-[var(--brand)] sm:text-4xl";
 
-const BAND = "border-y border-[var(--brand)]/10 bg-white";
+const BAND = "border-y border-[var(--border)] bg-[var(--surface)]";
 
 
 export default async function Home() {
@@ -56,7 +56,7 @@ export default async function Home() {
 
   return (
     <PublicShell>
-      <section className="relative isolate overflow-hidden">
+      <section className="relative isolate overflow-hidden bg-[var(--brand-strong)]">
         <div
           aria-hidden
           className="absolute inset-0 bg-cover bg-center"
@@ -64,23 +64,23 @@ export default async function Home() {
         />
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-r from-[var(--brand-strong)]/95 via-[var(--brand)]/85 to-[var(--brand-strong)]/55"
+          className="absolute inset-0 bg-gradient-to-r from-[var(--brand-strong)]/95 via-[var(--brand)]/90 to-[var(--brand-strong)]/50"
         />
         <div
           aria-hidden
-          className="absolute inset-x-0 bottom-0 h-px bg-[var(--accent)]/60"
+          className="absolute inset-x-0 bottom-0 h-px bg-[var(--accent)]/70"
         />
 
-        <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:py-24">
+        <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:py-28">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-[var(--accent)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--accent)]">
               Welcome to
             </p>
-            <h1 className="mt-4 font-display text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 className="mt-4 font-display text-4xl font-semibold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
               {SITE.university}
             </h1>
             <div className="mt-5 h-px w-16 bg-[var(--accent)]" />
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/80 sm:text-lg">
               A premier state university in Eastern Visayas, committed to academic excellence,
               innovation, and community development.
             </p>
@@ -91,7 +91,7 @@ export default async function Home() {
               </Link>
               <Link
                 href="/checkin"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20"
               >
                 <QrCode className="h-4 w-4" />
                 I have a pass
@@ -99,17 +99,17 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-black/5 sm:p-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--brand)]">
-              <Users className="h-7 w-7 text-white" />
+          <div className="rounded-xl border border-white/20 bg-[var(--surface)] p-6 sm:p-8">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--brand)]">
+              <Users className="h-6 w-6 text-white" />
             </div>
-            <h2 className="mt-4 font-display text-2xl font-bold tracking-tight text-[var(--brand)]">
+            <h2 className="mt-4 font-display text-2xl font-semibold tracking-tight text-[var(--brand)]">
               Visitor Registration
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
               Pre-register online, scan your ID, and get your QR pass by email before you arrive.
             </p>
-            <Link href="/register" className={buttonClass("primary", "mt-5 w-full py-3")}>
+            <Link href="/register" className={buttonClass("primary", "mt-5 w-full")}>
               Start Registration
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -126,8 +126,8 @@ export default async function Home() {
               Find your destination easily. Explore the university buildings, departments, and
               offices — the Main Gate is where visitors enter and register.
             </p>
-            <div className="mt-6 flex gap-3 border-t border-[var(--brand)]/10 pt-5">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] font-display text-xs font-bold text-white">
+            <div className="mt-6 flex gap-3 border-t border-[var(--border)] pt-5">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[var(--brand)] text-[11px] font-semibold text-white">
                 1
               </span>
               <p className="text-sm leading-relaxed text-[var(--foreground)]">
@@ -145,7 +145,7 @@ export default async function Home() {
             <img
               src={SITE.campusMap}
               alt="EVSU campus map showing numbered buildings, roads and the main gate"
-              className="w-full rounded-2xl border border-[var(--brand)]/10 bg-white shadow-sm transition group-hover:shadow-md"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] transition-colors group-hover:border-[var(--brand)]/30"
             />
           </CampusMap>
         </div>
@@ -176,39 +176,39 @@ export default async function Home() {
                 <Link
                   key={d.id}
                   href={`/office/${d.id}`}
-                  className="group block overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="group block overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] transition-colors hover:border-[var(--brand)]/30"
                 >
-                  <div className="relative h-36 overflow-hidden bg-gradient-to-br from-[var(--brand)] to-[var(--brand-strong)]">
+                  <div className="relative h-36 overflow-hidden bg-[var(--brand-soft)]">
                     {d.photoPath ? (
                       <img
                         src={departmentPhotoSrc(d.photoPath) ?? undefined}
                         alt={`${d.name} building`}
                         loading="lazy"
                         decoding="async"
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                       />
                     ) : (
                       <Landmark
                         aria-hidden
-                        className="absolute inset-0 m-auto h-10 w-10 text-white/30"
+                        className="absolute inset-0 m-auto h-9 w-9 text-[var(--brand)]/30"
                       />
                     )}
-                    <Landmark
-                      aria-hidden
-                      className="absolute right-4 top-4 h-8 w-8 text-white/30"
-                    />
                   </div>
-                  <div className="relative px-5 pb-5">
-                    <span className="-mt-5 mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow ring-1 ring-[var(--border)]">
-                      <Landmark className="h-5 w-5 text-[var(--brand)]" />
-                    </span>
-                    <h3 className="text-sm font-bold leading-snug tracking-tight">{d.name}</h3>
-                    {d.building ? (
-                      <p className="mt-1 text-xs uppercase tracking-[0.08em] text-[var(--muted)]">
-                        {d.building}
-                      </p>
-                    ) : null}
-                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
+                  <div className="px-5 py-4">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-soft)] text-[var(--brand)]">
+                        <Landmark className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-semibold leading-snug tracking-tight">{d.name}</h3>
+                        {d.building ? (
+                          <p className="mt-1 text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">
+                            {d.building}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                    <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
                       View office
                       <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
                     </span>
@@ -243,15 +243,15 @@ export default async function Home() {
           <div className="relative">
             <div
               aria-hidden
-              className="absolute bottom-6 left-5 top-6 w-px bg-[var(--brand)]/15"
+              className="absolute bottom-6 left-5 top-6 w-px bg-[var(--border)]"
             />
             <ol className="space-y-9">
               {ENTRY_STEPS.map((step, i) => (
                 <li key={step.title} className="relative pl-14">
-                  <span className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--brand)]/25 bg-[var(--paper)] font-display text-sm font-bold text-[var(--brand)]">
+                  <span className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm font-semibold text-[var(--brand)]">
                     {i + 1}
                   </span>
-                  <h3 className="pt-1.5 text-base font-bold tracking-tight">{step.title}</h3>
+                  <h3 className="pt-1.5 text-base font-semibold tracking-tight">{step.title}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-[var(--muted)]">{step.body}</p>
                 </li>
               ))}
@@ -262,10 +262,10 @@ export default async function Home() {
 
       <div className={BAND}>
         <div className={SECTION}>
-          <div className="grid gap-8 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-[var(--brand)]/10">
+          <div className="grid gap-8 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-[var(--border)]">
             <section className="lg:pr-8">
               <p className={EYEBROW}>The University</p>
-              <h2 className="mt-2 font-display text-xl font-bold tracking-tight text-[var(--brand)]">
+              <h2 className="mt-2 font-display text-xl font-semibold tracking-tight text-[var(--brand)]">
                 About EVSU
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">{ABOUT}</p>
@@ -282,7 +282,7 @@ export default async function Home() {
 
             <section id="guidelines" className="scroll-mt-28 lg:px-8">
               <p className={EYEBROW}>Before you visit</p>
-              <h2 className="mt-2 font-display text-xl font-bold tracking-tight text-[var(--brand)]">
+              <h2 className="mt-2 font-display text-xl font-semibold tracking-tight text-[var(--brand)]">
                 Visitor Guidelines
               </h2>
               <ul className="mt-3 space-y-2.5">
@@ -297,7 +297,7 @@ export default async function Home() {
 
             <section className="lg:px-8">
               <p className={EYEBROW}>Shortcuts</p>
-              <h2 className="mt-2 font-display text-xl font-bold tracking-tight text-[var(--brand)]">
+              <h2 className="mt-2 font-display text-xl font-semibold tracking-tight text-[var(--brand)]">
                 Quick Links
               </h2>
               <ul className="mt-3 space-y-2.5">
@@ -318,7 +318,7 @@ export default async function Home() {
               </ul>
             </section>
 
-            <section className="relative isolate flex min-h-52 items-end overflow-hidden rounded-2xl p-6 lg:ml-8">
+            <section className="relative isolate flex min-h-52 items-end overflow-hidden rounded-xl p-6 lg:ml-8">
               <div
                 aria-hidden
                 className="absolute inset-0 bg-cover bg-center"
@@ -337,17 +337,17 @@ export default async function Home() {
       </div>
 
       <section className={SECTION}>
-        <div className="grid gap-10 md:grid-cols-2 md:gap-0 md:divide-x md:divide-[var(--brand)]/10">
+        <div className="grid gap-10 md:grid-cols-2 md:gap-0 md:divide-x md:divide-[var(--border)]">
           <section className="md:pr-10">
             <p className={EYEBROW}>Front Desk</p>
-            <h2 className="mt-2 font-display text-xl font-bold tracking-tight text-[var(--brand)]">
+            <h2 className="mt-2 font-display text-xl font-semibold tracking-tight text-[var(--brand)]">
               Office hours
             </h2>
             <ul className="mt-4 space-y-2.5">
               {SITE.officeHours.map((h) => (
                 <li
                   key={h.days}
-                  className="flex items-center justify-between gap-3 border-b border-[var(--brand)]/10 pb-2.5 text-sm last:border-0"
+                  className="flex items-center justify-between gap-3 border-b border-[var(--border)] pb-2.5 text-sm last:border-0"
                 >
                   <span className="text-[var(--muted)]">{h.days}</span>
                   <span className="font-semibold tabular-nums">{h.hours}</span>
@@ -357,7 +357,7 @@ export default async function Home() {
           </section>
 
           <section className="md:pl-10">
-            <h2 className="flex items-center gap-2 font-display text-xl font-bold tracking-tight text-[var(--brand)]">
+            <h2 className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight text-[var(--brand)]">
               <ShieldCheck className="h-5 w-5" />
               Privacy notice
             </h2>
@@ -372,9 +372,9 @@ export default async function Home() {
           </section>
         </div>
 
-        <div className="mt-12 flex flex-col items-center gap-4 border-t border-[var(--brand)]/10 pt-8 text-center sm:flex-row sm:justify-between sm:text-left">
+        <div className="mt-12 flex flex-col items-center gap-4 border-t border-[var(--border)] pt-8 text-center sm:flex-row sm:justify-between sm:text-left">
           <div>
-            <h2 className="font-display text-xl font-bold tracking-tight text-[var(--brand)]">
+            <h2 className="font-display text-xl font-semibold tracking-tight text-[var(--brand)]">
               Ready to check in?
             </h2>
             <p className="mt-1 text-sm text-[var(--muted)]">

@@ -142,19 +142,19 @@ export default function CampusMap({
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-3 sm:p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--foreground)]/55 p-3 backdrop-blur-sm sm:p-6"
           role="dialog"
           aria-modal="true"
           aria-label="EVSU campus map"
           onClick={close}
         >
           <div
-            className="flex h-full max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="flex h-full max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-[var(--surface)] shadow-pop"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
               <div>
-                <p className="text-sm font-bold">Campus map</p>
+                <p className="text-sm font-semibold">Campus map</p>
                 <p className="text-xs text-[var(--muted)]">
                   Scroll or pinch to zoom, drag to move.
                 </p>
@@ -163,7 +163,7 @@ export default function CampusMap({
                 <button
                   type="button"
                   onClick={() => setScale((s) => clamp(s * 0.8, MIN_SCALE, MAX_SCALE))}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)] disabled:opacity-40"
                   aria-label="Zoom out"
                   disabled={scale <= MIN_SCALE}
                 >
@@ -172,7 +172,7 @@ export default function CampusMap({
                 <button
                   type="button"
                   onClick={() => setScale((s) => clamp(s * 1.25, MIN_SCALE, MAX_SCALE))}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)] disabled:opacity-40"
                   aria-label="Zoom in"
                   disabled={scale >= MAX_SCALE}
                 >
@@ -181,7 +181,7 @@ export default function CampusMap({
                 <button
                   type="button"
                   onClick={reset}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] text-slate-600 hover:bg-slate-50"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
                   aria-label="Reset view"
                 >
                   <RotateCcw className="h-4 w-4" />
@@ -189,7 +189,7 @@ export default function CampusMap({
                 <button
                   type="button"
                   onClick={close}
-                  className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--surface-muted)] text-[var(--foreground)] transition-colors hover:bg-[var(--border)]"
                   aria-label="Close map"
                 >
                   <X className="h-4 w-4" />
@@ -199,7 +199,7 @@ export default function CampusMap({
 
             <div
               ref={viewportRef}
-              className="relative flex-1 touch-none select-none overflow-hidden bg-slate-100"
+              className="relative flex-1 touch-none select-none overflow-hidden bg-[var(--surface-muted)]"
               style={{ cursor: dragging ? "grabbing" : scale > 1 ? "grab" : "default" }}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}

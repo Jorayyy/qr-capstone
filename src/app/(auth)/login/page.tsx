@@ -18,8 +18,8 @@ export default async function LoginPage({
 
   return (
     <>
-      <div className="rounded-2xl border border-[var(--border)] bg-white p-6 shadow-xl">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--brand)]">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xs sm:p-7">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-[var(--brand)]">
           Staff sign in
         </h1>
         <p className="mb-5 mt-1 text-sm text-[var(--muted)]">
@@ -31,7 +31,7 @@ export default async function LoginPage({
       <div className="mt-6 text-center">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-slate-500 transition hover:bg-white hover:text-[var(--brand)]"
+          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--brand)]"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to welcome page

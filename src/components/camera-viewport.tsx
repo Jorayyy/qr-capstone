@@ -258,7 +258,7 @@ export function CameraViewport({ onScan, active, className, onStateChange }: Pro
   return (
     <div
       className={cx(
-        "relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-black",
+        "relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-black",
         className
       )}
     >
@@ -293,7 +293,7 @@ export function CameraViewport({ onScan, active, className, onStateChange }: Pro
             <button
               type="button"
               onClick={() => void start()}
-              className="mt-1 inline-flex min-h-11 items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-900"
+              className="mt-1 inline-flex min-h-11 items-center gap-2 rounded-lg bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--foreground)]"
             >
               <RefreshCw className="h-4 w-4" />
               {current === "error" ? "Try again" : "Tap to start camera"}

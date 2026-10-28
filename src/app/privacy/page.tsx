@@ -15,10 +15,10 @@ export default function PrivacyPage() {
   return (
     <PublicShell>
       <div className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted)]">
+        <p className="eyebrow">
           Data Privacy Act of 2012 · RA 10173
         </p>
-        <h1 className="mt-2 flex items-center gap-2 font-display text-3xl font-bold tracking-tight text-[var(--brand)]">
+        <h1 className="mt-2 flex items-center gap-2 font-display text-3xl font-semibold tracking-tight text-[var(--brand)]">
           <ShieldCheck className="h-7 w-7" />
           Privacy Notice
         </h1>
@@ -36,13 +36,13 @@ export default function PrivacyPage() {
         <div className="mt-8 space-y-6">
           {PRIVACY_SECTIONS.map((section) => (
             <section key={section.title}>
-              <h2 className="font-display text-lg font-bold text-[var(--brand)]">{section.title}</h2>
+              <h2 className="font-display text-lg font-semibold text-[var(--brand)]">{section.title}</h2>
               <p className="mt-1 text-sm leading-relaxed text-[var(--muted)]">{section.body}</p>
             </section>
           ))}
         </div>
 
-        <div className="mt-10 rounded-xl border border-[var(--border)] bg-[var(--brand-soft)]/40 p-5 text-sm">
+        <div className="mt-10 rounded-lg border border-[var(--border)] bg-[var(--brand-soft)]/40 p-5 text-sm">
           <h2 className="font-semibold text-[var(--brand)]">Contact the Data Protection Officer</h2>
           <p className="mt-1 text-[var(--muted)]">
             {SITE.university} · {SITE.address}

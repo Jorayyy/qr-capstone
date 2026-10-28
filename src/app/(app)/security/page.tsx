@@ -61,7 +61,7 @@ export default async function SecurityPage({
             className={
               t.key === tab
                 ? "border-b-2 border-[var(--brand)] px-4 py-2 text-sm font-semibold text-[var(--brand)]"
-                : "px-4 py-2 text-sm font-medium text-[var(--muted)] transition hover:text-slate-700"
+                : "px-4 py-2 text-sm font-medium text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
             }
           >
             {t.label}
@@ -102,9 +102,9 @@ async function UsersSection({ actorId }: { actorId: string }) {
       <Card>
         <CardHeader title="Accounts" subtitle={`${users.length} total`} />
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-sm">
+          <table className="data-table min-w-[760px]">
             <thead>
-              <tr className="border-b border-[var(--border)] text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
+              <tr>
                 <th className="px-5 py-3">User</th>
                 <th className="px-5 py-3">Role</th>
                 <th className="px-5 py-3">Status</th>
@@ -112,12 +112,12 @@ async function UsersSection({ actorId }: { actorId: string }) {
                 <th className="px-5 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--border)]">
+            <tbody>
               {users.map((u) => {
                 const isSelf = u.id === actorId;
                 const locked = Boolean(u.lockedUntil && u.lockedUntil > now);
                 return (
-                  <tr key={u.id} className="hover:bg-slate-50">
+                  <tr key={u.id}>
                     <td className="px-5 py-3">
                       <p className="font-medium">{u.name}{isSelf ? " (you)" : ""}</p>
                       <p className="text-xs text-[var(--muted)]">{u.email}</p>
@@ -236,9 +236,9 @@ async function SessionsSection({ actorId }: { actorId: string }) {
         <EmptyState title="No active sessions" />
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[680px] text-left text-sm">
+          <table className="data-table min-w-[680px]">
             <thead>
-              <tr className="border-b border-[var(--border)] text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
+              <tr>
                 <th className="px-5 py-3">User</th>
                 <th className="px-5 py-3">IP</th>
                 <th className="px-5 py-3">Device</th>
@@ -247,9 +247,9 @@ async function SessionsSection({ actorId }: { actorId: string }) {
                 <th className="px-5 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--border)]">
+            <tbody>
               {sessions.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50">
+                <tr key={s.id}>
                   <td className="px-5 py-3">
                     <p className="font-medium">{s.user.name}</p>
                     <p className="text-xs text-[var(--muted)]">{s.user.email}</p>
@@ -337,7 +337,7 @@ async function AuditSection({
             <select
               name="action"
               defaultValue={filter ?? ""}
-              className="rounded-lg border border-[var(--border)] bg-white px-2.5 py-1.5 text-xs focus:border-[var(--brand)] focus:outline-none"
+              className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-xs focus:border-[var(--brand)] focus:outline-none"
             >
               <option value="">All actions</option>
               {knownActions.map((a) => (
@@ -348,7 +348,7 @@ async function AuditSection({
             </select>
             <button
               type="submit"
-              className="rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+              className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
             >
               Filter
             </button>
@@ -359,9 +359,9 @@ async function AuditSection({
         <EmptyState title="No audit entries" hint="Security-relevant events will appear here." />
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[880px] text-left text-sm">
+          <table className="data-table min-w-[880px]">
             <thead>
-              <tr className="border-b border-[var(--border)] text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
+              <tr>
                 <th className="px-5 py-3">Time</th>
                 <th className="px-5 py-3">Action</th>
                 <th className="px-5 py-3">Result</th>
@@ -371,9 +371,9 @@ async function AuditSection({
                 <th className="px-5 py-3">Details</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--border)]">
+            <tbody>
               {entries.map((e) => (
-                <tr key={e.id} className="hover:bg-slate-50">
+                <tr key={e.id}>
                   <td className="whitespace-nowrap px-5 py-3 text-xs">{formatDateTime(e.createdAt)}</td>
                   <td className="whitespace-nowrap px-5 py-3 font-mono text-xs">{e.action}</td>
                   <td className="px-5 py-3">

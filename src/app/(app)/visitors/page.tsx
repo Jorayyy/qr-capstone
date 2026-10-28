@@ -5,7 +5,7 @@ import { recordAudit } from "@/lib/audit";
 import { can } from "@/lib/rbac";
 import { LIMITS, WINDOWS, rateLimit } from "@/lib/rate-limit";
 import { searchQuerySchema, uuidSchema } from "@/lib/validation";
-import { PageHeader, Button, Card, Badge, EmptyState, Input, Select, Avatar } from "@/components/ui";
+import { PageHeader, Button, Card, Badge, EmptyState, Input, Select } from "@/components/ui";
 import { Plus, Search } from "lucide-react";
 import { DeleteVisitorButton } from "./actions-client";
 
@@ -135,9 +135,9 @@ export default async function VisitorsPage({
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
+            <table className="data-table min-w-[900px]">
               <thead>
-                <tr className="border-b border-[var(--border)] bg-slate-50/60 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                <tr>
                   <th className="px-5 py-3 font-semibold">Name</th>
                   <th className="px-5 py-3 font-semibold">Email</th>
                   <th className="px-5 py-3 font-semibold">Phone</th>
@@ -148,14 +148,14 @@ export default async function VisitorsPage({
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--border)]">
+              <tbody>
                 {visitors.map((v) => {
                   const visits = departmentId
                     ? v.visits.filter((visit) => visit.departmentId === departmentId)
                     : v.visits;
                   const offices = [...new Set(v.visits.map((visit) => visit.department?.name).filter(Boolean))] as string[];
                   return (
-                    <tr key={v.id} className="transition-colors hover:bg-[var(--brand-soft)]/30">
+                    <tr key={v.id}>
                       <td className="px-5 py-3 font-medium">
                         {v.firstName} {v.lastName}
                       </td>

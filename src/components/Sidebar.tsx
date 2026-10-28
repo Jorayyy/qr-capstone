@@ -47,13 +47,13 @@ function NavLink({
       href={item.href}
       aria-current={active ? "page" : undefined}
       className={cx(
-        "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition",
+        "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
         active
-          ? "bg-[var(--brand-soft)] text-[var(--brand)]"
-          : "text-slate-600 hover:bg-slate-50 hover:text-[var(--brand)]"
+          ? "bg-[var(--brand-soft)] font-semibold text-[var(--brand)]"
+          : "font-medium text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
       )}
     >
-      <Icon className={cx("h-4 w-4", active ? "text-[var(--brand)]" : "text-slate-400")} />
+      <Icon className={cx("h-4 w-4", active ? "text-[var(--brand)]" : "text-[var(--muted)]")} />
       {children ?? item.label}
     </Link>
   );
@@ -70,66 +70,71 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
   const mayRegister = userRole ? can(userRole, "visitor:write") : false;
 
   return (
-    <aside className="no-print flex h-full w-60 flex-col border-r border-[var(--border)] bg-white">
-      <div className="bg-[var(--brand)] px-4 py-5">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white p-0.5">
+    <aside className="no-print flex h-full w-64 flex-col border-r border-[var(--border)] bg-[var(--surface)]">
+      <div className="border-b border-[var(--border)] px-5 py-5">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[var(--border)] bg-white p-1 shadow-xs">
             <img src="/logo.png" alt="EVSU Logo" className="h-full w-full object-contain" />
           </span>
-          <div className="min-w-0 pt-0.5">
-            <p className="font-display text-[15px] font-bold leading-tight tracking-tight text-white">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold leading-tight tracking-tight text-[var(--foreground)]">
               Visitor Management
             </p>
-            <p className="mt-1.5 text-[9px] font-semibold uppercase leading-[1.6] tracking-[0.14em] text-[var(--accent)]">
-              Eastern Visayas
-              <br />
-              State University
+            <p className="mt-1 text-[10px] font-medium uppercase leading-[1.5] tracking-[0.14em] text-[var(--muted)]">
+              Eastern Visayas State University
             </p>
           </div>
         </div>
+        <div className="mt-4 h-0.5 w-10 bg-[var(--accent)]" />
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Workspace
-        </p>
-        {NAV_ITEMS.map((item) => {
-          const active =
-            pathname.startsWith(item.href) &&
-            !(item.exclude ?? []).some((prefix) => pathname.startsWith(prefix));
-          return <NavLink key={item.href} item={item} active={active} />;
-        })}
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
+        <div>
+          <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]/80">
+            Workspace
+          </p>
+          <div className="space-y-1">
+            {NAV_ITEMS.map((item) => {
+              const active =
+                pathname.startsWith(item.href) &&
+                !(item.exclude ?? []).some((prefix) => pathname.startsWith(prefix));
+              return <NavLink key={item.href} item={item} active={active} />;
+            })}
 
-        {mayRegister && (
-          <NavLink item={{ href: "/visitors/register", label: "Register Walk-in", icon: UserPlus }} active={pathname.startsWith("/visitors/register")} />
-        )}
+            {mayRegister && (
+              <NavLink item={{ href: "/visitors/register", label: "Register Walk-in", icon: UserPlus }} active={pathname.startsWith("/visitors/register")} />
+            )}
+          </div>
+        </div>
 
         {isAdmin && (
-          <>
-            <p className="px-3 pb-1 pt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
+          <div>
+            <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]/80">
               Administration
             </p>
-            {ADMIN_ITEMS.map((item) => (
-              <NavLink key={item.href} item={item} active={pathname.startsWith(item.href)} />
-            ))}
-          </>
+            <div className="space-y-1">
+              {ADMIN_ITEMS.map((item) => (
+                <NavLink key={item.href} item={item} active={pathname.startsWith(item.href)} />
+              ))}
+            </div>
+          </div>
         )}
       </nav>
 
       <div className="border-t border-[var(--border)] p-3">
         {userName && (
-          <div className="mb-2 flex items-center gap-2.5 rounded-lg bg-slate-50 px-2.5 py-2">
+          <div className="mb-2 flex items-center gap-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] px-2.5 py-2">
             <Avatar name={userName} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold leading-tight">{userName}</p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)]">
+              <p className="truncate text-sm font-medium leading-tight">{userName}</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[var(--muted)]">
                 {userRole?.toLowerCase()}
               </p>
             </div>
           </div>
         )}
         <form action={logoutAction}>
-          <button type="submit" className={buttonClass("ghost", "w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700")}>
+          <button type="submit" className={buttonClass("ghost", "w-full justify-start text-[var(--danger)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]")}>
             <LogOut className="h-4 w-4" />
             Logout
           </button>

@@ -12,11 +12,11 @@ export default async function AccountLayout({ children }: { children: React.Reac
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-6 text-white">
           <div className="flex items-center gap-2.5">
             <img src="/logo.png" alt="" className="h-8 w-8 rounded-md bg-white object-contain p-0.5" />
-            <span className="font-display text-sm font-bold tracking-tight">Account Settings</span>
+            <span className="font-display text-sm font-semibold tracking-tight">Account Settings</span>
           </div>
           <Link
             href="/dashboard"
-            className="text-xs font-bold uppercase tracking-[0.1em] text-[var(--accent)] hover:underline"
+            className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--accent)] hover:underline"
           >
             Back to app
           </Link>

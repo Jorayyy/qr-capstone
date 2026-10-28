@@ -17,11 +17,11 @@ function TrendChart({ points }: { points: TrendPoint[] }) {
                 className={
                   p.count
                     ? "relative w-full rounded-t-sm bg-[var(--brand)]/80 transition-colors group-hover:bg-[var(--brand)]"
-                    : "w-full rounded-t-sm bg-slate-200"
+                    : "w-full rounded-t-sm bg-[var(--border)]"
                 }
               >
                 {p.count > 0 && (
-                  <span className="pointer-events-none absolute -top-6 left-1/2 hidden -translate-x-1/2 rounded bg-slate-900 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white group-hover:block">
+                  <span className="pointer-events-none absolute -top-6 left-1/2 hidden -translate-x-1/2 rounded-md bg-[var(--foreground)] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white group-hover:block">
                     {p.count}
                   </span>
                 )}
@@ -59,7 +59,7 @@ function BreakdownColumn({ title, rows }: { title: string; rows: BreakdownRow[] 
                   {r.count} · {r.percent}%
                 </span>
               </div>
-              <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-1 h-1 overflow-hidden rounded-full bg-[var(--surface-muted)]">
                 <div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${r.percent}%` }} />
               </div>
             </div>

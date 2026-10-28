@@ -39,12 +39,12 @@ function QRCodeDisplay({ qrString, visitorName }: { qrString: string; visitorNam
       QRCode.toCanvas(canvasRef.current, qrString, {
         width: 256,
         margin: 2,
-        color: { dark: "#1e293b", light: "#ffffff" },
+        color: { dark: "#6f1010", light: "#ffffff" },
       });
       QRCode.toDataURL(qrString, {
         width: 256,
         margin: 2,
-        color: { dark: "#1e293b", light: "#ffffff" },
+        color: { dark: "#6f1010", light: "#ffffff" },
       }).then(setDataUrl);
     }
   }, [qrString]);
@@ -90,7 +90,7 @@ function QRCodeDisplay({ qrString, visitorName }: { qrString: string; visitorNam
       <canvas ref={canvasRef} className="hidden" />
       {dataUrl && (
         <>
-          <div className="rounded-xl border-2 border-[var(--brand)] bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-xs">
             <img src={dataUrl} alt={`QR Code for ${visitorName}`} width={256} height={256} />
           </div>
           <p className="mt-3 font-mono text-xs text-[var(--muted)] break-all max-w-[280px] text-center">{qrString}</p>
@@ -128,11 +128,11 @@ export default function RegisterVisitorPage() {
       <div className="mx-auto max-w-lg">
         <Card className="p-8 text-center">
           <div className="mb-4 flex justify-center">
-            <div className="rounded-full bg-emerald-100 p-3">
-              <CheckCircle className="h-8 w-8 text-emerald-600" />
+            <div className="rounded-xl bg-[var(--success-soft)] p-3">
+              <CheckCircle className="h-8 w-8 text-[var(--success)]" />
             </div>
           </div>
-          <h2 className="text-lg font-bold">Visitor Registered!</h2>
+          <h2 className="text-lg font-semibold">Visitor Registered!</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
             Show or send this QR code to the visitor. They can use it at any check-in station.
           </p>
@@ -140,8 +140,8 @@ export default function RegisterVisitorPage() {
             <p
               className={
                 state.data.emailSent
-                  ? "mt-2 text-sm font-medium text-emerald-600"
-                  : "mt-2 text-sm font-medium text-amber-600"
+                  ? "mt-2 text-sm font-medium text-[var(--success)]"
+                  : "mt-2 text-sm font-medium text-[var(--warning)]"
               }
             >
               {state.data.emailSent
@@ -186,7 +186,7 @@ export default function RegisterVisitorPage() {
 
         <form action={formAction} className="space-y-6 p-5">
           {state.message && !state.success && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{state.message}</div>
+            <div className="rounded-lg border border-[var(--danger)]/20 bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]">{state.message}</div>
           )}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -18,11 +18,11 @@ export default function NewDepartmentPage() {
       <div className="mx-auto max-w-lg">
         <Card className="p-8 text-center">
           <div className="mb-4 flex justify-center">
-            <div className="rounded-full bg-emerald-100 p-3">
-              <CheckCircle className="h-8 w-8 text-emerald-600" />
+            <div className="rounded-xl bg-[var(--success-soft)] p-3">
+              <CheckCircle className="h-8 w-8 text-[var(--success)]" />
             </div>
           </div>
-          <h2 className="text-lg font-bold">Department Created!</h2>
+          <h2 className="text-lg font-semibold">Department Created!</h2>
           <div className="mt-6 flex gap-3 justify-center">
             <Link href="/departments">
               <Button variant="secondary">
@@ -52,7 +52,7 @@ export default function NewDepartmentPage() {
 
         <form action={formAction} className="space-y-5 p-5">
           {state.message && !state.success && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{state.message}</div>
+            <div className="rounded-lg border border-[var(--danger)]/20 bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]">{state.message}</div>
           )}
 
           <div>

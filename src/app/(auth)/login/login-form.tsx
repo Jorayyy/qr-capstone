@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { loginAction, verifyMfaAction } from "@/lib/actions/auth";
+import { buttonClass } from "@/components/ui";
 
 export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
   const [loginState, loginFormAction, loginPending] = useActionState(loginAction, null);
@@ -15,13 +16,13 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       <form action={mfaFormAction} className="space-y-4">
         {callbackUrl ? <input type="hidden" name="callbackUrl" value={callbackUrl} /> : null}
         {mfaState?.error ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+          <div className="rounded-lg border border-[var(--danger)]/20 bg-[var(--danger-soft)] px-3 py-2 text-xs font-medium text-[var(--danger)]">
             {mfaState.error}
           </div>
         ) : null}
 
         <div>
-          <label htmlFor="code" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <label htmlFor="code" className="label">
             {useRecoveryCode ? "Recovery Code" : "Authentication Code"}
           </label>
           <input
@@ -40,7 +41,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
         <button
           type="submit"
           disabled={mfaPending}
-          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:pointer-events-none disabled:opacity-50"
+          className={buttonClass("primary", "w-full")}
         >
           {mfaPending ? "Verifying…" : "Verify"}
         </button>
@@ -49,14 +50,14 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
           <button
             type="button"
             onClick={() => setUseRecoveryCode((v) => !v)}
-            className="text-xs font-medium text-slate-500 underline-offset-2 hover:text-[var(--brand)] hover:underline"
+            className="text-xs font-medium text-[var(--muted)] underline-offset-2 hover:text-[var(--brand)] hover:underline"
           >
             {useRecoveryCode ? "Use authenticator app instead" : "Use a recovery code instead"}
           </button>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="text-xs font-medium text-slate-500 underline-offset-2 hover:text-[var(--brand)] hover:underline"
+            className="text-xs font-medium text-[var(--muted)] underline-offset-2 hover:text-[var(--brand)] hover:underline"
           >
             Start over
           </button>
@@ -69,13 +70,13 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
     <form action={loginFormAction} className="space-y-4">
       {callbackUrl ? <input type="hidden" name="callbackUrl" value={callbackUrl} /> : null}
       {loginState?.error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+        <div className="rounded-lg border border-[var(--danger)]/20 bg-[var(--danger-soft)] px-3 py-2 text-xs font-medium text-[var(--danger)]">
           {loginState.error}
         </div>
       ) : null}
 
       <div>
-        <label htmlFor="email" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <label htmlFor="email" className="label">
           Email
         </label>
         <input
@@ -90,7 +91,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       </div>
 
       <div>
-        <label htmlFor="password" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <label htmlFor="password" className="label">
           Password
         </label>
         <input
@@ -107,7 +108,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       <button
         type="submit"
         disabled={loginPending}
-        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:pointer-events-none disabled:opacity-50"
+        className={buttonClass("primary", "w-full")}
       >
         {loginPending ? (
           <>

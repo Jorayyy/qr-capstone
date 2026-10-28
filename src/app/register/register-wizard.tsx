@@ -305,18 +305,18 @@ export default function RegisterWizard({ departments }: { departments: Departmen
   if (result) {
     return (
       <div className="mx-auto max-w-2xl">
-        <div className="rounded-2xl border border-[var(--border)] bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-            <CheckCircle2 className="h-9 w-9 text-emerald-600" />
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-8 text-center shadow-xs">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-xl bg-[var(--success-soft)]">
+            <CheckCircle2 className="h-9 w-9 text-[var(--success)]" />
           </div>
-          <h1 className="mt-4 font-display text-2xl font-bold text-[var(--brand)]">Pre-Registration Submitted!</h1>
+          <h1 className="mt-4 font-display text-2xl font-semibold text-[var(--brand)]">Pre-Registration Submitted!</h1>
           <p className="mt-2 text-sm text-[var(--muted)]">
             Your information has been recorded. Your QR pass has been sent to your email.
           </p>
 
-          <div className="mt-6 rounded-xl border border-[var(--accent)] bg-amber-50 p-4">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber-800/70">Reference number</p>
-            <p className="mt-1 font-mono text-xl font-bold text-[var(--brand)]">{result.referenceCode}</p>
+          <div className="mt-6 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent-soft)] p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--accent-strong)]">Reference number</p>
+            <p className="mt-1 font-mono text-xl font-semibold text-[var(--brand)]">{result.referenceCode}</p>
           </div>
 
           <dl className="mt-6 grid gap-3 text-left text-sm sm:grid-cols-2">
@@ -330,7 +330,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
             </div>
             <div className="sm:col-span-2">
               <dt className="text-xs text-[var(--muted)]">Pass delivery</dt>
-              <dd className={`font-semibold ${result.emailSent ? "text-emerald-700" : "text-amber-700"}`}>
+              <dd className={`font-semibold ${result.emailSent ? "text-[var(--success)]" : "text-[var(--warning)]"}`}>
                 {result.emailSent
                   ? `Emailed to ${result.emailTo}. Check your inbox for the QR pass.`
                   : `We could not email ${result.emailTo}. Open or download the pass below.`}
@@ -349,7 +349,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
             <button
               type="button"
               onClick={reset}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-white px-5 py-2.5 text-sm font-semibold hover:bg-slate-50"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-[var(--surface-muted)]"
             >
               Register another visitor
             </button>
@@ -367,8 +367,8 @@ export default function RegisterWizard({ departments }: { departments: Departmen
   return (
     <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
       <aside className="lg:sticky lg:top-28 lg:self-start">
-        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--brand)]/55">Visitor registration</p>
-        <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-[var(--brand)] sm:text-4xl">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--brand)]/55">Visitor registration</p>
+        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-[var(--brand)] sm:text-4xl">
           Pre-register your visit
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
@@ -392,10 +392,10 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                 >
                   <span
                     className={cx(
-                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
                       active && "bg-white/20 text-white",
-                      done && "bg-emerald-100 text-emerald-700",
-                      !active && !done && "bg-slate-100 text-slate-500"
+                      done && "bg-[var(--success-soft)] text-[var(--success)]",
+                      !active && !done && "bg-[var(--surface-muted)] text-[var(--muted)]"
                     )}
                   >
                     {done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
@@ -407,7 +407,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
           })}
         </ol>
 
-        <div className="mt-7 rounded-xl border border-[var(--border)] bg-white p-4 text-xs leading-relaxed text-[var(--muted)]">
+        <div className="mt-7 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-xs leading-relaxed text-[var(--muted)]">
           <p className="flex items-center gap-2 font-semibold text-[var(--brand)]">
             <ShieldCheck className="h-4 w-4" />
             Bring the same ID on the day
@@ -419,17 +419,17 @@ export default function RegisterWizard({ departments }: { departments: Departmen
         </div>
       </aside>
 
-      <section className="rounded-2xl border border-[var(--border)] bg-white shadow-sm">
+      <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs">
         <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-4">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--brand-soft)] text-[var(--brand)]">
               <StepIcon className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
                 Step {step + 1} of {STEPS.length}
               </p>
-              <h2 className="font-display text-lg font-bold tracking-tight text-[var(--brand)]">{STEPS[step].label}</h2>
+              <h2 className="font-display text-lg font-semibold tracking-tight text-[var(--brand)]">{STEPS[step].label}</h2>
             </div>
           </div>
           <span className="hidden text-xs text-[var(--muted)] sm:block">
@@ -439,7 +439,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
 
         <div className="space-y-5 p-5">
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+            <div className="rounded-lg border border-[var(--danger)]/20 bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">{error}</div>
           )}
 
           {step === 0 && (
@@ -457,7 +457,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                 <span className="flex items-center gap-3">
                   <ClipboardCheck className="h-6 w-6 text-[var(--brand)]" />
                   <span>
-                    <span className="block text-sm font-bold">Pre-Register (Optional)</span>
+                    <span className="block text-sm font-semibold">Pre-Register (Optional)</span>
                     <span className="block text-xs text-[var(--muted)]">
                       Register in advance, get a QR pass, and use it within your chosen date range.
                     </span>
@@ -478,7 +478,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                 <span className="flex items-center gap-3">
                   <User className="h-6 w-6 text-[var(--brand)]" />
                   <span>
-                    <span className="block text-sm font-bold">Walk-In Registration</span>
+                    <span className="block text-sm font-semibold">Walk-In Registration</span>
                     <span className="block text-xs text-[var(--muted)]">
                       Register when you arrive at the campus entrance — the guard will assist you.
                     </span>
@@ -487,7 +487,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
               </button>
 
               {method === "WALK_IN" && (
-                <div className="rounded-lg border border-[var(--accent)] bg-amber-50 p-4 text-sm text-amber-900">
+                <div className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent-soft)] p-4 text-sm text-[var(--accent-strong)]">
                   <p className="font-semibold">Walk-in visitors are registered at the Main Gate.</p>
                   <p className="mt-1 text-xs">
                     Bring a valid ID. Pre-registration is optional for everyone, but it saves time at
@@ -497,7 +497,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                     <Button type="button" variant="secondary" onClick={() => setMethod("PRE_REGISTERED")}>
                       Pre-register instead
                     </Button>
-                    <CampusMap className="inline-flex min-h-11 items-center rounded-lg border border-amber-300 bg-white px-4 py-2.5 text-sm font-semibold text-amber-900">
+                    <CampusMap className="inline-flex min-h-11 items-center rounded-lg border border-[var(--accent)]/50 bg-[var(--surface)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-strong)] transition-colors hover:bg-[var(--accent-soft)]">
                       View campus map
                     </CampusMap>
                   </div>
@@ -509,7 +509,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
           {step === 1 && (
             <div className="space-y-5">
               <div>
-                <h3 className="text-sm font-bold">Upload or scan your ID *</h3>
+                <h3 className="text-sm font-semibold">Upload or scan your ID *</h3>
                 <p className="mt-1 text-xs text-[var(--muted)]">
                   Front side required. We read it automatically and fill in your details. You can
                   correct everything on the next step.
@@ -517,7 +517,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
               </div>
               <IdScan onPath={setIdPhotoPath} onExtract={applyOcr} />
               <div className="border-t border-[var(--border)] pt-4">
-                <p className="text-sm font-bold">Your photo for the pass (optional)</p>
+                <p className="text-sm font-semibold">Your photo for the pass (optional)</p>
                 <p className="mt-1 text-xs text-[var(--muted)]">
                   A clear photo helps the guard match you to the pass. You can skip this.
                 </p>
@@ -597,7 +597,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
           {step === 3 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-bold">Choose one or more offices</h3>
+                <h3 className="text-sm font-semibold">Choose one or more offices</h3>
                 <p className="mt-1 text-xs text-[var(--muted)]">
                   Provide the person to visit and purpose for each office.
                 </p>
@@ -628,13 +628,13 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                         aria-pressed={checked}
                         className={cx(
                           "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition",
-                          checked ? "bg-[var(--brand-soft)] text-[var(--brand)]" : "hover:bg-slate-50"
+                          checked ? "bg-[var(--brand-soft)] text-[var(--brand)]" : "hover:bg-[var(--surface-muted)]"
                         )}
                       >
                         <span
                           className={cx(
                             "flex h-4 w-4 items-center justify-center rounded border",
-                            checked ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-slate-300"
+                            checked ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-[var(--border-strong)]"
                           )}
                         >
                           {checked && <Check className="h-3 w-3" />}
@@ -658,11 +658,11 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                     return (
                       <div key={office.departmentId} className="rounded-xl border border-[var(--border)] p-4">
                         <div className="flex items-start justify-between gap-3">
-                          <p className="text-sm font-bold">{department?.name ?? "Office"}</p>
+                          <p className="text-sm font-semibold">{department?.name ?? "Office"}</p>
                           <button
                             type="button"
                             onClick={() => toggleDepartment({ id: office.departmentId, name: "", building: null })}
-                            className="text-xs font-semibold text-red-600 hover:underline"
+                            className="text-xs font-semibold text-[var(--danger)] hover:underline"
                           >
                             Remove
                           </button>
@@ -724,7 +724,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
           {step === 4 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-bold">Will you bring a vehicle?</h3>
+                <h3 className="text-sm font-semibold">Will you bring a vehicle?</h3>
                 <p className="mt-1 text-xs text-[var(--muted)]">
                   Vehicle details are optional and help the guard at the gate.
                 </p>
@@ -847,13 +847,13 @@ export default function RegisterWizard({ departments }: { departments: Departmen
           {step === 6 && (
             <div className="space-y-5">
               <div>
-                <h3 className="text-sm font-bold">Review your information</h3>
+                <h3 className="text-sm font-semibold">Review your information</h3>
                 <p className="mt-1 text-xs text-[var(--muted)]">Check every detail before submitting.</p>
               </div>
 
               <div className="rounded-xl border border-[var(--border)] p-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-[0.1em] text-[var(--muted)]">Personal information</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--muted)]">Personal information</p>
                   <button type="button" onClick={() => setStep(2)} className="text-xs font-semibold text-[var(--brand)] hover:underline">Edit</button>
                 </div>
                 <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
@@ -889,7 +889,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
 
               <div className="rounded-xl border border-[var(--border)] p-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-[0.1em] text-[var(--muted)]">Offices to visit</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--muted)]">Offices to visit</p>
                   <button type="button" onClick={() => setStep(3)} className="text-xs font-semibold text-[var(--brand)] hover:underline">Edit</button>
                 </div>
                 <ul className="mt-2 space-y-2 text-sm">
@@ -910,7 +910,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
 
               {hasVehicle && (
                 <div className="rounded-xl border border-[var(--border)] p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.1em] text-[var(--muted)]">Vehicle</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--muted)]">Vehicle</p>
                   <p className="mt-1 text-sm font-semibold">
                     {[form.vehicleColor, form.vehicleModel, form.vehicleType].filter(Boolean).join(" · ") || "Vehicle"}
                     {form.vehiclePlateNumber ? ` · ${form.vehiclePlateNumber}` : ""}
@@ -920,7 +920,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
 
               <div className="rounded-xl border border-[var(--border)] p-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-[0.1em] text-[var(--muted)]">Visit schedule</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--muted)]">Visit schedule</p>
                   <button type="button" onClick={() => setStep(5)} className="text-xs font-semibold text-[var(--brand)] hover:underline">Edit</button>
                 </div>
                 <p className="mt-1 text-sm font-semibold">
@@ -933,7 +933,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
               </div>
 
               <div className="rounded-xl border border-[var(--border)] p-4">
-                <p className="flex items-center gap-2 text-sm font-bold">
+                <p className="flex items-center gap-2 text-sm font-semibold">
                   <ShieldCheck className="h-4 w-4 text-[var(--brand)]" />
                   Privacy notice
                 </p>
@@ -969,7 +969,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
               type="button"
               onClick={back}
               disabled={step === 0 || pending}
-              className="inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--muted)] hover:bg-slate-50 disabled:opacity-40"
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-muted)] disabled:opacity-40"
             >
               <ArrowLeft className="h-4 w-4" />
               Back

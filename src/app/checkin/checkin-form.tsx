@@ -5,8 +5,8 @@ import { buttonClass } from "@/components/ui";
 import { CameraViewport } from "@/components/camera-viewport";
 import { LogIn, LogOut, ScanLine } from "lucide-react";
 
-const CARD = "rounded-2xl border border-[var(--border)] bg-white shadow-sm";
-const LABEL = "mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500";
+const CARD = "rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs";
+const LABEL = "label";
 const INPUT = "field";
 
 type Result = { action: "CHECKED_IN" | "CHECKED_OUT"; visitorName: string; departmentName: string; at: string };
@@ -43,16 +43,16 @@ export default function CheckinForm() {
     const checkedIn = result.action === "CHECKED_IN";
     return (
       <div className={`${CARD} p-8 text-center`}>
-        <div className="mb-3 flex justify-center">
-          <div className="rounded-full bg-emerald-100 p-3">
+        <div className="mb-4 flex justify-center">
+          <div className="rounded-xl bg-[var(--success-soft)] p-3">
             {checkedIn ? (
-              <LogIn className="h-7 w-7 text-emerald-600" />
+              <LogIn className="h-7 w-7 text-[var(--success)]" />
             ) : (
-              <LogOut className="h-7 w-7 text-emerald-600" />
+              <LogOut className="h-7 w-7 text-[var(--success)]" />
             )}
           </div>
         </div>
-        <h2 className="text-xl font-bold tracking-tight">
+        <h2 className="text-xl font-semibold tracking-tight">
           {checkedIn ? "You are checked in" : "You are checked out"}
         </h2>
         <p className="mt-1 text-sm text-[var(--muted)]">
@@ -79,7 +79,7 @@ export default function CheckinForm() {
   return (
     <form onSubmit={submit} className={`${CARD} space-y-5 p-6`}>
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+        <div className="rounded-lg border border-[var(--danger)]/20 bg-[var(--danger-soft)] px-3 py-2 text-sm font-medium text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -116,7 +116,7 @@ export default function CheckinForm() {
                 setQr(text.trim().toUpperCase());
                 setScanning(false);
               }}
-              className="rounded-xl"
+              className="rounded-lg"
             />
             <p className="mt-2 text-xs text-[var(--muted)]">Point the camera at the QR code on your pass.</p>
           </div>
@@ -127,7 +127,7 @@ export default function CheckinForm() {
       <button
         type="submit"
         disabled={busy}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-3 py-3 text-base font-semibold text-white shadow-lg transition hover:bg-[var(--brand-strong)] disabled:pointer-events-none disabled:opacity-50"
+        className={buttonClass("primary", "w-full")}
       >
         {busy ? "Checking…" : "Check in / out"}
       </button>

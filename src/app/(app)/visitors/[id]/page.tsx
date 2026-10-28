@@ -98,7 +98,7 @@ export default async function VisitorDetailPage({
               image: await QRCode.toDataURL(v.qrCode, {
                 width: 200,
                 margin: 1,
-                color: { dark: "#1e293b", light: "#ffffff" },
+                color: { dark: "#6f1010", light: "#ffffff" },
               }),
               inactive: invalidationLabel(v),
             },
@@ -137,12 +137,12 @@ export default async function VisitorDetailPage({
             <img
               src={`/api/visitor-photo?path=${encodeURIComponent(visitor.photoUrl)}`}
               alt=""
-              className="h-16 w-16 shrink-0 rounded-2xl border border-[var(--border)] bg-slate-50 object-cover shadow-sm"
+              className="h-16 w-16 shrink-0 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] object-cover"
             />
           ) : (
             <Avatar
               name={`${visitor.firstName} ${visitor.lastName}`}
-              className="h-16 w-16 rounded-2xl text-lg"
+              className="h-16 w-16 rounded-lg text-lg"
             />
           )
         }
@@ -182,7 +182,7 @@ export default async function VisitorDetailPage({
                       <img
                         src={`/api/visitor-photo?path=${encodeURIComponent(visitor.photoUrl)}`}
                         alt="Visitor photo"
-                        className="h-40 w-full rounded-lg border border-[var(--border)] bg-slate-50 object-cover"
+                        className="h-40 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] object-cover"
                       />
                     </a>
                   </div>
@@ -198,7 +198,7 @@ export default async function VisitorDetailPage({
                       <img
                         src={`/api/visitor-photo?path=${encodeURIComponent(visitor.idPhotoUrl)}`}
                         alt="ID photo"
-                        className="h-40 w-full rounded-lg border border-[var(--border)] bg-slate-50 object-contain"
+                        className="h-40 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] object-contain"
                       />
                     </a>
                   </div>
@@ -275,12 +275,12 @@ export default async function VisitorDetailPage({
                       <img
                         src={qr?.image}
                         alt={`QR code ${v.qrCode}`}
-                        className={`h-20 w-20 rounded-lg border border-[var(--border)] bg-white p-1 ${
+                        className={`h-20 w-20 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1 ${
                           qr?.inactive ? "opacity-40" : ""
                         }`}
                       />
                       {qr?.inactive && (
-                        <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-white/60 text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                        <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-[var(--surface)]/60 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">
                           {qr.inactive}
                         </span>
                       )}
@@ -317,24 +317,24 @@ export default async function VisitorDetailPage({
 
                   {/* Building stops */}
                   {v.stops.length > 0 && (
-                    <div className="mt-3 rounded-lg bg-slate-50 p-3">
-                      <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                    <div className="mt-3 rounded-lg bg-[var(--surface-muted)] p-3">
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
                         Building Stops ({v.stops.length})
                       </p>
                       <div className="space-y-1.5">
                         {v.stops.map((stop, i) => (
                           <div key={stop.id} className="flex items-center gap-3 text-xs">
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-[10px] font-bold text-white">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[var(--brand)] text-[10px] font-semibold text-white">
                               {i + 1}
                             </span>
-                            <MapPin className="h-3 w-3 text-slate-400" />
+                            <MapPin className="h-3 w-3 text-[var(--muted)]" />
                             <span className="font-medium">{stop.department.name}</span>
                             {stop.building && <span className="text-[var(--muted)]">({stop.building})</span>}
                             <span className="text-[var(--muted)]">{formatDate(stop.checkedInAt)}</span>
                             {!stop.checkedInAt ? (
                               <Badge tone="gray">Not yet visited</Badge>
                             ) : stop.checkedOutAt ? (
-                              <span className="text-emerald-600">
+                              <span className="text-[var(--success)]">
                                 → {formatDate(stop.checkedOutAt)}
                                 <span className="ml-1 text-[var(--muted)]">
                                   ({formatDuration(stop.checkedInAt, stop.checkedOutAt)})

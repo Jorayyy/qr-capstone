@@ -224,7 +224,7 @@ export default function ScannerPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div>
-        <h1 className="text-xl font-bold tracking-tight">QR Code Scanner</h1>
+        <h1 className="text-xl font-semibold tracking-tight">QR Code Scanner</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
           Scan a visitor&apos;s QR code with the camera, upload a screenshot, or enter it manually.
         </p>
@@ -357,7 +357,7 @@ export default function ScannerPage() {
       )}
 
       {error && (
-        <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-lg border border-[var(--danger)]/20 bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]">
           <XCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
@@ -418,7 +418,7 @@ export default function ScannerPage() {
                     <img
                       src={`/api/visitor-photo?path=${encodeURIComponent(result.visitor.photoUrl)}`}
                       alt="Visitor"
-                      className="mt-1 h-40 w-full rounded-lg border border-[var(--border)] bg-slate-50 object-cover"
+                      className="mt-1 h-40 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] object-cover"
                     />
                   </div>
                 )}
@@ -428,7 +428,7 @@ export default function ScannerPage() {
                     <img
                       src={`/api/visitor-photo?path=${encodeURIComponent(result.visitor.idPhotoUrl)}`}
                       alt="ID"
-                      className="mt-1 h-40 w-full rounded-lg border border-[var(--border)] bg-slate-50 object-contain"
+                      className="mt-1 h-40 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] object-contain"
                     />
                   </div>
                 )}
@@ -436,7 +436,7 @@ export default function ScannerPage() {
             )}
 
             {feedback && (
-              <div className="flex items-center gap-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
+              <div className="flex items-center gap-2 rounded-lg border border-[var(--success)]/20 bg-[var(--success-soft)] p-3 text-sm text-[var(--success)]">
                 <CheckCircle className="h-4 w-4" />
                 {feedback}
               </div>
@@ -452,13 +452,13 @@ export default function ScannerPage() {
             {result.status === "CHECKED_IN" && (
               <>
                 <div className="rounded-lg border border-[var(--border)] p-4 space-y-3">
-                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Visit Stops</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Visit Stops</p>
                   {result.stops && result.stops.length > 0 ? (
                     <div className="space-y-2">
                       {result.stops.map((stop) => (
-                        <div key={stop.id} className="flex items-center justify-between rounded bg-slate-50 px-3 py-2 text-sm">
+                        <div key={stop.id} className="flex items-center justify-between rounded-md bg-[var(--surface-muted)] px-3 py-2 text-sm">
                           <div className="flex items-center gap-2">
-                            <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                            <MapPin className="h-3.5 w-3.5 text-[var(--muted)]" />
                             <span className="font-medium">{stop.department?.name || "Unknown"}</span>
                             {stop.building && <span className="text-xs text-[var(--muted)]">({stop.building})</span>}
                             {stop.checkedInAt && (
@@ -469,16 +469,16 @@ export default function ScannerPage() {
                             <button
                               onClick={() => handleCheckInStop(stop.id)}
                               disabled={isPending}
-                              className="text-xs font-medium text-emerald-600 hover:underline disabled:opacity-50"
+                              className="text-xs font-medium text-[var(--success)] hover:underline disabled:opacity-50"
                             >
                               Mark arrived
                             </button>
                           ) : !stop.checkedOutAt ? (
-                            <button onClick={() => handleCheckoutStop(stop.id)} className="text-xs text-red-600 hover:underline">
+                            <button onClick={() => handleCheckoutStop(stop.id)} className="text-xs text-[var(--danger)] hover:underline">
                               Check Out
                             </button>
                           ) : (
-                            <span className="text-xs text-emerald-600">Left {formatDate(stop.checkedOutAt)}</span>
+                            <span className="text-xs text-[var(--success)]">Left {formatDate(stop.checkedOutAt)}</span>
                           )}
                         </div>
                       ))}

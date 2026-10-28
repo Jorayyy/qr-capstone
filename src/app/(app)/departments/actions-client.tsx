@@ -25,7 +25,7 @@ export function ToggleForm({ departmentId, isActive }: { departmentId: string; i
         {isActive ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
       </button>
       {state.message && !state.success && (
-        <p className="mt-1 text-[10px] text-red-600">{state.message}</p>
+        <p className="mt-1 text-[10px] text-[var(--danger)]">{state.message}</p>
       )}
     </form>
   );
@@ -64,7 +64,7 @@ export function DeleteForm({
         </button>
       </span>
       {state.message && !state.success && (
-        <p className="mt-1 text-[10px] text-red-600">{state.message}</p>
+        <p className="mt-1 text-[10px] text-[var(--danger)]">{state.message}</p>
       )}
     </form>
   );

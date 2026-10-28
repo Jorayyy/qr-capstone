@@ -69,7 +69,7 @@ export function VisitControls({
       <Button
         variant="ghost"
         disabled={pending}
-        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+        className="text-[var(--danger)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
         onClick={() =>
           run(() => cancelVisitAction(visitId), "Cancel this visit? The QR code will stop working.")
         }
@@ -82,8 +82,8 @@ export function VisitControls({
         <span
           className={
             message.ok
-              ? "text-xs font-medium text-emerald-600"
-              : "text-xs font-medium text-red-600"
+              ? "text-xs font-medium text-[var(--success)]"
+              : "text-xs font-medium text-[var(--danger)]"
           }
         >
           {message.text}
@@ -105,7 +105,7 @@ export function DeleteVisitorButton({ visitorId }: { visitorId: string }) {
         type="submit"
         variant="ghost"
         disabled={pending}
-        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+        className="text-[var(--danger)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
         onClick={(e) => {
           if (!confirm("Delete this visitor and all their visits?")) {
             e.preventDefault();
@@ -115,7 +115,7 @@ export function DeleteVisitorButton({ visitorId }: { visitorId: string }) {
         {pending ? "Deleting..." : "Delete"}
       </Button>
       {state.message && !state.success && (
-        <p className="mt-1 text-[10px] text-red-600">{state.message}</p>
+        <p className="mt-1 text-[10px] text-[var(--danger)]">{state.message}</p>
       )}
     </form>
   );

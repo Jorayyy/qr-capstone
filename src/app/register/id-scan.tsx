@@ -161,13 +161,13 @@ export default function IdScan({
 
   return (
     <div>
-      <div className="rounded-xl border border-[var(--border)] bg-slate-50 p-3">
+      <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-3">
         {preview ? (
-          <img src={preview} alt="Uploaded ID" className="mx-auto max-h-56 w-auto rounded-lg bg-white object-contain" />
+          <img src={preview} alt="Uploaded ID" className="mx-auto max-h-56 w-auto rounded-lg bg-[var(--surface)] object-contain" />
         ) : cameraOn ? (
           <video ref={videoRef} autoPlay playsInline muted className="mx-auto max-h-56 w-full rounded-lg bg-black object-cover" />
         ) : (
-          <label className="flex h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[var(--brand)]/25 bg-white text-center text-sm text-[var(--muted)] transition hover:border-[var(--brand)]/50">
+          <label className="flex h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[var(--brand)]/25 bg-[var(--surface)] text-center text-sm text-[var(--muted)] transition hover:border-[var(--brand)]/50">
             <Upload className="h-7 w-7 text-[var(--brand)]/60" />
             <span className="font-semibold text-[var(--brand)]">Upload your ID</span>
             <span className="px-6 text-xs">Click to upload or drag the front side here — JPG, PNG, WebP (max 5 MB)</span>
@@ -188,7 +188,7 @@ export default function IdScan({
             </>
           ) : (
             <>
-              <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-[var(--border)] bg-white px-4 py-2.5 text-sm font-semibold hover:bg-slate-50">
+              <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-[var(--surface-muted)]">
                 <Upload className="h-4 w-4" />
                 Upload image
                 <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onFile} />
@@ -214,12 +214,12 @@ export default function IdScan({
           </p>
         )}
         {status === "done" && (
-          <p className="mt-3 flex items-center gap-2 text-xs font-medium text-emerald-700">
+          <p className="mt-3 flex items-center gap-2 text-xs font-medium text-[var(--success)]">
             <ScanLine className="h-4 w-4" />
             {message}
           </p>
         )}
-        {status === "error" && <p className="mt-3 text-xs text-amber-700">{message}</p>}
+        {status === "error" && <p className="mt-3 text-xs text-[var(--warning)]">{message}</p>}
       </div>
     </div>
   );

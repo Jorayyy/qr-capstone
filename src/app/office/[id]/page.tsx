@@ -52,8 +52,8 @@ export default async function DepartmentPreviewPage({ params }: Props) {
           All departments &amp; offices
         </Link>
 
-        <div className="mt-5 overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-sm">
-          <div className="relative h-64 bg-gradient-to-br from-[var(--brand)] to-[var(--brand-strong)] sm:h-80">
+        <div className="mt-5 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs">
+          <div className="relative h-64 bg-[var(--brand-strong)] sm:h-80">
             {photo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -64,14 +64,14 @@ export default async function DepartmentPreviewPage({ params }: Props) {
             ) : (
               <Landmark className="absolute inset-0 m-auto h-16 w-16 text-white/30" />
             )}
-            <span className="absolute left-5 top-5 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--brand)] backdrop-blur">
+            <span className="absolute left-5 top-5 inline-flex items-center gap-1.5 rounded-md bg-[var(--surface)]/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--brand)] backdrop-blur">
               <Landmark className="h-3.5 w-3.5" />
               Office preview
             </span>
           </div>
 
           <div className="p-6 sm:p-8">
-            <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--brand)]">
+            <h1 className="font-display text-3xl font-semibold tracking-tight text-[var(--brand)]">
               {department.name}
             </h1>
             {department.building && (
@@ -83,7 +83,7 @@ export default async function DepartmentPreviewPage({ params }: Props) {
 
             <div className="mt-6 grid gap-4 border-t border-[var(--border)] pt-6 sm:grid-cols-2">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.1em] text-[var(--muted)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
                   Visiting this office?
                 </p>
                 <p className="mt-1 text-sm leading-relaxed">
@@ -96,7 +96,7 @@ export default async function DepartmentPreviewPage({ params }: Props) {
                 </Link>
               </div>
 
-              <dl className="space-y-2.5 rounded-xl bg-slate-50 p-4 text-sm">
+              <dl className="space-y-2.5 rounded-lg bg-[var(--surface-muted)] p-4 text-sm">
                 {department.contactPerson && (
                   <div className="flex items-start gap-2">
                     <User className="mt-0.5 h-4 w-4 shrink-0 text-[var(--muted)]" />

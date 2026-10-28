@@ -16,10 +16,10 @@ const STATUS_TEXT: Record<string, string> = {
 };
 
 const STATUS_DOT: Record<string, string> = {
-  PENDING: "bg-slate-400",
-  CHECKED_IN: "bg-emerald-500",
-  CHECKED_OUT: "bg-slate-300",
-  CANCELLED: "bg-red-500",
+  PENDING: "bg-[var(--warning)]",
+  CHECKED_IN: "bg-[var(--success)]",
+  CHECKED_OUT: "bg-[var(--border-strong)]",
+  CANCELLED: "bg-[var(--danger)]",
 };
 
 
@@ -49,11 +49,11 @@ function ArrivalsChart({
                     ? isPeak
                       ? "bg-[var(--accent)]"
                       : "bg-[var(--brand)]/80 group-hover:bg-[var(--brand)]"
-                    : "bg-slate-200"
+                    : "bg-[var(--border)]"
                 )}
               >
                 {b.count > 0 && (
-                  <span className="pointer-events-none absolute -top-6 left-1/2 hidden -translate-x-1/2 rounded bg-slate-900 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white group-hover:block">
+                  <span className="pointer-events-none absolute -top-6 left-1/2 hidden -translate-x-1/2 rounded-md bg-[var(--foreground)] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white group-hover:block">
                     {b.count}
                   </span>
                 )}
@@ -139,47 +139,47 @@ export async function DashboardOverview() {
     <>
       <Card className="mb-6 overflow-hidden">
         <div className="grid grid-cols-1 gap-px bg-[var(--border)] sm:grid-cols-2 lg:grid-cols-4">
-          <div className="bg-white p-5">
+          <div className="bg-[var(--surface)] p-5">
             <div className="flex items-start justify-between gap-2">
               <Users className="h-5 w-5 text-[var(--muted)]" />
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+              <span className="rounded-md bg-[var(--surface-muted)] px-2 py-0.5 text-[11px] font-semibold text-[var(--muted)]">
                 All registrations
               </span>
             </div>
-            <p className="mt-3 font-display text-3xl font-bold tabular-nums text-[var(--brand)]">{totalAll}</p>
+            <p className="mt-3 text-3xl font-semibold tabular-nums text-[var(--foreground)]">{totalAll}</p>
             <p className="mt-1 text-sm font-semibold">Registered Visitors</p>
             <p className="mt-0.5 text-xs text-[var(--muted)]">All visitor registrations to date.</p>
           </div>
-          <div className="bg-white p-5">
+          <div className="bg-[var(--surface)] p-5">
             <div className="flex items-start justify-between gap-2">
               <Building2 className="h-5 w-5 text-[var(--muted)]" />
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+              <span className="rounded-md bg-[var(--success-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--success)]">
                 Active
               </span>
             </div>
-            <p className="mt-3 font-display text-3xl font-bold tabular-nums text-[var(--brand)]">{inCampus}</p>
+            <p className="mt-3 text-3xl font-semibold tabular-nums text-[var(--foreground)]">{inCampus}</p>
             <p className="mt-1 text-sm font-semibold">In Campus</p>
             <p className="mt-0.5 text-xs text-[var(--muted)]">Visitors who have checked in but not yet checked out.</p>
           </div>
-          <div className="bg-white p-5">
+          <div className="bg-[var(--surface)] p-5">
             <div className="flex items-start justify-between gap-2">
               <CheckCircle2 className="h-5 w-5 text-[var(--muted)]" />
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+              <span className="rounded-md bg-[var(--surface-muted)] px-2 py-0.5 text-[11px] font-semibold text-[var(--muted)]">
                 Completed
               </span>
             </div>
-            <p className="mt-3 font-display text-3xl font-bold tabular-nums text-[var(--brand)]">{visited}</p>
+            <p className="mt-3 text-3xl font-semibold tabular-nums text-[var(--foreground)]">{visited}</p>
             <p className="mt-1 text-sm font-semibold">Visited</p>
             <p className="mt-0.5 text-xs text-[var(--muted)]">Visits that have been completed.</p>
           </div>
-          <div className="bg-white p-5">
+          <div className="bg-[var(--surface)] p-5">
             <div className="flex items-start justify-between gap-2">
               <CalendarClock className="h-5 w-5 text-[var(--muted)]" />
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+              <span className="rounded-md bg-[var(--warning-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--warning)]">
                 Pending
               </span>
             </div>
-            <p className="mt-3 font-display text-3xl font-bold tabular-nums text-[var(--brand)]">{pending}</p>
+            <p className="mt-3 text-3xl font-semibold tabular-nums text-[var(--foreground)]">{pending}</p>
             <p className="mt-1 text-sm font-semibold">To Visit</p>
             <p className="mt-0.5 text-xs text-[var(--muted)]">Expected visitors who have not yet checked in.</p>
           </div>
@@ -213,7 +213,7 @@ export async function DashboardOverview() {
                     <span className="truncate font-medium">{o.name}</span>
                     <span className="shrink-0 font-semibold tabular-nums">{o.count}</span>
                   </div>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-muted)]">
                     <div
                       className="h-full rounded-full bg-[var(--brand)]"
                       style={{ width: `${Math.round((o.count / occupancyMax) * 100)}%` }}
@@ -244,9 +244,9 @@ export async function DashboardOverview() {
           <EmptyState title="No visits yet" hint="Visits appear here once visitors are registered." />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[680px] text-left text-sm">
+            <table className="data-table min-w-[680px]">
               <thead>
-                <tr className="border-b border-[var(--border)] bg-slate-50/60 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                <tr>
                   <th className="px-5 py-2.5 font-semibold">Visitor</th>
                   <th className="px-5 py-2.5 font-semibold">Destination</th>
                   <th className="px-5 py-2.5 font-semibold">Purpose</th>
@@ -254,9 +254,9 @@ export async function DashboardOverview() {
                   <th className="px-5 py-2.5 font-semibold">Registered</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--border)]">
+              <tbody>
                 {recentVisits.map((v) => (
-                  <tr key={v.id} className="transition-colors hover:bg-slate-50">
+                  <tr key={v.id}>
                     <td className="px-5 py-3">
                       <Link href={`/visitors/${v.visitor.id}`} className="flex items-center gap-3">
                         <Avatar name={`${v.visitor.firstName} ${v.visitor.lastName}`} />
@@ -267,7 +267,7 @@ export async function DashboardOverview() {
                     <td className="px-5 py-3 text-[var(--muted)]">{v.purpose.replace("_", " ")}</td>
                     <td className="px-5 py-3">
                       <span className="inline-flex items-center gap-2">
-                        <span className={cx("h-2 w-2 rounded-full", STATUS_DOT[v.status] ?? "bg-slate-300")} />
+                        <span className={cx("h-2 w-2 rounded-full", STATUS_DOT[v.status] ?? "bg-[var(--border-strong)]")} />
                         <span className="text-sm">{STATUS_TEXT[v.status] ?? v.status}</span>
                       </span>
                     </td>

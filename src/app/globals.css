@@ -1,35 +1,72 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f7f8;
+  --background: #f6f3ed;
   --surface: #ffffff;
-  --foreground: #0f172a;
-  --muted: #64748b;
-  --border: #e2e8f0;
+  --surface-muted: #fbf9f5;
+  --foreground: #211c18;
+  --muted: #716860;
+  --border: #e6dfd4;
+  --border-strong: #d8cec0;
   /* EVSU maroon + gold, sampled from public/logo.png */
-  --brand: #700000;
-  --brand-strong: #570000;
-  --brand-soft: #f6ecec;
-  --accent: #f0c000;
-  --accent-strong: #d9ad00;
+  --brand: #6f1010;
+  --brand-strong: #4d0808;
+  --brand-soft: #f4e8e5;
+  --accent: #d7a21a;
+  --accent-strong: #b8840c;
+  --accent-soft: #fbf2d8;
+  --success: #157f3d;
+  --success-strong: #0f5f2d;
+  --success-soft: #e8f5ec;
+  --warning: #b45309;
+  --warning-strong: #8a3f07;
+  --warning-soft: #fdf0df;
+  --danger: #b42318;
+  --danger-strong: #8e1b12;
+  --danger-soft: #fdecea;
+  --info: #1d4ed8;
+  --info-soft: #e9eefc;
   /* Warm paper tone for the visitor-facing pages */
   --paper: #faf7f1;
+  --ring: rgb(111 16 16 / 0.22);
+  --shadow-xs: 0 1px 2px rgb(33 28 24 / 0.05);
+  --shadow-pop: 0 12px 32px rgb(33 28 24 / 0.12);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
   --color-brand-soft: var(--brand-soft);
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-strong: var(--success-strong);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-strong: var(--warning-strong);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-strong: var(--danger-strong);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
   --color-paper: var(--paper);
   --font-sans: var(--font-inter);
   --font-display: var(--font-playfair);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-pop: var(--shadow-pop);
+}
+
+html {
+  color-scheme: light;
 }
 
 body {
@@ -38,6 +75,11 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
+}
+
+::selection {
+  background: var(--brand);
+  color: #fff;
 }
 
 /* iOS zooms the viewport when a field below 16 px gains focus — keep form
@@ -58,24 +100,72 @@ body {
     min-height: 2.75rem;
     border-radius: 0.5rem;
     border: 1px solid var(--border);
-    background: #fff;
+    background: var(--surface);
     padding: 0.625rem 0.75rem;
     font-size: 0.9375rem;
     color: var(--foreground);
     outline: none;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .field::placeholder {
+    color: color-mix(in srgb, var(--muted) 72%, white);
+  }
+  .field:hover {
+    border-color: var(--border-strong);
   }
   .field:focus {
     border-color: var(--brand);
-    box-shadow: 0 0 0 3px rgb(112 0 0 / 0.15);
+    box-shadow: 0 0 0 3px var(--ring);
+  }
+  .field:disabled {
+    background: var(--surface-muted);
+    color: var(--muted);
   }
   .label {
     display: block;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: #475569;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     margin-bottom: 0.375rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: left;
+    font-size: 0.875rem;
+  }
+  .data-table thead th {
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-muted);
+    padding: 0.75rem 1rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .data-table tbody td {
+    border-bottom: 1px solid var(--border);
+    padding: 0.875rem 1rem;
+    vertical-align: middle;
+  }
+  .data-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .data-table tbody tr {
+    transition: background-color 150ms ease;
+  }
+  .data-table tbody tr:hover {
+    background: color-mix(in srgb, var(--brand-soft) 42%, var(--surface));
   }
 }
 

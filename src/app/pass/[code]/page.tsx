@@ -55,7 +55,7 @@ export default async function PassPage({ params }: { params: Promise<{ code: str
   const qrDataUrl = await QRCode.toDataURL(code, {
     width: 480,
     margin: 1,
-    color: { dark: "#700000", light: "#ffffff" },
+    color: { dark: "#6f1010", light: "#ffffff" },
   });
 
   const statusLabel =
@@ -82,15 +82,15 @@ export default async function PassPage({ params }: { params: Promise<{ code: str
           Back to homepage
         </Link>
 
-        <article className="pass-card overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-lg">
-          <header className="bg-[var(--brand)] px-6 py-5 text-white">
+        <article className="pass-card overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs">
+          <header className="border-b-2 border-[var(--accent)] bg-[var(--brand-strong)] px-6 py-5 text-white">
             <div className="flex items-center gap-3">
               <img src="/logo.png" alt="" className="h-12 w-12 shrink-0 object-contain" />
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
                   {SITE.university}
                 </p>
-                <p className="font-display text-xl font-bold tracking-tight">Visitor Pass</p>
+                <p className="font-display text-xl font-semibold tracking-tight">Visitor Pass</p>
               </div>
             </div>
           </header>
@@ -101,28 +101,28 @@ export default async function PassPage({ params }: { params: Promise<{ code: str
                 <img
                   src={`/api/pass-photo?code=${code}`}
                   alt={`Photo of ${visit.visitor.firstName} ${visit.visitor.lastName}`}
-                  className="h-20 w-20 shrink-0 rounded-xl border border-[var(--border)] object-cover"
+                  className="h-20 w-20 shrink-0 rounded-lg border border-[var(--border)] object-cover"
                 />
               ) : (
-                <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-soft)] font-display text-2xl font-bold text-[var(--brand)]">
+                <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-soft)] font-display text-2xl font-semibold text-[var(--brand)]">
                   {initials || "?"}
                 </span>
               )}
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
                   {visit.visitor.affiliation.toLowerCase().replace("_", " ")}
                 </p>
-                <h1 className="mt-0.5 truncate font-display text-lg font-bold leading-tight">
+                <h1 className="mt-0.5 truncate font-display text-lg font-semibold leading-tight">
                   {visit.visitor.firstName} {visit.visitor.middleName ? `${visit.visitor.middleName} ` : ""}
                   {visit.visitor.lastName}
                 </h1>
-                <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-mono text-[11px] font-bold text-amber-800 ring-1 ring-amber-200">
+                <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-[var(--accent-soft)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--warning)] ring-1 ring-[var(--accent)]/30">
                   {visit.referenceCode}
                 </p>
               </div>
             </div>
 
-            <div className="mt-5 flex justify-center rounded-xl border border-[var(--border)] bg-white p-3">
+            <div className="mt-5 flex justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={qrDataUrl} alt={`QR pass ${visit.referenceCode}`} width={208} height={208} />
             </div>
@@ -152,8 +152,8 @@ export default async function PassPage({ params }: { params: Promise<{ code: str
                   <span
                     className={
                       active
-                        ? "inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200"
-                        : "inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700 ring-1 ring-red-200"
+                        ? "inline-flex items-center gap-1 rounded-md bg-[var(--success-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--success)] ring-1 ring-[var(--success)]/20"
+                        : "inline-flex items-center gap-1 rounded-md bg-[var(--danger-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--danger)] ring-1 ring-[var(--danger)]/20"
                     }
                   >
                     {active ? <ShieldCheck className="h-3.5 w-3.5" /> : <ShieldAlert className="h-3.5 w-3.5" />}

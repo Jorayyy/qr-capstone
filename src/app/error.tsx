@@ -17,7 +17,7 @@ export default function ErrorPage({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--background)] p-8 text-center">
-      <p className="text-6xl font-bold text-slate-300">500</p>
+      <p className="text-6xl font-semibold tracking-tight text-[var(--border-strong)]">500</p>
       <h1 className="text-xl font-semibold">Something went wrong</h1>
       <p className="max-w-sm text-sm text-[var(--muted)]">
         An unexpected error occurred. Try again, or return to the dashboard.
@@ -26,13 +26,13 @@ export default function ErrorPage({
         <button
           type="button"
           onClick={reset}
-          className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)]"
+          className="rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--brand-strong)]"
         >
           Try again
         </button>
         <a
           href="/dashboard"
-          className="rounded-xl border border-[var(--border)] bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-muted)]"
         >
           Dashboard
         </a>

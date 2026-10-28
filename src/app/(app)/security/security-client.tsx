@@ -2,6 +2,7 @@
 
 import { useActionState, useState, type FormEvent, type ReactNode } from "react";
 import type { AdminUserState } from "@/lib/actions/admin";
+import { buttonClass } from "@/components/ui";
 
 /** Small form button that runs a state-returning admin server action. */
 export function RowAction({
@@ -43,21 +44,21 @@ export function RowAction({
           disabled={pending}
           className={
             variant === "danger"
-              ? "rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
-              : "rounded-lg border border-[var(--border)] bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+              ? "rounded-lg border border-[var(--danger)]/20 bg-[var(--surface)] px-2.5 py-1 text-xs font-semibold text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)] disabled:opacity-50"
+              : "rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-xs font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)] disabled:opacity-50"
           }
         >
           {pending ? "…" : children}
         </button>
       </form>
       {visible && (
-        <div className="mt-2 rounded-lg border border-[var(--border)] bg-slate-50 p-3 text-xs">
-          {state?.error && <p className="font-medium text-red-600">{state.error}</p>}
-          {state?.success && <p className="font-medium text-green-700">{state.success}</p>}
+        <div className="mt-2 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-3 text-xs">
+          {state?.error && <p className="font-medium text-[var(--danger)]">{state.error}</p>}
+          {state?.success && <p className="font-medium text-[var(--success)]">{state.success}</p>}
           {state?.tempPassword && (
             <div className="mt-2">
-              <p className="font-semibold text-slate-700">One-time password — copy now:</p>
-              <code className="mt-1 block break-all rounded bg-white px-2 py-1 font-mono text-[13px] text-slate-800">
+              <p className="font-semibold text-[var(--foreground)]">One-time password — copy now:</p>
+              <code className="mt-1 block break-all rounded-md bg-[var(--surface)] px-2 py-1 font-mono text-[13px] text-[var(--foreground)]">
                 {state.tempPassword}
               </code>
             </div>
@@ -65,7 +66,7 @@ export function RowAction({
           <button
             type="button"
             onClick={() => setDismissed(true)}
-            className="mt-2 text-slate-500 underline hover:text-slate-700"
+            className="mt-2 text-[var(--muted)] underline hover:text-[var(--foreground)]"
           >
             Dismiss
           </button>
@@ -98,7 +99,7 @@ export function RoleSelect({
         name="role"
         defaultValue={currentRole}
         disabled={disabled || pending}
-        className="rounded-lg border border-[var(--border)] bg-white px-2 py-1 text-xs focus:border-[var(--brand)] focus:outline-none disabled:opacity-50"
+        className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs focus:border-[var(--brand)] focus:outline-none disabled:opacity-50"
       >
         {roles.map((role) => (
           <option key={role} value={role}>
@@ -109,12 +110,12 @@ export function RoleSelect({
       <button
         type="submit"
         disabled={disabled || pending}
-        className="rounded-lg border border-[var(--border)] bg-white px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+        className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)] disabled:opacity-50"
       >
         {pending ? "…" : "Set"}
       </button>
-      {state?.error && <span className="text-xs text-red-600">{state.error}</span>}
-      {state?.success && <span className="text-xs text-green-700">{state.success}</span>}
+      {state?.error && <span className="text-xs text-[var(--danger)]">{state.error}</span>}
+      {state?.success && <span className="text-xs text-[var(--success)]">{state.success}</span>}
     </form>
   );
 }
@@ -131,18 +132,18 @@ export function CreateUserForm({
   const [dismissed, setDismissed] = useState(false);
 
   return (
-    <form action={formAction} className="space-y-3 rounded-xl border border-[var(--border)] bg-slate-50 p-4">
+    <form action={formAction} className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-4">
       <p className="text-sm font-semibold">Create staff account</p>
       {state?.error && !dismissed && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+        <div className="rounded-lg border border-[var(--danger)]/20 bg-[var(--danger-soft)] px-3 py-2 text-xs font-medium text-[var(--danger)]">
           {state.error}
         </div>
       )}
       {state?.success && !dismissed && (
-        <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
+        <div className="rounded-lg border border-[var(--success)]/20 bg-[var(--success-soft)] px-3 py-2 text-xs text-[var(--success)]">
           <p className="font-medium">{state.success}</p>
           {state.tempPassword && (
-            <code className="mt-1 block break-all rounded bg-white px-2 py-1 font-mono text-[13px]">
+            <code className="mt-1 block break-all rounded-md bg-[var(--surface)] px-2 py-1 font-mono text-[13px]">
               {state.tempPassword}
             </code>
           )}
@@ -157,7 +158,7 @@ export function CreateUserForm({
           type="email"
           required
           placeholder="email@university.edu"
-          className="rounded-xl border border-[var(--border)] bg-white px-3 py-2.5 text-sm focus:border-[var(--brand)] focus:outline-none"
+          className="field"
         />
         <input
           name="name"
@@ -165,12 +166,12 @@ export function CreateUserForm({
           required
           maxLength={120}
           placeholder="Full name"
-          className="rounded-xl border border-[var(--border)] bg-white px-3 py-2.5 text-sm focus:border-[var(--brand)] focus:outline-none"
+          className="field"
         />
         <select
           name="role"
           defaultValue="STAFF"
-          className="rounded-xl border border-[var(--border)] bg-white px-3 py-2.5 text-sm focus:border-[var(--brand)] focus:outline-none"
+          className="field"
         >
           {roles.map((role) => (
             <option key={role} value={role}>
@@ -184,12 +185,12 @@ export function CreateUserForm({
         type="text"
         maxLength={128}
         placeholder="Initial password (leave blank to auto-generate)"
-        className="w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2.5 text-sm focus:border-[var(--brand)] focus:outline-none"
+        className="w-full field"
       />
       <button
         type="submit"
         disabled={pending}
-        className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-50"
+        className={buttonClass("primary")}
       >
         {pending ? "Creating…" : "Create account"}
       </button>

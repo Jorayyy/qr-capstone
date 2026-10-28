@@ -8,6 +8,7 @@ import {
   startMfaEnrollmentAction,
   verifyMfaEnrollmentAction,
 } from "@/lib/actions/mfa";
+import { buttonClass } from "@/components/ui";
 
 type Props = {
   email: string;
@@ -67,7 +68,7 @@ function MfaSetup({ email }: { email: string }) {
     return (
       <div className="space-y-4">
         {setupError && (
-          <div className="rounded-xl border border-red-300/50 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <div className="rounded-lg border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)]">
             {setupError}
           </div>
         )}
@@ -79,7 +80,7 @@ function MfaSetup({ email }: { email: string }) {
           type="button"
           onClick={handleStart}
           disabled={starting}
-          className="rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#700000]/20 transition hover:bg-[var(--brand-strong)] disabled:opacity-50 disabled:pointer-events-none"
+          className={buttonClass("primary", "px-4 py-3")}
         >
           {starting ? "Preparing…" : "Set up authenticator app"}
         </button>
@@ -90,7 +91,7 @@ function MfaSetup({ email }: { email: string }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
-        <div className="rounded-xl border border-[var(--border)] bg-white p-3">
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
           {qrDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={qrDataUrl} alt="Authenticator QR code" width={220} height={220} />
@@ -102,21 +103,21 @@ function MfaSetup({ email }: { email: string }) {
         </div>
         <div className="text-sm text-[var(--muted)] space-y-2">
           <p>Can&apos;t scan? Enter this key manually in your app:</p>
-          <code className="block break-all rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700">
+          <code className="block break-all rounded-md bg-[var(--surface-muted)] px-3 py-2 text-xs text-[var(--foreground)]">
             {manualSecret}
           </code>
-          <p>Account: <span className="font-medium text-slate-700">{email}</span></p>
+          <p>Account: <span className="font-medium text-[var(--foreground)]">{email}</span></p>
         </div>
       </div>
 
       <form action={verifyAction} className="space-y-3">
         {verifyState?.error && (
-          <div className="rounded-xl border border-red-300/50 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <div className="rounded-lg border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)]">
             {verifyState.error}
           </div>
         )}
         <div>
-          <label htmlFor="mfa-code" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+          <label htmlFor="mfa-code" className="label">
             6-digit code
           </label>
           <input
@@ -128,13 +129,13 @@ function MfaSetup({ email }: { email: string }) {
             required
             maxLength={10}
             placeholder="000000"
-            className="w-full max-w-xs rounded-xl border border-[var(--border)] bg-white px-4 py-3 text-sm focus:border-[var(--brand)] focus:ring-2 focus:ring-[#700000]/15 focus:outline-none"
+            className="field max-w-xs"
           />
         </div>
         <button
           type="submit"
           disabled={verifying}
-          className="rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#700000]/20 transition hover:bg-[var(--brand-strong)] disabled:opacity-50 disabled:pointer-events-none"
+          className={buttonClass("primary", "px-4 py-3")}
         >
           {verifying ? "Verifying…" : "Verify and enable"}
         </button>
@@ -155,7 +156,7 @@ function MfaEnabled({ email }: { email: string }) {
   if (disableState?.success) {
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-amber-300/50 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+        <div className="rounded-lg border border-[var(--warning)]/25 bg-[var(--warning-soft)] px-4 py-3 text-sm font-medium text-[var(--warning)]">
           Two-factor authentication is now off. Consider setting it up again soon.
         </div>
         <MfaManager email={email} mfaEnabled={false} />
@@ -165,8 +166,8 @@ function MfaEnabled({ email }: { email: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
-        <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" />
+      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--success)]">
+        <span className="inline-block h-2.5 w-2.5 rounded-full bg-[var(--success)]" />
         Two-factor authentication is enabled
       </div>
 
@@ -175,15 +176,15 @@ function MfaEnabled({ email }: { email: string }) {
           <button
             type="button"
             onClick={() => setShowRegen(true)}
-            className="rounded-xl border border-[var(--border)] bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className={buttonClass("secondary")}
           >
             Regenerate recovery codes
           </button>
         </div>
       ) : (
-        <form action={regenAction} className="space-y-3 rounded-xl border border-[var(--border)] bg-slate-50 p-4">
+        <form action={regenAction} className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-4">
           {regenState?.error && (
-            <div className="rounded-xl border border-red-300/50 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <div className="rounded-lg border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)]">
               {regenState.error}
             </div>
           )}
@@ -196,20 +197,20 @@ function MfaEnabled({ email }: { email: string }) {
             required
             autoComplete="current-password"
             placeholder="Confirm with your password"
-            className="w-full max-w-sm rounded-xl border border-[var(--border)] bg-white px-4 py-3 text-sm focus:border-[var(--brand)] focus:ring-2 focus:ring-[#700000]/15 focus:outline-none"
+            className="field max-w-sm"
           />
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={regenerating}
-              className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-50 disabled:pointer-events-none"
+              className={buttonClass("primary")}
             >
               {regenerating ? "Generating…" : "Generate new codes"}
             </button>
             <button
               type="button"
               onClick={() => setShowRegen(false)}
-              className="rounded-xl border border-[var(--border)] bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              className={buttonClass("secondary")}
             >
               Cancel
             </button>
@@ -217,11 +218,11 @@ function MfaEnabled({ email }: { email: string }) {
         </form>
       )}
 
-      <div className="rounded-xl border border-red-200 bg-red-50/50 p-4">
-        <p className="text-sm font-semibold text-red-700">Turn off two-factor authentication</p>
+      <div className="rounded-lg border border-[var(--danger)]/20 bg-[var(--danger-soft)]/60 p-4">
+        <p className="text-sm font-semibold text-[var(--danger)]">Turn off two-factor authentication</p>
         <form action={disableAction} className="mt-3 space-y-3">
           {disableState?.error && (
-            <div className="rounded-xl border border-red-300/50 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <div className="rounded-lg border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-4 py-3 text-sm font-medium text-[var(--danger)]">
               {disableState.error}
             </div>
           )}
@@ -231,12 +232,12 @@ function MfaEnabled({ email }: { email: string }) {
             required
             autoComplete="current-password"
             placeholder="Confirm with your password"
-            className="w-full max-w-sm rounded-xl border border-[var(--border)] bg-white px-4 py-3 text-sm focus:border-[var(--brand)] focus:ring-2 focus:ring-[#700000]/15 focus:outline-none"
+            className="field max-w-sm"
           />
           <button
             type="submit"
             disabled={disabling}
-            className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50 disabled:pointer-events-none"
+            className={buttonClass("danger")}
           >
             {disabling ? "Disabling…" : "Disable MFA"}
           </button>
@@ -257,13 +258,13 @@ function RecoveryCodes({
 }) {
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-amber-300/50 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+      <div className="rounded-lg border border-[var(--warning)]/25 bg-[var(--warning-soft)] px-4 py-3 text-sm font-medium text-[var(--warning)]">
         {done
           ? "New recovery codes generated — the old set no longer works."
           : "Two-factor authentication is now enabled."}{" "}
         Save these somewhere safe. They are shown only once.
       </div>
-      <div className="grid grid-cols-2 gap-2 rounded-xl border border-[var(--border)] bg-slate-50 p-4 font-mono text-sm sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-4 font-mono text-sm sm:grid-cols-3">
         {codes.map((code) => (
           <span key={code} className="tracking-wider">
             {code}
@@ -274,7 +275,7 @@ function RecoveryCodes({
         <button
           type="button"
           onClick={() => window.print()}
-          className="rounded-xl border border-[var(--border)] bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          className={buttonClass("secondary")}
         >
           Print codes
         </button>
@@ -282,14 +283,14 @@ function RecoveryCodes({
           <button
             type="button"
             onClick={onBack}
-            className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)]"
+            className={buttonClass("primary")}
           >
             Done
           </button>
         ) : (
           <a
             href="/dashboard"
-            className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)]"
+            className={buttonClass("primary")}
           >
             Continue to dashboard
           </a>

@@ -39,7 +39,7 @@ export default async function ReportsPage({
 
       {/* Print-only heading, since the interactive header is hidden when printing. */}
       <div className="mb-4 hidden print:block">
-        <h1 className="text-2xl font-bold tracking-tight">Visitor Report</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Visitor Report</h1>
         <p className="text-sm text-[var(--muted)]">
           {data.label} · generated {new Date().toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" })}
         </p>

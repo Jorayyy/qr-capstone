@@ -119,9 +119,9 @@ export default function PhotoCapture({
   return (
     <div>
       <label className="label">{label}</label>
-      <div className="rounded-xl border border-[var(--border)] bg-slate-50 p-3">
+      <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-3">
         {preview ? (
-          <img src={preview} alt={label} className="mx-auto max-h-56 w-auto rounded-lg bg-white object-contain" />
+          <img src={preview} alt={label} className="mx-auto max-h-56 w-auto rounded-lg bg-[var(--surface)] object-contain" />
         ) : cameraOn ? (
           <video
             ref={videoRef}
@@ -143,7 +143,7 @@ export default function PhotoCapture({
                 <X className="h-4 w-4" />
                 Remove
               </Button>
-              <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-[var(--border)] bg-white px-4 py-2.5 text-sm font-semibold hover:bg-slate-50">
+              <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-[var(--surface-muted)]">
                 <Upload className="h-4 w-4" />
                 Replace
                 <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onFile} />
@@ -165,7 +165,7 @@ export default function PhotoCapture({
                 <Camera className="h-4 w-4" />
                 Take photo
               </Button>
-              <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-[var(--border)] bg-white px-4 py-2.5 text-sm font-semibold hover:bg-slate-50">
+              <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-[var(--surface-muted)]">
                 <Upload className="h-4 w-4" />
                 Upload
                 <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onFile} />
@@ -175,7 +175,7 @@ export default function PhotoCapture({
           {busy && <span className="self-center text-xs text-[var(--muted)]">Uploading…</span>}
         </div>
 
-        {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+        {error && <p className="mt-2 text-xs text-[var(--danger)]">{error}</p>}
       </div>
     </div>
   );

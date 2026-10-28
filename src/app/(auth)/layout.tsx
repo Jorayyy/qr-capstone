@@ -11,26 +11,26 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         />
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-t from-[var(--brand-strong)]/95 via-[var(--brand)]/75 to-[var(--brand-strong)]/40"
+          className="absolute inset-0 bg-gradient-to-t from-[var(--brand-strong)]/95 via-[var(--brand)]/80 to-[var(--brand-strong)]/30"
         />
 
         <div className="relative flex items-center gap-3">
           <img src="/logo.png" alt={`${SITE.shortName} logo`} className="h-11 w-11 object-contain" />
           <div>
-            <p className="font-display text-base font-bold leading-tight tracking-tight text-white sm:text-lg">
+            <p className="font-display text-base font-semibold leading-tight tracking-tight text-white sm:text-lg">
               {SITE.university}
             </p>
-            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
+            <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.2em] text-white/55">
               {SITE.motto}
             </p>
           </div>
         </div>
 
         <div className="relative mt-6 hidden lg:mt-0 lg:block">
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-[var(--accent)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--accent)]">
             Visitor Management
           </p>
-          <p className="mt-3 max-w-md font-display text-4xl font-bold leading-tight tracking-tight text-white">
+          <p className="mt-3 max-w-md font-display text-4xl font-semibold leading-tight tracking-tight text-white">
             Secure, QR-based campus entry.
           </p>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/70">
