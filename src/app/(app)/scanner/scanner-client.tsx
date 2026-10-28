@@ -2,12 +2,14 @@
 
 import { useCallback, useState, useTransition } from "react";
 import { Card, CardHeader, Input, Button, Badge, Select, buttonClass } from "@/components/ui";
-import { checkInAction, checkOutAction, addVisitStopAction, checkOutStopAction } from "@/lib/actions/visitors";
+import { checkInAction, checkOutAction, addVisitStopAction, checkInStopAction, checkOutStopAction } from "@/lib/actions/visitors";
+import { PH_TZ } from "@/lib/ph-time";
 import { QrCode, Search, CheckCircle, XCircle, LogIn, LogOut, Camera, X, Keyboard, MapPin, Plus, Upload } from "lucide-react";
 import { CameraViewport, type CameraState } from "@/components/camera-viewport";
 
 type VisitStopInfo = {
   id: string;
+  departmentId?: string;
   department?: { name: string } | null;
   building?: string | null;
   checkedInAt?: string | null;
@@ -34,11 +36,12 @@ type VisitResult = {
 
 function formatDate(d?: Date | string | null) {
   if (!d) return "—";
-  return new Date(d).toLocaleString("en-US", {
+  return new Date(d).toLocaleString("en-PH", {
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: PH_TZ,
   });
 }
 
@@ -182,7 +185,22 @@ export default function ScannerPage() {
         setResult(updated);
         setStopDept("");
         setStopBuilding("");
-        setFeedback("Stop logged!");
+        setFeedback(res.message);
+      } else {
+        setFeedback(res.message);
+      }
+    });
+  }
+
+  async function handleCheckInStop(stopId: string) {
+    if (!result) return;
+    setFeedback("");
+    startTransition(async () => {
+      const res = await checkInStopAction(stopId);
+      if (res.success) {
+        const updated = await fetch(`/api/visits/lookup?qr=${encodeURIComponent(result.qrCode ?? "")}`).then((r) => r.json());
+        setResult(updated);
+        setFeedback("Stop marked as visited.");
       } else {
         setFeedback(res.message);
       }
@@ -196,7 +214,9 @@ export default function ScannerPage() {
       if (res.success) {
         const updated = await fetch(`/api/visits/lookup?qr=${encodeURIComponent(result.qrCode ?? "")}`).then((r) => r.json());
         setResult(updated);
-        setFeedback("Stop checked out.");
+        setFeedback(res.message);
+      } else {
+        setFeedback(res.message);
       }
     });
   }
@@ -441,10 +461,18 @@ export default function ScannerPage() {
                             <MapPin className="h-3.5 w-3.5 text-slate-400" />
                             <span className="font-medium">{stop.department?.name || "Unknown"}</span>
                             {stop.building && <span className="text-xs text-[var(--muted)]">({stop.building})</span>}
-                            <span className="text-xs text-[var(--muted)]">{formatDate(stop.checkedInAt)}</span>
+                            {stop.checkedInAt && (
+                              <span className="text-xs text-[var(--muted)]">{formatDate(stop.checkedInAt)}</span>
+                            )}
                           </div>
                           {!stop.checkedInAt ? (
-                            <span className="text-xs text-[var(--muted)]">Not yet visited</span>
+                            <button
+                              onClick={() => handleCheckInStop(stop.id)}
+                              disabled={isPending}
+                              className="text-xs font-medium text-emerald-600 hover:underline disabled:opacity-50"
+                            >
+                              Mark arrived
+                            </button>
                           ) : !stop.checkedOutAt ? (
                             <button onClick={() => handleCheckoutStop(stop.id)} className="text-xs text-red-600 hover:underline">
                               Check Out
@@ -458,12 +486,22 @@ export default function ScannerPage() {
                   ) : (
                     <p className="text-xs text-[var(--muted)]">No stops logged yet.</p>
                   )}
+                  <p className="text-xs text-[var(--muted)]">
+                    Planned offices are listed above. Use the dropdown only for an unplanned stop.
+                  </p>
                   <div className="flex gap-2">
                     <Select value={stopDept} onChange={(e) => setStopDept(e.target.value)}>
                       <option value="">Select department</option>
-                      {departments.map((d) => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
-                      ))}
+                      {departments
+                        .filter(
+                          (d) =>
+                            !result.stops?.some(
+                              (stop) => stop.departmentId === d.id && !stop.checkedOutAt
+                            )
+                        )
+                        .map((d) => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
+                        ))}
                     </Select>
                     <Input value={stopBuilding} onChange={(e) => setStopBuilding(e.target.value)} placeholder="Building (optional)" className="flex-1" />
                     <Button onClick={handleAddStop} disabled={!stopDept || isPending}>

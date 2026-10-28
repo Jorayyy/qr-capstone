@@ -541,31 +541,66 @@ export async function addVisitStopAction(
       return { success: false, message: "The selected department is unavailable." };
     }
 
-    await db.visitStop.create({
-      data: {
+    const planned = await db.visitStop.findFirst({
+      where: {
         visitId: parsed.data.visitId,
         departmentId: parsed.data.departmentId,
-        building: parsed.data.building,
-        checkedInAt: new Date(),
-        notes: parsed.data.notes,
+        checkedInAt: null,
+        checkedOutAt: null,
       },
+      select: { id: true, building: true },
     });
+
+    if (planned) {
+      await db.visitStop.update({
+        where: { id: planned.id },
+        data: {
+          checkedInAt: new Date(),
+          building: parsed.data.building ?? planned.building,
+          ...(parsed.data.notes ? { notes: parsed.data.notes } : {}),
+        },
+      });
+    } else {
+      const openStop = await db.visitStop.findFirst({
+        where: {
+          visitId: parsed.data.visitId,
+          departmentId: parsed.data.departmentId,
+          checkedInAt: { not: null },
+          checkedOutAt: null,
+        },
+        select: { id: true },
+      });
+      if (openStop) {
+        return { success: false, message: "This office is already marked as visited." };
+      }
+
+      await db.visitStop.create({
+        data: {
+          visitId: parsed.data.visitId,
+          departmentId: parsed.data.departmentId,
+          building: parsed.data.building,
+          checkedInAt: new Date(),
+          notes: parsed.data.notes,
+        },
+      });
+    }
 
     await recordAudit({
       actorId: auth.user.userId,
       actorEmail: auth.user.email,
-      action: "VISIT_STOP_ADDED",
+      action: planned ? "VISIT_STOP_CHECKED_IN" : "VISIT_STOP_ADDED",
       result: "SUCCESS",
       targetType: "visit",
       targetId: parsed.data.visitId,
       ip: auth.ctx.ip,
       userAgent: auth.ctx.userAgent,
       requestId: auth.ctx.requestId,
-      meta: { departmentId: parsed.data.departmentId },
+      meta: { departmentId: parsed.data.departmentId, planned: Boolean(planned) },
     });
 
     revalidatePath("/scanner");
-    return { success: true, message: "Stop logged." };
+    revalidatePath("/visitors/[id]", "page");
+    return { success: true, message: planned ? "Stop marked as visited." : "Stop logged." };
   } catch (error) {
     console.error(
       JSON.stringify({
@@ -576,6 +611,64 @@ export async function addVisitStopAction(
       })
     );
     return { success: false, message: "Failed to log stop." };
+  }
+}
+
+export async function checkInStopAction(stopId: string): Promise<VisitActionState> {
+  const auth = await guard("visit:transition", "VISIT_STOP_CHECKED_IN", stopId);
+  if (!auth) return DENIED;
+
+  const id = uuidSchema.safeParse(stopId);
+  if (!id.success) return { success: false, message: "Invalid stop." };
+
+  try {
+    const stop = await db.visitStop.findUnique({
+      where: { id: id.data },
+      select: {
+        id: true,
+        visitId: true,
+        departmentId: true,
+        checkedInAt: true,
+        visit: { select: { status: true } },
+      },
+    });
+    if (!stop) return { success: false, message: "Stop not found." };
+    if (stop.checkedInAt) return { success: false, message: "Stop was already marked as visited." };
+    if (stop.visit.status !== "CHECKED_IN") {
+      return { success: false, message: "Check the visitor in before marking a stop." };
+    }
+
+    await db.visitStop.update({
+      where: { id: stop.id },
+      data: { checkedInAt: new Date() },
+    });
+
+    await recordAudit({
+      actorId: auth.user.userId,
+      actorEmail: auth.user.email,
+      action: "VISIT_STOP_CHECKED_IN",
+      result: "SUCCESS",
+      targetType: "visitStop",
+      targetId: stop.id,
+      ip: auth.ctx.ip,
+      userAgent: auth.ctx.userAgent,
+      requestId: auth.ctx.requestId,
+      meta: { visitId: stop.visitId, departmentId: stop.departmentId },
+    });
+
+    revalidatePath("/scanner");
+    revalidatePath("/visitors/[id]", "page");
+    return { success: true, message: "Stop marked as visited." };
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "CHECKIN_STOP_ERROR",
+        requestId: auth.ctx.requestId,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    );
+    return { success: false, message: "Failed to mark stop as visited." };
   }
 }
 
@@ -614,6 +707,7 @@ export async function checkOutStopAction(stopId: string): Promise<VisitActionSta
     });
 
     revalidatePath("/scanner");
+    revalidatePath("/visitors/[id]", "page");
     return { success: true, message: "Stop checked out." };
   } catch (error) {
     console.error(
