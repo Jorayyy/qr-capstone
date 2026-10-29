@@ -15,22 +15,32 @@ import {
 } from "lucide-react";
 import { cx, buttonClass, Avatar } from "@/components/ui";
 import { logoutAction } from "@/lib/actions/auth";
-import { can } from "@/lib/rbac";
+import { PORTAL_LABELS, type Portal } from "@/lib/portal";
 
-type NavItem = { href: string; label: string; icon: LucideIcon; exclude?: string[] };
+type NavItem = { href: string; label: string; icon: LucideIcon; exclude?: string[]; exact?: boolean };
 
-const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  // /visitors/register has its own entry below — without this it lit up both.
-  { href: "/visitors", label: "Visitors", icon: Users, exclude: ["/visitors/register"] },
-  { href: "/scanner", label: "Scan QR", icon: ScanLine },
-];
-
-const ADMIN_ITEMS: NavItem[] = [
-  { href: "/departments", label: "Departments", icon: Building2 },
-  { href: "/reports", label: "Reports", icon: FileBarChart },
-  { href: "/security", label: "Security", icon: ShieldCheck },
-];
+const NAV_ITEMS: Record<Portal, NavItem[]> = {
+  admin: [
+    { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/visitors", label: "Visitors", icon: Users, exclude: ["/admin/visitors/register"] },
+    { href: "/admin/visitors/register", label: "Register Walk-in", icon: UserPlus },
+    { href: "/admin/scanner", label: "Scan QR", icon: ScanLine },
+    { href: "/admin/departments", label: "Departments", icon: Building2 },
+    { href: "/admin/reports", label: "Reports", icon: FileBarChart },
+    { href: "/admin/security", label: "Security", icon: ShieldCheck },
+  ],
+  staff: [
+    { href: "/staff/visitors", label: "Visitors", icon: Users, exclude: ["/staff/visitors/register"] },
+    { href: "/staff/visitors/register", label: "Register Walk-in", icon: UserPlus },
+    { href: "/staff/scanner", label: "Scan QR", icon: ScanLine },
+    { href: "/staff/reports", label: "Reports", icon: FileBarChart },
+  ],
+  guard: [
+    { href: "/guard", label: "Scan QR", icon: ScanLine, exact: true },
+    { href: "/guard/visitors", label: "On-site Visitors", icon: Users, exclude: ["/guard/visitors/register"] },
+    { href: "/guard/visitors/register", label: "Register Walk-in", icon: UserPlus },
+  ],
+};
 
 function NavLink({
   item,
@@ -62,12 +72,12 @@ function NavLink({
 type SidebarProps = {
   userName?: string;
   userRole?: string;
+  portal: Portal;
 };
 
-export function Sidebar({ userName, userRole }: SidebarProps) {
+export function Sidebar({ userName, userRole, portal }: SidebarProps) {
   const pathname = usePathname();
-  const isAdmin = userRole === "ADMIN";
-  const mayRegister = userRole ? can(userRole, "visitor:write") : false;
+  const items = NAV_ITEMS[portal];
 
   return (
     <aside className="no-print flex h-full w-64 flex-col border-r border-[var(--border)] bg-[var(--surface)]">
@@ -91,34 +101,18 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
       <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
         <div>
           <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]/80">
-            Workspace
+            {PORTAL_LABELS[portal]}
           </p>
           <div className="space-y-1">
-            {NAV_ITEMS.map((item) => {
-              const active =
-                pathname.startsWith(item.href) &&
-                !(item.exclude ?? []).some((prefix) => pathname.startsWith(prefix));
+            {items.map((item) => {
+              const active = item.exact
+                ? pathname === item.href
+                : pathname.startsWith(item.href) &&
+                  !(item.exclude ?? []).some((prefix) => pathname.startsWith(prefix));
               return <NavLink key={item.href} item={item} active={active} />;
             })}
-
-            {mayRegister && (
-              <NavLink item={{ href: "/visitors/register", label: "Register Walk-in", icon: UserPlus }} active={pathname.startsWith("/visitors/register")} />
-            )}
           </div>
         </div>
-
-        {isAdmin && (
-          <div>
-            <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]/80">
-              Administration
-            </p>
-            <div className="space-y-1">
-              {ADMIN_ITEMS.map((item) => (
-                <NavLink key={item.href} item={item} active={pathname.startsWith(item.href)} />
-              ))}
-            </div>
-          </div>
-        )}
       </nav>
 
       <div className="border-t border-[var(--border)] p-3">

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { portalHome } from "@/lib/portal";
 import { buttonClass } from "@/components/ui";
 import { PublicShell, ACCENT_BUTTON } from "@/components/public-shell";
 import CampusMap from "@/components/campus-map";
@@ -45,7 +46,7 @@ const BAND = "border-y border-[var(--border)] bg-[var(--surface)]";
 
 export default async function Home() {
   const user = await getSession();
-  if (user) redirect("/dashboard");
+  if (user) redirect(portalHome(user.role));
 
   const departments = await db.department.findMany({
     where: { isActive: true },

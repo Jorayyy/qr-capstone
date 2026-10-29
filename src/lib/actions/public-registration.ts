@@ -11,6 +11,7 @@ import { isUniqueViolation, nextReferenceCode } from "@/lib/reference";
 import { resolveVisitWindow } from "@/lib/registration";
 import { PRIVACY_VERSION } from "@/lib/site-info";
 import { publicRegistrationSchema } from "@/lib/validation";
+import { revalidatePortals } from "@/lib/revalidate";
 
 export type PublicRegistrationState = {
   success: boolean;
@@ -189,7 +190,7 @@ export async function registerPublicAction(input: unknown): Promise<PublicRegist
       meta: { referenceCode, offices: data.offices.length, channel: "public", consentVersion: PRIVACY_VERSION },
     });
 
-    revalidatePath("/dashboard");
+    revalidatePortals();
     revalidatePath("/visitors");
 
     const passPath = `/pass/${qrCode}`;

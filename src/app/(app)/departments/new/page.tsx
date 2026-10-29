@@ -1,7 +1,8 @@
-import { requirePermission } from "@/lib/auth";
-import NewDepartmentForm from "./new-form";
+import { legacyRedirectTo } from "@/lib/portal-server";
+import { portalHomePath } from "@/lib/portal";
 
-export default async function NewDepartmentPage() {
-  await requirePermission("department:manage");
-  return <NewDepartmentForm />;
+export default function LegacyNewDepartmentPage() {
+  return legacyRedirectTo((portal) =>
+    portal === "admin" ? "/admin/departments/new" : portalHomePath(portal)
+  );
 }

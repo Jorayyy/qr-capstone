@@ -24,13 +24,13 @@ export default function NewDepartmentPage() {
           </div>
           <h2 className="text-lg font-semibold">Department Created!</h2>
           <div className="mt-6 flex gap-3 justify-center">
-            <Link href="/departments">
+            <Link href="/admin/departments">
               <Button variant="secondary">
                 <ArrowLeft className="h-4 w-4" />
                 Back to Departments
               </Button>
             </Link>
-            <Link href="/departments/new">
+            <Link href="/admin/departments/new">
               <Button>Add Another</Button>
             </Link>
           </div>
@@ -42,7 +42,7 @@ export default function NewDepartmentPage() {
   return (
     <div className="mx-auto max-w-lg">
       <div className="mb-4">
-        <Link href="/departments" className="text-sm text-[var(--muted)] hover:text-[var(--brand)]">
+        <Link href="/admin/departments" className="text-sm text-[var(--muted)] hover:text-[var(--brand)]">
           ← Back to Departments
         </Link>
       </div>

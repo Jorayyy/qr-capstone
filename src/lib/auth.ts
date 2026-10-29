@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { intFromEnv } from "@/lib/env";
 import { can, type Permission } from "@/lib/rbac";
+import { portalHome } from "@/lib/portal";
 
 export const SESSION_COOKIE = "vms-session";
 const LAST_SEEN_THROTTLE_MS = 60_000;
@@ -186,7 +187,7 @@ export async function requirePermission(...permissions: Permission[]): Promise<S
   const user = await getSession();
   if (!user) redirect("/login");
   const allowed = permissions.every((p) => can(user.role, p));
-  if (!allowed) redirect("/dashboard");
+  if (!allowed) redirect(portalHome(user.role));
   return user;
 }
 

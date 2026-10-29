@@ -1,7 +1,6 @@
-import { requirePermission } from "@/lib/auth";
-import RegisterVisitorForm from "./register-form";
+import { legacyRedirectTo } from "@/lib/portal-server";
+import { portalHref } from "@/lib/portal";
 
-export default async function RegisterVisitorPage() {
-  await requirePermission("visitor:write");
-  return <RegisterVisitorForm />;
+export default function LegacyRegisterVisitorPage() {
+  return legacyRedirectTo((portal) => portalHref(portal, "/visitors/register"));
 }

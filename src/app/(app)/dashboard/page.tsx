@@ -1,44 +1,6 @@
-import Link from "next/link";
-import { requirePermission } from "@/lib/auth";
-import { PageHeader, Button } from "@/components/ui";
-import { DashboardOverview } from "@/components/dashboard-overview";
-import { PH_TZ } from "@/lib/ph-time";
-import { QrCode, Plus } from "lucide-react";
+import { legacyRedirectTo } from "@/lib/portal-server";
+import { portalHomePath } from "@/lib/portal";
 
-export default async function DashboardPage() {
-  await requirePermission("visit:read");
-
-  const todayLabel = new Date().toLocaleDateString("en-PH", {
-    timeZone: PH_TZ,
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-
-  return (
-    <div>
-      <PageHeader
-        title="Dashboard"
-        subtitle={todayLabel}
-        actions={
-          <div className="flex gap-2">
-            <Link href="/visitors/register">
-              <Button>
-                <Plus className="h-4 w-4" />
-                Register Visitor
-              </Button>
-            </Link>
-            <Link href="/scanner">
-              <Button variant="secondary">
-                <QrCode className="h-4 w-4" />
-                Scan QR
-              </Button>
-            </Link>
-          </div>
-        }
-      />
-
-      <DashboardOverview />
-    </div>
-  );
+export default function LegacyDashboardPage() {
+  return legacyRedirectTo((portal) => portalHomePath(portal));
 }

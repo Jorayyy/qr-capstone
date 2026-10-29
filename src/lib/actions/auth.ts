@@ -23,6 +23,7 @@ import {
   verifyPassword,
 } from "@/lib/password";
 import { consumeRecoveryCode, decryptSecret, verifyTotp } from "@/lib/mfa";
+import { portalHome } from "@/lib/portal";
 import { changePasswordSchema, formString, loginSchema, mfaCodeSchema, safeCallbackUrl } from "@/lib/validation";
 
 export type LoginState =
@@ -226,7 +227,7 @@ export async function loginAction(
       requestId: ctx.requestId,
     });
     revalidatePath("/");
-    redirect(safeCallbackUrl(formString(formData, "callbackUrl")) ?? "/dashboard");
+    redirect(safeCallbackUrl(formString(formData, "callbackUrl")) ?? portalHome(user.role));
   } catch (error) {
     if (isRedirectError(error)) throw error;
     console.error(
@@ -281,7 +282,7 @@ export async function verifyMfaAction(
   try {
     const user = await db.user.findUnique({
       where: { id: pending.userId },
-      select: { id: true, email: true, mfaEnabled: true, mfaSecret: true, mfaRecoveryCodes: true, isActive: true },
+      select: { id: true, email: true, role: true, mfaEnabled: true, mfaSecret: true, mfaRecoveryCodes: true, isActive: true },
     });
     if (!user || !user.isActive || !user.mfaEnabled || !user.mfaSecret) {
       await revokePendingMfaSession(pending.id);
@@ -336,7 +337,7 @@ export async function verifyMfaAction(
       meta: usedRecovery ? { via: "recovery_code" } : { via: "totp" },
     });
     revalidatePath("/");
-    redirect(safeCallbackUrl(formString(formData, "callbackUrl")) ?? "/dashboard");
+    redirect(safeCallbackUrl(formString(formData, "callbackUrl")) ?? portalHome(user.role));
   } catch (error) {
     if (isRedirectError(error)) throw error;
     console.error(

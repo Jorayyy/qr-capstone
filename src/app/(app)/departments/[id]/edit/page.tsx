@@ -1,19 +1,14 @@
-import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
-import { requirePermission } from "@/lib/auth";
-import EditDepartmentForm from "./form";
+import { legacyRedirectTo } from "@/lib/portal-server";
+import { portalHomePath } from "@/lib/portal";
 
-export default async function EditDepartmentPage({
+export default async function LegacyEditDepartmentPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
 
-  await requirePermission("department:manage");
-
-  const department = await db.department.findUnique({ where: { id } });
-  if (!department) notFound();
-
-  return <EditDepartmentForm department={department} />;
+  return legacyRedirectTo((portal) =>
+    portal === "admin" ? `/admin/departments/${id}/edit` : portalHomePath(portal)
+  );
 }

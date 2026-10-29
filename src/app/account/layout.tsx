@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { portalHome } from "@/lib/portal";
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const user = await getSession();
@@ -15,7 +16,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
             <span className="font-display text-sm font-semibold tracking-tight">Account Settings</span>
           </div>
           <Link
-            href="/dashboard"
+            href={portalHome(user.role)}
             className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--accent)] hover:underline"
           >
             Back to app

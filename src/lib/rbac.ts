@@ -15,7 +15,7 @@ export const PERMISSIONS = {
   "users:manage": ["ADMIN"],
   "sessions:manage": ["ADMIN"],
   "audit:read": ["ADMIN", "SECURITY"],
-  "report:read": ["ADMIN"],
+  "report:read": ["ADMIN", "STAFF", "RECEPTIONIST"],
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;

@@ -1,7 +1,8 @@
-import { requirePermission } from "@/lib/auth";
-import ScannerClient from "./scanner-client";
+import { legacyRedirectTo } from "@/lib/portal-server";
+import { portalHref } from "@/lib/portal";
 
-export default async function ScannerPage() {
-  await requirePermission("visit:transition");
-  return <ScannerClient />;
+export default function LegacyScannerPage() {
+  return legacyRedirectTo((portal) =>
+    portal === "guard" ? "/guard" : portalHref(portal, "/scanner")
+  );
 }

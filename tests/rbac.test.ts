@@ -39,6 +39,12 @@ describe("permission matrix", () => {
     expect(can("STAFF", "audit:read")).toBe(false);
   });
 
+  it("staff can read reports but guards cannot", () => {
+    expect(can("STAFF", "report:read")).toBe(true);
+    expect(can("RECEPTIONIST", "report:read")).toBe(true);
+    expect(can("SECURITY", "report:read")).toBe(false);
+  });
+
   it("unknown roles hold nothing", () => {
     for (const permission of ALL_PERMISSIONS) {
       expect(can("HACKER", permission), permission).toBe(false);

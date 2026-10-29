@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
+import { PORTAL_LABELS, type Portal } from "@/lib/portal";
 
 type Props = {
   children: React.ReactNode;
   userName?: string;
   userRole?: string;
+  portal: Portal;
 };
 
 /**
@@ -16,7 +18,7 @@ type Props = {
  * The old shell always reserved 240 px for the sidebar, which left ~130 px of
  * usable width on a 375 px phone.
  */
-export function AppShell({ children, userName, userRole }: Props) {
+export function AppShell({ children, userName, userRole, portal }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -52,7 +54,7 @@ export function AppShell({ children, userName, userRole }: Props) {
           alt=""
           className="h-8 w-8 shrink-0 rounded-md bg-white object-contain p-0.5"
         />
-        <span className="truncate text-sm font-semibold tracking-tight">Visitor Management</span>
+        <span className="truncate text-sm font-semibold tracking-tight">{PORTAL_LABELS[portal]}</span>
         {userRole ? (
           <span className="ml-auto rounded-md bg-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] ring-1 ring-inset ring-white/15">
             {userRole}
@@ -62,7 +64,7 @@ export function AppShell({ children, userName, userRole }: Props) {
 
       {/* Desktop sidebar */}
       <div className="hidden shrink-0 print:hidden lg:block">
-        <Sidebar userName={userName} userRole={userRole} />
+        <Sidebar userName={userName} userRole={userRole} portal={portal} />
       </div>
 
       {/* Phone/tablet drawer */}
@@ -88,7 +90,7 @@ export function AppShell({ children, userName, userRole }: Props) {
             >
               <X className="h-5 w-5" />
             </button>
-            <Sidebar userName={userName} userRole={userRole} />
+            <Sidebar userName={userName} userRole={userRole} portal={portal} />
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import Link from "next/link";
 import QRCode from "qrcode";
 import {
   disableMfaAction,
@@ -288,12 +289,12 @@ function RecoveryCodes({
             Done
           </button>
         ) : (
-          <a
-            href="/dashboard"
+          <Link
+            href="/"
             className={buttonClass("primary")}
           >
             Continue to dashboard
-          </a>
+          </Link>
         )}
       </div>
     </div>

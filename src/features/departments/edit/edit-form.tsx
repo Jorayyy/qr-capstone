@@ -34,7 +34,7 @@ export default function EditDepartmentForm({ department }: { department: Departm
           </div>
           <h2 className="text-lg font-semibold">Department Updated!</h2>
           <div className="mt-6">
-            <Link href="/departments">
+            <Link href="/admin/departments">
               <Button>
                 <ArrowLeft className="h-4 w-4" />
                 Back to Departments
@@ -49,7 +49,7 @@ export default function EditDepartmentForm({ department }: { department: Departm
   return (
     <div className="mx-auto max-w-lg">
       <div className="mb-4">
-        <Link href="/departments" className="text-sm text-[var(--muted)] hover:text-[var(--brand)]">
+        <Link href="/admin/departments" className="text-sm text-[var(--muted)] hover:text-[var(--brand)]">
           ← Back to Departments
         </Link>
       </div>

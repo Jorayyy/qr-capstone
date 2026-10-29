@@ -26,14 +26,15 @@ Public:
 - `/office/[id]` - public office preview
 - `/privacy` - privacy notice
 
-Staff (`src/app/(app)/`):
+Role portals (page code lives in `src/features/**`, routes are thin re-exports):
 
-- `/dashboard`, `/visitors`, `/visitors/register`, `/visitors/[id]`
-- `/scanner` - requires `visit:transition`
-- `/departments`, `/departments/new`, `/departments/[id]/edit`
-- `/reports` - admin only
-- `/security` - security/audit tools
-- `/account/password`, `/account/security`
+- Admin (`src/app/admin/`): `/admin/dashboard`, `/admin/visitors`, `/admin/visitors/register`, `/admin/visitors/[id]`, `/admin/scanner`, `/admin/departments/*`, `/admin/reports`, `/admin/security`
+- Staff (`src/app/staff/`; STAFF + RECEPTIONIST): `/staff/visitors`, `/staff/visitors/register`, `/staff/visitors/[id]`, `/staff/scanner`, `/staff/reports`
+- Guard (`src/app/guard/`; SECURITY): `/guard` (scanner), `/guard/visitors` (on-site today), `/guard/visitors/register`
+
+- `src/app/(app)/` keeps only role-aware redirects from the old `/dashboard`, `/visitors`, `/scanner`, `/departments`, `/reports`, `/security` URLs plus `/reports/export`.
+- Admin keeps full access to every portal; other roles are bounced to their own home by `requirePortal()` (`src/lib/portal-server.ts`).
+- `/account/password`, `/account/security` stay outside the portals.
 
 API:
 
@@ -71,8 +72,10 @@ Server actions are in `src/lib/actions/visitors.ts` (`checkInAction`, `checkOutA
 - `src/lib/auth.ts`: `getSession`, `requireSession`, `requirePermission`, session revoke helpers.
 - Every server action/API route enforces its own permission; the UI is not the authority.
 - `visit:transition` covers scanner, visit transitions, and stop actions.
-- `visitor:delete`, `department:manage`, `users:manage`, `sessions:manage`, `report:read` are admin-only.
+- `visitor:delete`, `department:manage`, `users:manage`, `sessions:manage` are admin-only.
+- `report:read`: admin, staff, receptionist (read-only export); not security.
 - `visit:revoke-qr` and `audit:read`: admin/security.
+- Portal access: `src/lib/portal.ts` maps roles to portals (`ADMIN` -> admin, `SECURITY` -> guard, others -> staff); `requirePortal()` enforces it per layout.
 - The lookup API requires a logged-in session plus rate limits; it is not public.
 
 ## Time

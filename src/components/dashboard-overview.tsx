@@ -232,7 +232,7 @@ export async function DashboardOverview() {
           subtitle="Latest 10 registrations"
           action={
             <Link
-              href="/visitors"
+              href="/admin/visitors"
               className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--brand)] hover:underline"
             >
               View all
@@ -258,7 +258,7 @@ export async function DashboardOverview() {
                 {recentVisits.map((v) => (
                   <tr key={v.id}>
                     <td className="px-5 py-3">
-                      <Link href={`/visitors/${v.visitor.id}`} className="flex items-center gap-3">
+                      <Link href={`/admin/visitors/${v.visitor.id}`} className="flex items-center gap-3">
                         <Avatar name={`${v.visitor.firstName} ${v.visitor.lastName}`} />
                         <span className="font-medium">{`${v.visitor.firstName} ${v.visitor.lastName}`}</span>
                       </Link>

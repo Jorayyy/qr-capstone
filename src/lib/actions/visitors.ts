@@ -11,6 +11,7 @@ import { can, type Permission } from "@/lib/rbac";
 import { LIMITS, WINDOWS, rateLimit } from "@/lib/rate-limit";
 import { isUniqueViolation, nextReferenceCode } from "@/lib/reference";
 import { formString, registerVisitorSchema, uuidSchema } from "@/lib/validation";
+import { revalidatePortals } from "@/lib/revalidate";
 
 export type ActionState = {
   success: boolean;
@@ -285,7 +286,7 @@ export async function registerVisitorAction(
       },
     });
 
-    revalidatePath("/dashboard");
+    revalidatePortals();
     revalidatePath("/visitors");
 
     let emailSent = false;
@@ -375,7 +376,7 @@ export async function checkInAction(visitId: string): Promise<VisitActionState> 
       requestId: auth.ctx.requestId,
     });
 
-    revalidatePath("/dashboard");
+    revalidatePortals();
     revalidatePath("/scanner");
     revalidatePath("/visitors");
     revalidatePath("/visitors/[id]", "page");
@@ -435,7 +436,7 @@ export async function checkOutAction(visitId: string): Promise<VisitActionState>
       requestId: auth.ctx.requestId,
     });
 
-    revalidatePath("/dashboard");
+    revalidatePortals();
     revalidatePath("/scanner");
     revalidatePath("/visitors");
     revalidatePath("/visitors/[id]", "page");
@@ -484,7 +485,7 @@ export async function cancelVisitAction(visitId: string): Promise<VisitActionSta
       requestId: auth.ctx.requestId,
     });
 
-    revalidatePath("/dashboard");
+    revalidatePortals();
     revalidatePath("/scanner");
     revalidatePath("/visitors");
     revalidatePath("/visitors/[id]", "page");
@@ -750,7 +751,7 @@ export async function deleteVisitorAction(visitorId: string): Promise<VisitActio
     });
 
     revalidatePath("/visitors");
-    revalidatePath("/dashboard");
+    revalidatePortals();
     return { success: true, message: "Visitor deleted." };
   } catch (error) {
     console.error(

@@ -4,6 +4,7 @@ import { useActionState, useRef, useEffect, useState } from "react";
 import { Card, CardHeader, Input, Select, Button } from "@/components/ui";
 import PhotoCapture from "@/components/photo-capture";
 import { registerVisitorAction, type ActionState } from "@/lib/actions/visitors";
+import { portalHomePath, portalHref, type Portal } from "@/lib/portal";
 import { ArrowLeft, CheckCircle, Download, Printer } from "lucide-react";
 import Link from "next/link";
 import QRCode from "qrcode";
@@ -110,7 +111,10 @@ function QRCodeDisplay({ qrString, visitorName }: { qrString: string; visitorNam
   );
 }
 
-export default function RegisterVisitorPage() {
+export default function RegisterVisitorPage({ portal }: { portal: Portal }) {
+  const homeHref = portalHomePath(portal);
+  const homeLabel = portal === "admin" ? "Dashboard" : portal === "guard" ? "Scanner" : "Visitors";
+
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     registerVisitorAction,
     { success: false, message: "" }
@@ -158,13 +162,13 @@ export default function RegisterVisitorPage() {
           </div>
 
           <div className="mt-6 flex gap-3 justify-center">
-            <Link href="/dashboard">
+            <Link href={homeHref}>
               <Button variant="secondary">
                 <ArrowLeft className="h-4 w-4" />
-                Dashboard
+                {homeLabel}
               </Button>
             </Link>
-            <Link href="/visitors/register">
+            <Link href={portalHref(portal, "/visitors/register")}>
               <Button>Register Another</Button>
             </Link>
           </div>
@@ -176,8 +180,8 @@ export default function RegisterVisitorPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-4">
-        <Link href="/dashboard" className="text-sm text-[var(--muted)] hover:text-[var(--brand)]">
-          ← Back to Dashboard
+        <Link href={homeHref} className="text-sm text-[var(--muted)] hover:text-[var(--brand)]">
+          ← Back to {homeLabel}
         </Link>
       </div>
 

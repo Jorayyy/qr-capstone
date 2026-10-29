@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { safeCallbackUrl } from "@/lib/validation";
+import { portalHome } from "@/lib/portal";
 import { ArrowLeft } from "lucide-react";
 import { LoginForm } from "./login-form";
 
@@ -14,7 +15,7 @@ export default async function LoginPage({
   const safeCallback = safeCallbackUrl(callbackUrl);
 
   const user = await getSession();
-  if (user) redirect(safeCallback ?? "/dashboard");
+  if (user) redirect(safeCallback ?? portalHome(user.role));
 
   return (
     <>

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth";
 
 /**
- * Optimistic route protection (Next.js 16 "proxy" — replaces middleware).
+ * Optimistic route protection (Next.js 16 "proxy" - replaces middleware).
  *
  * This only checks for the *presence* of a session cookie to redirect
  * anonymous visitors early. It is a UX layer, NOT a security boundary:
@@ -21,7 +21,12 @@ const PROTECTED_PREFIXES = [
   "/security",
   "/reports",
   "/account",
+  "/admin",
+  "/staff",
+  "/guard",
 ];
+
+const PORTALS = ["admin", "staff", "guard"] as const;
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -37,9 +42,27 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  const requestHeaders = new Headers(request.headers);
+  const portal = PORTALS.find(
+    (value) => pathname === `/${value}` || pathname.startsWith(`/${value}/`)
+  );
+  if (portal) requestHeaders.set("x-portal", portal);
+  else requestHeaders.delete("x-portal");
+
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/visitors/:path*", "/departments/:path*", "/scanner/:path*", "/security/:path*", "/reports/:path*", "/account/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/visitors/:path*",
+    "/departments/:path*",
+    "/scanner/:path*",
+    "/security/:path*",
+    "/reports/:path*",
+    "/account/:path*",
+    "/admin/:path*",
+    "/staff/:path*",
+    "/guard/:path*",
+  ],
 };
