@@ -15,9 +15,7 @@ export function portalForRole(role: string | null | undefined): Portal {
 
 /** Landing page of each portal. */
 export function portalHomePath(portal: Portal): string {
-  if (portal === "admin") return "/admin/dashboard";
-  if (portal === "guard") return "/guard";
-  return "/staff/visitors";
+  return `/${portal}/dashboard`;
 }
 
 /** Where a role lands after signing in. */

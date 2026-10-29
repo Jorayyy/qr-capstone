@@ -30,12 +30,14 @@ const NAV_ITEMS: Record<Portal, NavItem[]> = {
     { href: "/admin/security", label: "Security", icon: ShieldCheck },
   ],
   staff: [
+    { href: "/staff/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/staff/visitors", label: "Visitors", icon: Users, exclude: ["/staff/visitors/register"] },
     { href: "/staff/visitors/register", label: "Register Walk-in", icon: UserPlus },
     { href: "/staff/scanner", label: "Scan QR", icon: ScanLine },
     { href: "/staff/reports", label: "Reports", icon: FileBarChart },
   ],
   guard: [
+    { href: "/guard/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/guard", label: "Scan QR", icon: ScanLine, exact: true },
     { href: "/guard/visitors", label: "On-site Visitors", icon: Users, exclude: ["/guard/visitors/register"] },
     { href: "/guard/visitors/register", label: "Register Walk-in", icon: UserPlus },

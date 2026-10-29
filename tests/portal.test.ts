@@ -16,9 +16,9 @@ describe("portal mapping", () => {
 
   it("gives each role its own landing page", () => {
     expect(portalHome("ADMIN")).toBe("/admin/dashboard");
-    expect(portalHome("SECURITY")).toBe("/guard");
-    expect(portalHome("STAFF")).toBe("/staff/visitors");
-    expect(portalHome("RECEPTIONIST")).toBe("/staff/visitors");
+    expect(portalHome("SECURITY")).toBe("/guard/dashboard");
+    expect(portalHome("STAFF")).toBe("/staff/dashboard");
+    expect(portalHome("RECEPTIONIST")).toBe("/staff/dashboard");
   });
 
   it("builds portal-scoped links", () => {
@@ -27,6 +27,6 @@ describe("portal mapping", () => {
     expect(portalHref("guard", "/visitors/abc")).toBe("/guard/visitors/abc");
     expect(portalHref("admin")).toBe("/admin");
     expect(portalHref("guard", "/")).toBe("/guard");
-    expect(portalHomePath("staff")).toBe("/staff/visitors");
+    expect(portalHomePath("staff")).toBe("/staff/dashboard");
   });
 });

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { Card, CardHeader, EmptyState, Avatar, cx } from "@/components/ui";
 import { RelativeTime } from "@/components/relative-time";
 import { manilaMidnight, manilaParts } from "@/lib/ph-time";
+import { portalHref, type Portal } from "@/lib/portal";
 import { ArrowRight, Building2, CalendarClock, CheckCircle2, Users } from "lucide-react";
 
 const DAY_START_HOUR = 7;
@@ -73,8 +74,8 @@ function ArrivalsChart({
   );
 }
 
-/** Shared visitor overview — identical for every role and reused by /dashboard and /security. */
-export async function DashboardOverview() {
+/** Shared visitor overview — reused by the admin, staff and guard dashboards. */
+export async function DashboardOverview({ portal = "admin" }: { portal?: Portal }) {
   const nowParts = manilaParts(new Date());
   const today = manilaMidnight(nowParts.year, nowParts.month, nowParts.day);
   const tomorrow = manilaMidnight(nowParts.year, nowParts.month, nowParts.day + 1);
@@ -134,6 +135,7 @@ export async function DashboardOverview() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 6);
   const occupancyMax = Math.max(1, ...occupancy.map((o) => o.count));
+  const visitorsHref = portalHref(portal, "/visitors");
 
   return (
     <>
@@ -232,7 +234,7 @@ export async function DashboardOverview() {
           subtitle="Latest 10 registrations"
           action={
             <Link
-              href="/admin/visitors"
+              href={visitorsHref}
               className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--brand)] hover:underline"
             >
               View all
@@ -258,10 +260,17 @@ export async function DashboardOverview() {
                 {recentVisits.map((v) => (
                   <tr key={v.id}>
                     <td className="px-5 py-3">
-                      <Link href={`/admin/visitors/${v.visitor.id}`} className="flex items-center gap-3">
-                        <Avatar name={`${v.visitor.firstName} ${v.visitor.lastName}`} />
-                        <span className="font-medium">{`${v.visitor.firstName} ${v.visitor.lastName}`}</span>
-                      </Link>
+                      {portal === "guard" ? (
+                        <span className="flex items-center gap-3">
+                          <Avatar name={`${v.visitor.firstName} ${v.visitor.lastName}`} />
+                          <span className="font-medium">{`${v.visitor.firstName} ${v.visitor.lastName}`}</span>
+                        </span>
+                      ) : (
+                        <Link href={portalHref(portal, `/visitors/${v.visitor.id}`)} className="flex items-center gap-3">
+                          <Avatar name={`${v.visitor.firstName} ${v.visitor.lastName}`} />
+                          <span className="font-medium">{`${v.visitor.firstName} ${v.visitor.lastName}`}</span>
+                        </Link>
+                      )}
                     </td>
                     <td className="px-5 py-3 text-[var(--muted)]">{v.department.name}</td>
                     <td className="px-5 py-3 text-[var(--muted)]">{v.purpose.replace("_", " ")}</td>

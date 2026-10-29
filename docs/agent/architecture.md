@@ -29,8 +29,8 @@ Public:
 Role portals (page code lives in `src/features/**`, routes are thin re-exports):
 
 - Admin (`src/app/admin/`): `/admin/dashboard`, `/admin/visitors`, `/admin/visitors/register`, `/admin/visitors/[id]`, `/admin/scanner`, `/admin/departments/*`, `/admin/reports`, `/admin/security`
-- Staff (`src/app/staff/`; STAFF + RECEPTIONIST): `/staff/visitors`, `/staff/visitors/register`, `/staff/visitors/[id]`, `/staff/scanner`, `/staff/reports`
-- Guard (`src/app/guard/`; SECURITY): `/guard` (scanner), `/guard/visitors` (on-site today), `/guard/visitors/register`
+- Staff (`src/app/staff/`; STAFF + RECEPTIONIST): `/staff/dashboard`, `/staff/visitors`, `/staff/visitors/register`, `/staff/visitors/[id]`, `/staff/scanner`, `/staff/reports`
+- Guard (`src/app/guard/`; SECURITY): `/guard/dashboard`, `/guard` (scanner), `/guard/visitors` (on-site today), `/guard/visitors/register`
 
 - `src/app/(app)/` keeps only role-aware redirects from the old `/dashboard`, `/visitors`, `/scanner`, `/departments`, `/reports`, `/security` URLs plus `/reports/export`.
 - Admin keeps full access to every portal; other roles are bounced to their own home by `requirePortal()` (`src/lib/portal-server.ts`).
