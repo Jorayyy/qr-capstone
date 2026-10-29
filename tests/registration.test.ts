@@ -184,6 +184,45 @@ describe("parseIdCardText", () => {
     expect(result.dateOfBirth).toBe("2000-01-15");
   });
 
+  it("reads an EVSU student ID", () => {
+    const result = parseIdCardText(`
+      EASTERN VISAYAS STATE UNIVERSITY
+      Tacloban City, Leyte
+      DELA CRUZ, JUAN P.
+      BS INFORMATION TECHNOLOGY
+      STUDENT ID NO. 2023-00123
+    `);
+    expect(result).toEqual({
+      lastName: "Dela Cruz",
+      firstName: "Juan",
+      middleName: "P",
+      idType: "STUDENT_ID",
+      idNumber: "2023-00123",
+    });
+  });
+
+  it("fills a generic ID with a free-order name and labelled number", () => {
+    const result = parseIdCardText(`
+      NORTHWIND TRADING CORPORATION
+      JUAN DELA CRUZ
+      ID NUMBER: CT-45821
+    `);
+    expect(result.lastName).toBe("Dela Cruz");
+    expect(result.firstName).toBe("Juan");
+    expect(result.idNumber).toBe("CT-45821");
+    expect(result.idType).toBe("OTHER");
+  });
+
+  it("does not mistake the school heading for the visitor name", () => {
+    const result = parseIdCardText(`
+      EASTERN VISAYAS STATE UNIVERSITY
+      MARIA SANTOS
+      ID NO. 2024-00987
+    `);
+    expect(result.firstName).toBe("Maria");
+    expect(result.lastName).toBe("Santos");
+  });
+
   it("returns an empty result instead of guessing", () => {
     expect(parseIdCardText("no readable text")).toEqual({});
   });

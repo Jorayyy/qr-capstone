@@ -170,7 +170,6 @@ export const publicRegistrationSchema = z
     firstName: requiredText(100, "First name"),
     middleName: optionalText(100),
     lastName: requiredText(100, "Last name"),
-    dateOfBirth: optionalIsoDate,
     email: emailField,
     phone: requiredText(32, "Contact number"),
     idType: z.enum(ID_TYPES),

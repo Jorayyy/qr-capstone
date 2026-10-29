@@ -74,7 +74,13 @@ export function resolveVisitWindow(input: {
   return { ok: true, window: { validFrom: from.start, validUntil: until.end } };
 }
 
-export type OcrIdType = "NATIONAL_ID" | "PASSPORT" | "DRIVERS_LICENSE" | "UMID";
+export type OcrIdType =
+  | "NATIONAL_ID"
+  | "PASSPORT"
+  | "DRIVERS_LICENSE"
+  | "UMID"
+  | "STUDENT_ID"
+  | "OTHER";
 
 export type OcrResult = {
   firstName?: string;
@@ -96,6 +102,13 @@ const NAME_STOPWORDS = new Set([
   "transportation", "office", "driver", "card", "identification", "philippines", "philippine",
   "number", "no", "street", "avenue", "ave", "road", "barangay", "brgy", "city", "province",
   "municipality", "leyte", "tacloban", "visitor", "passport", "umid", "capital",
+  "university", "college", "institute", "campus", "school", "academy", "eastern",
+  "visayas", "student", "faculty", "employee", "company", "corporation", "inc",
+  "course", "program", "year", "section", "semester", "academic", "bachelor",
+  "science", "information", "technology", "engineering", "education", "business",
+  "accountancy", "nursing", "criminology", "hospitality", "management",
+  "administration", "government", "republic", "id", "control", "holder",
+  "cardholder", "of", "the", "and", "in",
 ]);
 
 const DIGIT_CONFUSIONS: Record<string, string> = {
@@ -270,6 +283,43 @@ const FULL_NAME_HEADER = /(?:last\s*name|surname)[.,:\s]+(?:first\s*name|given\s
 const SURNAME_LABEL = /^(?:surname|last\s*name|apelyido)\b/i;
 const GIVEN_LABEL = /^(?:given\s*name|first\s*name|pangalan)\b/i;
 const MIDDLE_LABEL = /^(?:middle\s*name|gitnang\s*apelyido)\b/i;
+const GENERIC_NAME_LABEL = /^(?:full\s*name|name|pangalan|student\s*name|holder(?:'s)?\s*name|cardholder)\b/i;
+
+const NAME_SUFFIXES = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
+const INSTITUTION_WORDS =
+  /\b(?:university|college|institute|campus|school|academy|republic|government|city|municipality|province|barangay|street|address|course|program|student|employee|company|corporation|department|office|semester|bachelor|science|technology)\b/i;
+
+/** "Juan Dela Cruz" -> last name Dela Cruz, first Juan (no comma on the card). */
+function parseFreeName(tokens: string[]): ParsedName | null {
+  if (tokens.length < 2) return null;
+
+  let split = tokens.length - 1;
+  if (NAME_SUFFIXES.has(tokens[split].toLowerCase())) split -= 1;
+  while (split > 1 && NAME_PARTICLES.has(tokens[split - 1].toLowerCase())) split -= 1;
+
+  const given = tokens.slice(0, split);
+  const last = tokens.slice(split);
+  if (given.length === 0 || last.length === 0) return null;
+
+  const { first, middle } = splitGivenNames(given);
+  return {
+    lastName: titleCase(last.join(" ")),
+    firstName: titleCase(first),
+    ...(middle ? { middleName: titleCase(middle) } : {}),
+  };
+}
+
+/** Any name line, comma-separated or free-order. */
+function parseNameValue(value: string): ParsedName | null {
+  const cleaned = value.replace(/[^A-Za-zA`A�'.,\-\s]/g, " ").replace(/\s+/g, " ").trim();
+  if (!cleaned) return null;
+  if (cleaned.includes(",")) return parseCommaName(cleaned);
+
+  const tokens = splitNameTokens(cleaned);
+  if (tokens.length < 2 || tokens.length > 6) return null;
+  if (!tokens.every((token, index) => isNameToken(token, index))) return null;
+  return parseFreeName(tokens);
+}
 
 function isLabelLike(value: string): boolean {
   return (
@@ -303,6 +353,16 @@ function findCommaName(lines: string[]): ParsedName | null {
   return null;
 }
 
+/** Last resort: the first line that reads like a person's name, whatever the layout. */
+function findLooseName(lines: string[]): ParsedName | null {
+  for (const line of lines) {
+    if (INSTITUTION_WORDS.test(line)) continue;
+    const parsed = parseNameValue(line);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+
 function valueAfterLabel(lines: string[], label: RegExp): string | undefined {
   for (let i = 0; i < lines.length; i += 1) {
     const match = lines[i].match(label);
@@ -321,6 +381,12 @@ function valueAfterLabel(lines: string[], label: RegExp): string | undefined {
 }
 
 function parseLabelledName(lines: string[]): ParsedName | null {
+  const genericValue = valueAfterLabel(lines, GENERIC_NAME_LABEL);
+  if (genericValue) {
+    const parsed = parseNameValue(genericValue);
+    if (parsed) return parsed;
+  }
+
   const lastValue = valueAfterLabel(lines, SURNAME_LABEL);
   const givenValue = valueAfterLabel(lines, GIVEN_LABEL);
   if (!lastValue || !givenValue) return null;
@@ -359,6 +425,9 @@ function detectIdType(text: string): OcrIdType | undefined {
     return "NATIONAL_ID";
   }
   if (/\bpassport\b|paseport/i.test(normalized)) return "PASSPORT";
+  if (/\bstudent\b|\bevsu\b|eastern\s+visayas|\buniversity\b|\bcollege\b/i.test(normalized)) {
+    return "STUDENT_ID";
+  }
   return undefined;
 }
 
@@ -386,7 +455,35 @@ function parsePassportNumber(text: string): string | undefined {
   return candidate ? candidate[1].toUpperCase() : undefined;
 }
 
-function extractIdNumber(text: string, type?: OcrIdType): { value: string; type: OcrIdType } | undefined {
+const ID_NUMBER_LABEL =
+  /\b(?:student\s*(?:id|no\.?|number)|school\s*id|employee\s*(?:id|no\.?|number)|id\s*(?:no\.?|number|#)|identification\s*(?:no\.?|number)|control\s*(?:no\.?|number)|card\s*(?:no\.?|number)|sss\s*(?:no\.?|number)|tin\s*(?:no\.?|number)|prc\s*(?:no\.?|number)|postal\s*id|umid\s*(?:no\.?|number))\b/i;
+const GENERIC_ID_RE = /\b([A-Z]{2,8}(?:[- ]\d{2,12})+|\d{4}[- ]\d{4,10}|\d{6,14})\b/g;
+
+/** Keeps one plausible ID token; rejects dates, phone numbers and bare years. */
+function pickIdToken(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+
+  for (const raw of value.split(/\s+/)) {
+    const cleaned = raw.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9-]+$/g, "");
+    if (!cleaned) continue;
+
+    const candidate = /[A-Za-z]/.test(cleaned) ? cleaned : fixDigits(cleaned);
+    const compact = candidate.replace(/[^A-Za-z0-9]/g, "");
+    const digits = candidate.replace(/\D/g, "");
+    if (compact.length < 4 || compact.length > 24 || digits.length < 4) continue;
+    if (/^\d{4}$/.test(compact)) continue;
+    if (/^09\d{9}$/.test(compact)) continue;
+    if (parseDateToken(candidate)) continue;
+    return candidate.toUpperCase();
+  }
+  return undefined;
+}
+
+function extractIdNumber(
+  text: string,
+  type?: OcrIdType,
+  lines: string[] = []
+): { value: string; type: OcrIdType } | undefined {
   if (type === "DRIVERS_LICENSE" || /driver'?s?\s+licen[cs]e|licen[cs]e\s*(?:no\.?|number)/i.test(text)) {
     const license = parseLicenseNumber(text);
     if (license) return { value: license, type: "DRIVERS_LICENSE" };
@@ -413,12 +510,23 @@ function extractIdNumber(text: string, type?: OcrIdType): { value: string; type:
   }
 
   const license = parseLicenseNumber(text);
-  return license ? { value: license, type: "DRIVERS_LICENSE" } : undefined;
+  if (license) return { value: license, type: "DRIVERS_LICENSE" };
+
+  const labelled = pickIdToken(valueAfterLabel(lines, ID_NUMBER_LABEL));
+  if (labelled) return { value: labelled, type: type ?? "OTHER" };
+
+  for (const match of text.matchAll(GENERIC_ID_RE)) {
+    const generic = pickIdToken(match[1]);
+    if (generic) return { value: generic, type: type ?? "OTHER" };
+  }
+
+  return undefined;
 }
 
 /**
- * Best-effort OCR extraction from a Philippine ID (PhilSys, passport, UMID,
- * driver's licence). Anything uncertain is left blank so the visitor types it.
+ * Best-effort OCR extraction from any ID (PhilSys, passport, UMID, driver's
+ * licence, student/school/company cards). Anything uncertain is left blank so
+ * the visitor types it.
  */
 export function parseIdCardText(raw: string): OcrResult {
   const text = raw.replace(/\r/g, "\n");
@@ -431,7 +539,7 @@ export function parseIdCardText(raw: string): OcrResult {
   const idType = detectIdType(text);
   if (idType) result.idType = idType;
 
-  const idNumber = extractIdNumber(text, idType);
+  const idNumber = extractIdNumber(text, idType, lines);
   if (idNumber) {
     result.idType = idNumber.type;
     result.idNumber = idNumber.value;
@@ -454,8 +562,7 @@ export function parseIdCardText(raw: string): OcrResult {
     }
   }
 
-  const hasHeader = lines.some((line) => FULL_NAME_HEADER.test(line));
-  const name = findCommaName(lines) ?? (hasHeader ? null : parseLabelledName(lines));
+  const name = findCommaName(lines) ?? parseLabelledName(lines) ?? findLooseName(lines);
   if (name) Object.assign(result, name);
 
   return result;

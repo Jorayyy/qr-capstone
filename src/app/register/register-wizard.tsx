@@ -102,7 +102,6 @@ export default function RegisterWizard({ departments }: { departments: Departmen
     firstName: "",
     middleName: "",
     lastName: "",
-    dateOfBirth: "",
     email: "",
     phone: "",
     idType: "NATIONAL_ID",
@@ -148,7 +147,6 @@ export default function RegisterWizard({ departments }: { departments: Departmen
       firstName: fields.firstName || current.firstName,
       middleName: fields.middleName || current.middleName,
       lastName: fields.lastName || current.lastName,
-      dateOfBirth: fields.dateOfBirth || current.dateOfBirth,
       idType: fields.idType || current.idType,
       idNumber: fields.idNumber || current.idNumber,
     }));
@@ -237,7 +235,6 @@ export default function RegisterWizard({ departments }: { departments: Departmen
       firstName: form.firstName.trim(),
       middleName: form.middleName.trim() || undefined,
       lastName: form.lastName.trim(),
-      dateOfBirth: form.dateOfBirth || undefined,
       email: form.email.trim(),
       phone: form.phone.trim(),
       idType: form.idType,
@@ -280,7 +277,6 @@ export default function RegisterWizard({ departments }: { departments: Departmen
       firstName: "",
       middleName: "",
       lastName: "",
-      dateOfBirth: "",
       email: "",
       phone: "",
       idType: "NATIONAL_ID",
@@ -548,10 +544,6 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                 <div>
                   <label className="label" htmlFor="lastName">Last name *</label>
                   <Input id="lastName" value={form.lastName} onChange={(event) => setField("lastName", event.target.value)} autoComplete="family-name" />
-                </div>
-                <div>
-                  <label className="label" htmlFor="dateOfBirth">Date of birth</label>
-                  <Input id="dateOfBirth" type="date" value={form.dateOfBirth} onChange={(event) => setField("dateOfBirth", event.target.value)} />
                 </div>
                 <div>
                   <label className="label" htmlFor="phone">Contact number *</label>
@@ -860,10 +852,6 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                   <div className="sm:col-span-2">
                     <dt className="text-xs text-[var(--muted)]">Full name</dt>
                     <dd className="font-semibold">{form.firstName} {form.middleName} {form.lastName}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-[var(--muted)]">Date of birth</dt>
-                    <dd className="font-semibold">{form.dateOfBirth ? formatDate(form.dateOfBirth) : "—"}</dd>
                   </div>
                   <div>
                     <dt className="text-xs text-[var(--muted)]">Contact</dt>
