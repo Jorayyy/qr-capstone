@@ -88,7 +88,7 @@ Known gap: `src/app/checkin/checkin-form.tsx` formats the confirmation time with
 ## Registration and OCR
 
 - `src/lib/registration.ts` exports `parseIdCardText` and `filterOcrTextByConfidence`.
-- Parser is intentionally strict: name headers, DOB label windows, calendar validation, expiration rejection, ID type detection, PhilSys/UMID/passport/LTO handling, OCR digit corrections.
+- Parser is intentionally strict: name headers, free-order/anchor name detection, date rejection, ID type detection (incl. student/LRN), PhilSys/UMID/passport/LTO handling, generic ID fallback, OCR digit corrections.
 - `tests/registration.test.ts` covers the parser and OCR confidence filtering. Keep tests green; do not loosen extraction without new cases.
 - IDs and photos are PII; never log raw values.
 

@@ -10,6 +10,50 @@ const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
 
 type Status = "idle" | "uploading" | "reading" | "done" | "error";
 
+function nameParts(result: OcrResult): number {
+  return [result.firstName, result.middleName, result.lastName].filter(Boolean).length;
+}
+
+/** Prefer the pass that read the most complete name, filling gaps from the other. */
+function mergeResults(raw: OcrResult, filtered: OcrResult): OcrResult {
+  const primary = nameParts(filtered) >= nameParts(raw) ? filtered : raw;
+  const fallback = primary === filtered ? raw : filtered;
+
+  return {
+    firstName: primary.firstName ?? fallback.firstName,
+    middleName: primary.middleName ?? fallback.middleName,
+    lastName: primary.lastName ?? fallback.lastName,
+    idType: primary.idType ?? fallback.idType,
+    idNumber: primary.idNumber ?? fallback.idNumber,
+  };
+}
+
+/** Upscale and boost contrast so small card text survives Tesseract. */
+async function enhanceImage(file: File): Promise<Blob> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const longest = Math.max(bitmap.width, bitmap.height);
+    const scale = longest < 1600 ? Math.min(3, 1600 / longest) : 1;
+    const width = Math.round(bitmap.width * scale);
+    const height = Math.round(bitmap.height * scale);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+
+    ctx.filter = "grayscale(1) contrast(1.35)";
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.95));
+    return blob ?? file;
+  } catch {
+    return file;
+  }
+}
+
 /**
  * Captures or uploads the ID front side, stores it privately, and runs
  * Tesseract OCR in the browser. Failure is never fatal — the visitor keeps
@@ -63,9 +107,11 @@ export default function IdScan({
         },
       });
       try {
-        const { data } = await worker.recognize(file, {}, { text: true, tsv: true });
-        const confident = parseIdCardText(filterOcrTextByConfidence(data.tsv));
-        onExtract({ ...parseIdCardText(data.text), ...confident });
+        const enhanced = await enhanceImage(file);
+        const { data } = await worker.recognize(enhanced, {}, { text: true, tsv: true });
+        const raw = parseIdCardText(data.text);
+        const filtered = parseIdCardText(filterOcrTextByConfidence(data.tsv));
+        onExtract(mergeResults(raw, filtered));
         setStatus("done");
         setMessage("We filled in what we could read. Please check every field.");
       } finally {

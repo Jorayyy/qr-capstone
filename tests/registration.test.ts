@@ -107,7 +107,6 @@ describe("parseIdCardText", () => {
       middleName: "Santos",
       idType: "NATIONAL_ID",
       idNumber: "1234 5678 9012",
-      dateOfBirth: "2000-01-15",
     });
   });
 
@@ -143,19 +142,18 @@ describe("parseIdCardText", () => {
       lastName: "Andrade",
       firstName: "Mark Jory",
       middleName: "Abella",
-      dateOfBirth: "2001-05-05",
       idType: "DRIVERS_LICENSE",
       idNumber: "H02-26-000556",
     });
   });
 
-  it("never treats an expiration date as the birth date", () => {
+  it("does not treat birth or expiration dates as the ID number", () => {
     const result = parseIdCardText(`
       DRIVER'S LICENSE
       Date of Birth 2001/05/05
       Expiration Date 2030/05/05
     `);
-    expect(result.dateOfBirth).toBe("2001-05-05");
+    expect(result.idNumber).toBeUndefined();
   });
 
   it("filters faint OCR lines before parsing", () => {
@@ -181,7 +179,6 @@ describe("parseIdCardText", () => {
     `);
     expect(result.lastName).toBe("Dela Cruz");
     expect(result.firstName).toBe("Maria");
-    expect(result.dateOfBirth).toBe("2000-01-15");
   });
 
   it("reads an EVSU student ID", () => {
@@ -221,6 +218,31 @@ describe("parseIdCardText", () => {
     `);
     expect(result.firstName).toBe("Maria");
     expect(result.lastName).toBe("Santos");
+  });
+
+  it("reads a school ID and ignores the school's own details", () => {
+    const result = parseIdCardText(`
+      SNHS
+      SAGKAHAN NATIONAL HIGH SCHOOL
+      Brgy. 64 Bliss Sagkahan, Tacloban City
+      School ID: 303528
+      BAE ABELLA EE
+      JUNIOR HIGH SCHOOL
+      JIEZRELL C. ABELLA
+      Student
+      LRN: 124245160026
+      Grade 10 - LUBI-LUBI
+      SCHOOL YEAR 2026-2027
+      MA. DELIA E. SORIA Dev. EdD
+      School Principal IV
+    `);
+    expect(result).toEqual({
+      firstName: "Jiezrell",
+      middleName: "C",
+      lastName: "Abella",
+      idType: "STUDENT_ID",
+      idNumber: "1242 4516 0026",
+    });
   });
 
   it("returns an empty result instead of guessing", () => {

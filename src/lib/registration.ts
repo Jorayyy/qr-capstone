@@ -86,7 +86,6 @@ export type OcrResult = {
   firstName?: string;
   middleName?: string;
   lastName?: string;
-  dateOfBirth?: string;
   idType?: OcrIdType;
   idNumber?: string;
 };
@@ -184,37 +183,6 @@ function parseDateToken(token: string): string | undefined {
   return undefined;
 }
 
-const DATE_NUMBER_RE = /(?:^|[^0-9A-Za-z])([\dOoQqIliSsBbZzG¢©]{1,4}[/.-][\dOoQqIliSsBbZzG¢©]{1,2}[/.-][\dOoQqIliSsBbZzG¢©]{1,4})(?:$|[^0-9A-Za-z])/g;
-const MONTH_NAME_RE = /(?:^|[^A-Za-z])([A-Za-z]{3,9})\.?\s+(\d{1,2}),?\s+(\d{4})(?:$|[^0-9])/;
-const DAY_MONTH_RE = /(?:^|[^A-Za-z0-9])(\d{1,2})\s+([A-Za-z]{3,9})\.?,?\s+(\d{4})(?:$|[^0-9])/;
-
-function extractDate(value: string): string | undefined {
-  for (const match of value.matchAll(DATE_NUMBER_RE)) {
-    const parsed = parseDateToken(fixDigits(match[1]));
-    if (parsed) return parsed;
-  }
-
-  const monthName = value.match(MONTH_NAME_RE);
-  if (monthName) {
-    const month = MONTHS[monthName[1].toLowerCase()];
-    if (month) {
-      const parsed = normalizeDate(Number(monthName[2]), month, Number(monthName[3]));
-      if (parsed) return parsed;
-    }
-  }
-
-  const dayMonth = value.match(DAY_MONTH_RE);
-  if (dayMonth) {
-    const month = MONTHS[dayMonth[2].toLowerCase()];
-    if (month) {
-      const parsed = normalizeDate(Number(dayMonth[1]), month, Number(dayMonth[3]));
-      if (parsed) return parsed;
-    }
-  }
-
-  return undefined;
-}
-
 function splitNameTokens(value: string): string[] {
   return value
     .replace(/[^A-Za-zÑñ'.\-\s]/g, " ")
@@ -288,6 +256,9 @@ const GENERIC_NAME_LABEL = /^(?:full\s*name|name|pangalan|student\s*name|holder(
 const NAME_SUFFIXES = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
 const INSTITUTION_WORDS =
   /\b(?:university|college|institute|campus|school|academy|republic|government|city|municipality|province|barangay|street|address|course|program|student|employee|company|corporation|department|office|semester|bachelor|science|technology)\b/i;
+const NAME_ANCHOR = /\b(?:student|learner|lrn|grade|name|pangalan|holder|cardholder)\b/i;
+const NAME_TITLE =
+  /\b(?:principal|teacher|adviser|advisor|registrar|guard|student|grade|section|year|school|course|program|office|department)\b/i;
 
 /** "Juan Dela Cruz" -> last name Dela Cruz, first Juan (no comma on the card). */
 function parseFreeName(tokens: string[]): ParsedName | null {
@@ -311,7 +282,7 @@ function parseFreeName(tokens: string[]): ParsedName | null {
 
 /** Any name line, comma-separated or free-order. */
 function parseNameValue(value: string): ParsedName | null {
-  const cleaned = value.replace(/[^A-Za-zA`A�'.,\-\s]/g, " ").replace(/\s+/g, " ").trim();
+  const cleaned = value.replace(/[^A-Za-zÑñ'.,\-\s]/g, " ").replace(/\s+/g, " ").trim();
   if (!cleaned) return null;
   if (cleaned.includes(",")) return parseCommaName(cleaned);
 
@@ -353,14 +324,54 @@ function findCommaName(lines: string[]): ParsedName | null {
   return null;
 }
 
-/** Last resort: the first line that reads like a person's name, whatever the layout. */
-function findLooseName(lines: string[]): ParsedName | null {
-  for (const line of lines) {
-    if (INSTITUTION_WORDS.test(line)) continue;
-    const parsed = parseNameValue(line);
-    if (parsed) return parsed;
+function nameFromLine(line: string): ParsedName | null {
+  if (/\d/.test(line) || INSTITUTION_WORDS.test(line)) return null;
+  return parseNameValue(line);
+}
+
+/** The cardholder's name sits next to "Student", "LRN" or "Grade" on school IDs. */
+function findAnchoredName(lines: string[]): ParsedName | null {
+  for (let i = 0; i < lines.length; i += 1) {
+    if (!NAME_ANCHOR.test(lines[i])) continue;
+
+    for (let distance = 1; distance <= 3; distance += 1) {
+      const above = lines[i - distance];
+      if (above) {
+        const parsed = nameFromLine(above);
+        if (parsed) return parsed;
+      }
+      const below = lines[i + distance];
+      if (below) {
+        const parsed = nameFromLine(below);
+        if (parsed) return parsed;
+      }
+    }
   }
   return null;
+}
+
+/** Last resort: score every name-like line and keep the most likely one. */
+function findLooseName(lines: string[]): ParsedName | null {
+  let best: { parsed: ParsedName; score: number } | null = null;
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (NAME_TITLE.test(line)) continue;
+
+    const parsed = nameFromLine(line);
+    if (!parsed) continue;
+
+    const tokens = line.trim().split(/\s+/).length;
+    let score = tokens >= 2 && tokens <= 4 ? 20 : 5;
+    if (line === line.toUpperCase()) score += 10;
+
+    const window = lines.slice(Math.max(0, i - 2), i + 3).join(" ");
+    if (NAME_ANCHOR.test(window)) score += 15;
+
+    if (!best || score > best.score) best = { parsed, score };
+  }
+
+  return best?.parsed ?? null;
 }
 
 function valueAfterLabel(lines: string[], label: RegExp): string | undefined {
@@ -425,7 +436,11 @@ function detectIdType(text: string): OcrIdType | undefined {
     return "NATIONAL_ID";
   }
   if (/\bpassport\b|paseport/i.test(normalized)) return "PASSPORT";
-  if (/\bstudent\b|\bevsu\b|eastern\s+visayas|\buniversity\b|\bcollege\b/i.test(normalized)) {
+  if (
+    /\bstudent\b|\bevsu\b|eastern\s+visayas|\buniversity\b|\bcollege\b|\blrn\b|learner|national\s+high\s+school|junior\s+high|school\s+id|\bgrade\b/i.test(
+      normalized
+    )
+  ) {
     return "STUDENT_ID";
   }
   return undefined;
@@ -456,7 +471,7 @@ function parsePassportNumber(text: string): string | undefined {
 }
 
 const ID_NUMBER_LABEL =
-  /\b(?:student\s*(?:id|no\.?|number)|school\s*id|employee\s*(?:id|no\.?|number)|id\s*(?:no\.?|number|#)|identification\s*(?:no\.?|number)|control\s*(?:no\.?|number)|card\s*(?:no\.?|number)|sss\s*(?:no\.?|number)|tin\s*(?:no\.?|number)|prc\s*(?:no\.?|number)|postal\s*id|umid\s*(?:no\.?|number))\b/i;
+  /\b(?:student\s*(?:id|no\.?|number)|employee\s*(?:id|no\.?|number)|id\s*(?:no\.?|number|#)|identification\s*(?:no\.?|number)|control\s*(?:no\.?|number)|card\s*(?:no\.?|number)|sss\s*(?:no\.?|number)|tin\s*(?:no\.?|number)|prc\s*(?:no\.?|number)|postal\s*id|umid\s*(?:no\.?|number)|lrn)\b/i;
 const GENERIC_ID_RE = /\b([A-Z]{2,8}(?:[- ]\d{2,12})+|\d{4}[- ]\d{4,10}|\d{6,14})\b/g;
 
 /** Keeps one plausible ID token; rejects dates, phone numbers and bare years. */
@@ -473,6 +488,7 @@ function pickIdToken(value: string | undefined): string | undefined {
     if (compact.length < 4 || compact.length > 24 || digits.length < 4) continue;
     if (/^\d{4}$/.test(compact)) continue;
     if (/^09\d{9}$/.test(compact)) continue;
+    if (/^(?:19|20)\d{2}[- ](?:19|20)\d{2}$/.test(candidate)) continue;
     if (parseDateToken(candidate)) continue;
     return candidate.toUpperCase();
   }
@@ -499,6 +515,23 @@ function extractIdNumber(
     if (umid) return { value: `${umid[1]}-${umid[2]}-${umid[3]}`, type: "UMID" };
   }
 
+  const lrn = fixDigits(text).match(
+    /(?:LRN|learner\s+reference\s+(?:number|no\.?))[^0-9]{0,10}(\d{4})[ -]?(\d{4})[ -]?(\d{4})/i
+  );
+  if (lrn) return { value: `${lrn[1]} ${lrn[2]} ${lrn[3]}`, type: "STUDENT_ID" };
+
+  if (type === "STUDENT_ID") {
+    const studentNumber = fixDigits(text).match(
+      /(?:^|[^0-9])(\d{4})[ -]?(\d{4})[ -]?(\d{4})(?:$|[^0-9])/
+    );
+    if (studentNumber) {
+      return {
+        value: `${studentNumber[1]} ${studentNumber[2]} ${studentNumber[3]}`,
+        type: "STUDENT_ID",
+      };
+    }
+  }
+
   const pcn = fixDigits(text).match(/(?:^|[^0-9])(\d{4})[ -]?(\d{4})[ -]?(\d{4})[ -]?(\d{4})(?:$|[^0-9])/);
   if (pcn) {
     return { value: `${pcn[1]} ${pcn[2]} ${pcn[3]} ${pcn[4]}`, type: "NATIONAL_ID" };
@@ -515,9 +548,12 @@ function extractIdNumber(
   const labelled = pickIdToken(valueAfterLabel(lines, ID_NUMBER_LABEL));
   if (labelled) return { value: labelled, type: type ?? "OTHER" };
 
-  for (const match of text.matchAll(GENERIC_ID_RE)) {
-    const generic = pickIdToken(match[1]);
-    if (generic) return { value: generic, type: type ?? "OTHER" };
+  for (const line of lines) {
+    if (/\b(?:school\s*id|school\s*year|grade|section)\b/i.test(line)) continue;
+    for (const match of line.matchAll(GENERIC_ID_RE)) {
+      const generic = pickIdToken(match[1]);
+      if (generic) return { value: generic, type: type ?? "OTHER" };
+    }
   }
 
   return undefined;
@@ -545,24 +581,11 @@ export function parseIdCardText(raw: string): OcrResult {
     result.idNumber = idNumber.value;
   }
 
-  const dobLabel = /(?:date\s+of\s+birth|birth\s+date|petsa\s+ng\s+kapanganakan|kapanganakan|\bdob\b)/i;
-  for (let i = 0; i < lines.length; i += 1) {
-    const label = lines[i].match(dobLabel);
-    if (!label) continue;
-
-    const windows = [
-      lines[i].slice((label.index ?? 0) + label[0].length),
-      lines[i + 1],
-      lines[i + 2],
-    ];
-    const date = windows.map((window) => (window ? extractDate(window) : undefined)).find(Boolean);
-    if (date) {
-      result.dateOfBirth = date;
-      break;
-    }
-  }
-
-  const name = findCommaName(lines) ?? parseLabelledName(lines) ?? findLooseName(lines);
+  const name =
+    findCommaName(lines) ??
+    parseLabelledName(lines) ??
+    findAnchoredName(lines) ??
+    findLooseName(lines);
   if (name) Object.assign(result, name);
 
   return result;
