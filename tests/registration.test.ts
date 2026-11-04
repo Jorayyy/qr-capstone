@@ -181,6 +181,34 @@ describe("parseIdCardText", () => {
     expect(result.firstName).toBe("Maria");
   });
 
+  it("reads the bilingual labels on a real PhilSys card", () => {
+    const result = parseIdCardText(`
+      REPUBLIKA NG PILIPINAS
+      Republika ng Pilipinas
+      PAMBANSANG PAGKAKAKILANLAN
+      Philippine Identification Card
+      2697-0257-2839-5293
+      Apelyido/Last Name
+      ANDRADE
+      Mga Pangalan/Given Names
+      MARK JORY
+      Gitnang Apelyido/Middle Name
+      ABELLA
+      Petsa ng Kapanganakan/Date of Birth
+      MAY 05, 2001
+      Tirahan/Address
+      MAHAYHAY SAGKAHAN, BARANGAY 63, CITY OF TACLOBAN
+      LEYTE
+    `);
+    expect(result).toEqual({
+      lastName: "Andrade",
+      firstName: "Mark Jory",
+      middleName: "Abella",
+      idType: "NATIONAL_ID",
+      idNumber: "2697 0257 2839 5293",
+    });
+  });
+
   it("reads an EVSU student ID", () => {
     const result = parseIdCardText(`
       EASTERN VISAYAS STATE UNIVERSITY

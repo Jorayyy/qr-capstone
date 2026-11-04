@@ -275,9 +275,9 @@ function parseCommaName(line: string): ParsedName | null {
 }
 
 const FULL_NAME_HEADER = /(?:last\s*name|surname)[.,:\s]+(?:first\s*name|given\s*name)/i;
-const SURNAME_LABEL = /^(?:surname|last\s*name|apelyido)\b/i;
-const GIVEN_LABEL = /^(?:given\s*name|first\s*name|pangalan)\b/i;
-const MIDDLE_LABEL = /^(?:middle\s*name|gitnang\s*apelyido)\b/i;
+const SURNAME_LABEL = /(?:apelyidos?|surname|last\s*names?)\b/i;
+const GIVEN_LABEL = /(?:mga\s+pangalan|given\s*names?|first\s*names?|pangalan)\b/i;
+const MIDDLE_LABEL = /(?:gitnang\s+apelyido|middle\s*names?)\b/i;
 const GENERIC_NAME_LABEL =
   /^(?:full\s*name|name\s+of\s+(?:the\s+)?(?:student|employee|holder|cardholder|visitor|owner)|name|pangalan|student\s*name|employee\s*name|holder(?:'s)?\s*name|cardholder)\b/i;
 
@@ -340,10 +340,22 @@ function parseNameValue(value: string): ParsedName | null {
   return parseFreeName(tokens);
 }
 
+const LABEL_WORDS =
+  /\b(?:apelyido|surname|last\s*names?|mga\s+pangalan|given\s*names?|first\s*names?|gitnang\s+apelyido|middle\s*names?|pangalan|full\s*name|name)\b/gi;
+
+function stripLabelWords(value: string): string {
+  return value
+    .replace(LABEL_WORDS, " ")
+    .replace(/[^A-Za-zÑñ'.,\-\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^[.,:\-\s]+|[.,:\-\s]+$/g, "")
+    .trim();
+}
+
 function isLabelLike(value: string): boolean {
   return (
     FULL_NAME_HEADER.test(value) ||
-    /^(?:surname|last\s*name|given\s*name|first\s*name|middle\s*name|apelyido|pangalan|date\s+of\s+birth|birth\s+date|address|nationality|sex|weight|height|blood\s+type|eyes\s+color|license\s+no|expiration\s+date|agency\s+code|conditions|signature)\b/i.test(
+    /^(?:surname|last\s*names?|given\s*names?|first\s*names?|middle\s*names?|apelyido|gitnang\s+apelyido|mga\s+pangalan|pangalan|date\s+of\s+birth|birth\s+date|address|nationality|sex|weight|height|blood\s+type|eyes\s+color|license\s+no|expiration\s+date|agency\s+code|conditions|signature)\b/i.test(
       value
     )
   );
@@ -438,18 +450,20 @@ function findLooseName(lines: string[]): ParsedName | null {
   return best?.parsed ?? null;
 }
 
-function valueAfterLabel(lines: string[], label: RegExp): string | undefined {
+function valueAfterLabel(lines: string[], label: RegExp, exclude?: RegExp): string | undefined {
   for (let i = 0; i < lines.length; i += 1) {
+    if (exclude?.test(lines[i])) continue;
     const match = lines[i].match(label);
     if (!match) continue;
 
-    const inline = lines[i].slice((match.index ?? 0) + match[0].length).replace(/^[.,:\s]+/, "").trim();
+    const inline = stripLabelWords(lines[i].slice((match.index ?? 0) + match[0].length));
     if (inline && !isLabelLike(inline)) return inline;
 
     for (let j = i + 1; j <= Math.min(i + 2, lines.length - 1); j += 1) {
       const next = lines[j].trim();
       if (!next || isLabelLike(next)) break;
-      return next;
+      const value = stripLabelWords(next);
+      if (value && !isLabelLike(value)) return value;
     }
   }
   return undefined;
@@ -462,7 +476,9 @@ function parseLabelledName(lines: string[]): ParsedName | null {
     if (parsed) return parsed;
   }
 
-  const lastValue = valueAfterLabel(lines, SURNAME_LABEL);
+  if (lines.some((line) => FULL_NAME_HEADER.test(line))) return null;
+
+  const lastValue = valueAfterLabel(lines, SURNAME_LABEL, MIDDLE_LABEL);
   const givenValue = valueAfterLabel(lines, GIVEN_LABEL);
   if (!lastValue || !givenValue) return null;
 
