@@ -453,10 +453,13 @@ function findLooseName(lines: string[]): ParsedName | null {
 function valueAfterLabel(lines: string[], label: RegExp, exclude?: RegExp): string | undefined {
   for (let i = 0; i < lines.length; i += 1) {
     if (exclude?.test(lines[i])) continue;
-    const match = lines[i].match(label);
+    const line = lines[i];
+    const match = line.match(label);
     if (!match) continue;
 
-    const inline = stripLabelWords(lines[i].slice((match.index ?? 0) + match[0].length));
+    const bilingual = /(?:apelyido|pangalan|gitnang)/i.test(line) && /\bname/i.test(line);
+    const rest = line.slice((match.index ?? 0) + match[0].length);
+    const inline = bilingual ? "" : stripLabelWords(rest);
     if (inline && !isLabelLike(inline)) return inline;
 
     for (let j = i + 1; j <= Math.min(i + 2, lines.length - 1); j += 1) {

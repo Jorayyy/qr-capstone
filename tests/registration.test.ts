@@ -209,6 +209,20 @@ describe("parseIdCardText", () => {
     });
   });
 
+  it("ignores a misread English word in a bilingual middle label", () => {
+    const result = parseIdCardText(`
+      Apelyido/Last Name
+      ANDRADE
+      Mga Pangalan/Given Names
+      MARK JORY
+      Gitnang Apelyido/Middie Name
+      ABELLA
+    `);
+    expect(result.lastName).toBe("Andrade");
+    expect(result.firstName).toBe("Mark Jory");
+    expect(result.middleName).toBe("Abella");
+  });
+
   it("reads an EVSU student ID", () => {
     const result = parseIdCardText(`
       EASTERN VISAYAS STATE UNIVERSITY
