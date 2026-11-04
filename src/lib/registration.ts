@@ -714,12 +714,139 @@ function extractIdNumber(
   return undefined;
 }
 
+type TsvWord = {
+  line: string;
+  text: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+type NameColumn = { kind: "last" | "first" | "middle"; center: number };
+
+const TSV_NAME_KEYWORDS: { kind: NameColumn["kind"]; pattern: RegExp }[] = [
+  { kind: "last", pattern: /^(?:last|surname|apelyido)$/i },
+  { kind: "first", pattern: /^(?:first|given|pangalan)$/i },
+  { kind: "middle", pattern: /^(?:middle|gitnang)$/i },
+];
+
+function isNameLabelWord(text: string): boolean {
+  const word = text.replace(/[^A-Za-zÑñ]/g, "").toLowerCase();
+  return word === "name" || TSV_NAME_KEYWORDS.some((entry) => entry.pattern.test(word));
+}
+
+function tsvWords(tsv: string, minConfidence = 30): TsvWord[] {
+  const words: TsvWord[] = [];
+  for (const row of tsv.split(/\r?\n/)) {
+    const cols = row.split("\t");
+    if (cols[0] !== "5") continue;
+
+    const text = cols[11]?.trim();
+    const confidence = Number(cols[10]);
+    const left = Number(cols[6]);
+    const top = Number(cols[7]);
+    const width = Number(cols[8]);
+    const height = Number(cols[9]);
+    if (!text || !Number.isFinite(confidence) || confidence < minConfidence) continue;
+    if (![left, top, width, height].every(Number.isFinite)) continue;
+
+    words.push({
+      line: `${cols[1]}:${cols[2]}:${cols[3]}:${cols[4]}`,
+      text,
+      left,
+      top,
+      width,
+      height,
+    });
+  }
+  return words;
+}
+
+function nameColumns(line: TsvWord[]): NameColumn[] {
+  const columns: NameColumn[] = [];
+  for (const word of line) {
+    const text = word.text.replace(/[^A-Za-zÑñ]/g, "").toLowerCase();
+    const match = TSV_NAME_KEYWORDS.find((entry) => entry.pattern.test(text));
+    if (match) columns.push({ kind: match.kind, center: word.left + word.width / 2 });
+  }
+  return columns;
+}
+
+function columnBuckets(
+  line: TsvWord[],
+  columns: NameColumn[]
+): Record<NameColumn["kind"], string[]> {
+  const buckets: Record<NameColumn["kind"], string[]> = { last: [], first: [], middle: [] };
+  if (columns.length === 0) return buckets;
+
+  for (const word of line) {
+    if (isNameLabelWord(word.text)) continue;
+    const center = word.left + word.width / 2;
+    let nearest = columns[0];
+    for (const column of columns) {
+      if (Math.abs(column.center - center) < Math.abs(nearest.center - center)) nearest = column;
+    }
+    buckets[nearest.kind].push(word.text);
+  }
+  return buckets;
+}
+
+function nameFromBuckets(buckets: Record<NameColumn["kind"], string[]>): ParsedName | null {
+  const lastTokens = splitNameTokens(buckets.last.join(" "));
+  const firstTokens = splitNameTokens(buckets.first.join(" "));
+  if (!isNamePart(lastTokens) || !isNamePart(firstTokens)) return null;
+
+  const middleTokens = splitNameTokens(buckets.middle.join(" "));
+  const middleOk =
+    middleTokens.length > 0 &&
+    middleTokens.length <= 4 &&
+    middleTokens.every((token, index) => isNameToken(token, index + 1));
+
+  return {
+    lastName: titleCase(lastTokens.join(" ")),
+    firstName: titleCase(firstTokens.join(" ")),
+    ...(middleOk ? { middleName: titleCase(middleTokens.join(" ")) } : {}),
+  };
+}
+
+/** Reads the cardholder name using Tesseract's word grid, so columns line up. */
+function parseNameFromTsv(tsv: string): ParsedName | null {
+  const words = tsvWords(tsv);
+  if (words.length === 0) return null;
+
+  const lineMap = new Map<string, TsvWord[]>();
+  for (const word of words) {
+    const line = lineMap.get(word.line) ?? [];
+    line.push(word);
+    lineMap.set(word.line, line);
+  }
+
+  const lines = [...lineMap.values()]
+    .map((line) => line.sort((a, b) => a.left - b.left))
+    .sort((a, b) => Math.min(...a.map((word) => word.top)) - Math.min(...b.map((word) => word.top)));
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const columns = nameColumns(lines[i]);
+    const hasLast = columns.some((column) => column.kind === "last");
+    const hasFirst = columns.some((column) => column.kind === "first");
+    if (!hasLast || !hasFirst) continue;
+
+    for (let j = i; j <= Math.min(i + 3, lines.length - 1); j += 1) {
+      const parsed = nameFromBuckets(columnBuckets(lines[j], columns));
+      if (parsed) return parsed;
+    }
+  }
+  return null;
+}
+
 /**
  * Best-effort OCR extraction from any ID (PhilSys, passport, UMID, driver's
  * licence, student/school/company cards). Anything uncertain is left blank so
- * the visitor types it.
+ * the visitor types it. Pass the Tesseract TSV when available so name columns
+ * can be aligned by position.
  */
-export function parseIdCardText(raw: string): OcrResult {
+export function parseIdCardText(raw: string, tsv?: string | null): OcrResult {
   const text = raw.replace(/\r/g, "\n");
   const lines = text
     .split("\n")
@@ -737,8 +864,9 @@ export function parseIdCardText(raw: string): OcrResult {
   }
 
   const name =
-    findCommaName(lines) ??
+    (tsv ? parseNameFromTsv(tsv) : null) ??
     parseLabelledName(lines) ??
+    findCommaName(lines) ??
     findAnchoredName(lines) ??
     findLooseName(lines);
   if (name) Object.assign(result, name);

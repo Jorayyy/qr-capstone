@@ -314,6 +314,31 @@ describe("parseIdCardText", () => {
     expect(result.lastName).toBe("Dela Cruz");
   });
 
+  it("aligns PhilSys name columns using the OCR word grid", () => {
+    const tsv = [
+      "5\t1\t1\t1\t1\t0\t10\t100\t40\t20\t95\tLAST",
+      "5\t1\t1\t1\t1\t1\t55\t100\t40\t20\t95\tNAME",
+      "5\t1\t1\t1\t1\t2\t200\t100\t45\t20\t95\tFIRST",
+      "5\t1\t1\t1\t1\t3\t250\t100\t40\t20\t95\tNAME",
+      "5\t1\t1\t1\t1\t4\t400\t100\t55\t20\t95\tMIDDLE",
+      "5\t1\t1\t1\t1\t5\t460\t100\t40\t20\t95\tNAME",
+      "5\t1\t1\t1\t2\t0\t10\t130\t40\t20\t95\tMAY",
+      "5\t1\t1\t1\t2\t1\t55\t130\t30\t20\t95\tOS",
+      "5\t1\t1\t1\t2\t2\t200\t130\t30\t20\t95\tON",
+      "5\t1\t1\t1\t2\t3\t400\t130\t60\t20\t95\tSANTOS",
+    ].join("\n");
+
+    const result = parseIdCardText(
+      "LAST NAME FIRST NAME MIDDLE NAME\nMAY OS ON SANTOS\n2697 0257 2839 5293",
+      tsv
+    );
+
+    expect(result.lastName).toBe("May Os");
+    expect(result.firstName).toBe("On");
+    expect(result.middleName).toBe("Santos");
+    expect(result.idNumber).toBe("2697 0257 2839 5293");
+  });
+
   it("reads a surname-first name without a comma", () => {
     const result = parseIdCardText(`
       DELA CRUZ JUAN P.

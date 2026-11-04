@@ -14,19 +14,31 @@ export default function PhotoCapture({
   facing = "user",
   endpoint = "/api/uploads",
   onPath,
+  initialPreview = null,
+  onPreview,
 }: {
   label: string;
   kind: Kind;
   facing?: "user" | "environment";
   endpoint?: string;
   onPath: (pathname: string | null) => void;
+  initialPreview?: string | null;
+  onPreview?: (url: string | null) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraOn, setCameraOn] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreviewState] = useState<string | null>(initialPreview);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const setPreview = useCallback(
+    (url: string | null) => {
+      setPreviewState(url);
+      onPreview?.(url);
+    },
+    [onPreview]
+  );
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -37,9 +49,8 @@ export default function PhotoCapture({
   useEffect(() => {
     return () => {
       streamRef.current?.getTracks().forEach((track) => track.stop());
-      if (preview) URL.revokeObjectURL(preview);
     };
-  }, [preview]);
+  }, []);
 
   // The <video> element only mounts after `cameraOn` flips, so attach the
   // stream here rather than in startCamera (where the ref is still null).

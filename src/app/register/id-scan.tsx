@@ -62,17 +62,29 @@ async function enhanceImage(file: File): Promise<Blob> {
 export default function IdScan({
   onPath,
   onExtract,
+  initialPreview = null,
+  onPreview,
 }: {
   onPath: (pathname: string | null) => void;
   onExtract: (fields: OcrResult) => void;
+  initialPreview?: string | null;
+  onPreview?: (url: string | null) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraOn, setCameraOn] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreviewState] = useState<string | null>(initialPreview);
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("");
+
+  const setPreview = useCallback(
+    (url: string | null) => {
+      setPreviewState(url);
+      onPreview?.(url);
+    },
+    [onPreview]
+  );
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -111,8 +123,8 @@ export default function IdScan({
         const read = async () => {
           const { data } = await worker.recognize(enhanced, { rotateAuto: true }, { text: true, tsv: true });
           return mergeResults(
-            parseIdCardText(data.text),
-            parseIdCardText(filterOcrTextByConfidence(data.tsv))
+            parseIdCardText(data.text, data.tsv),
+            parseIdCardText(filterOcrTextByConfidence(data.tsv), data.tsv)
           );
         };
 

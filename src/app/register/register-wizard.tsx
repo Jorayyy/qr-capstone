@@ -118,6 +118,8 @@ export default function RegisterWizard({ departments }: { departments: Departmen
   const [hasVehicle, setHasVehicle] = useState(false);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [idPhotoPath, setIdPhotoPath] = useState<string | null>(null);
+  const [facePreview, setFacePreview] = useState<string | null>(null);
+  const [idPreview, setIdPreview] = useState<string | null>(null);
   const [offices, setOffices] = useState<Record<string, OfficeChoice>>({});
   const [search, setSearch] = useState("");
   const [agree, setAgree] = useState(false);
@@ -293,6 +295,10 @@ export default function RegisterWizard({ departments }: { departments: Departmen
     setHasVehicle(false);
     setPhotoPath(null);
     setIdPhotoPath(null);
+    if (facePreview) URL.revokeObjectURL(facePreview);
+    if (idPreview) URL.revokeObjectURL(idPreview);
+    setFacePreview(null);
+    setIdPreview(null);
     setOffices({});
     setAgree(false);
     setError("");
@@ -511,7 +517,12 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                   correct everything on the next step.
                 </p>
               </div>
-              <IdScan onPath={setIdPhotoPath} onExtract={applyOcr} />
+              <IdScan
+                onPath={setIdPhotoPath}
+                onExtract={applyOcr}
+                initialPreview={idPreview}
+                onPreview={setIdPreview}
+              />
               <div className="border-t border-[var(--border)] pt-4">
                 <p className="text-sm font-semibold">Your photo for the pass (optional)</p>
                 <p className="mt-1 text-xs text-[var(--muted)]">
@@ -524,6 +535,8 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                     facing="user"
                     endpoint="/api/register/uploads"
                     onPath={setPhotoPath}
+                    initialPreview={facePreview}
+                    onPreview={setFacePreview}
                   />
                 </div>
               </div>
