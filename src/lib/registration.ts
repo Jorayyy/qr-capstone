@@ -79,7 +79,12 @@ export type OcrIdType =
   | "PASSPORT"
   | "DRIVERS_LICENSE"
   | "UMID"
+  | "PRC"
+  | "POSTAL_ID"
   | "STUDENT_ID"
+  | "SSS"
+  | "TIN"
+  | "COMPANY_ID"
   | "OTHER";
 
 export type OcrResult = {
@@ -92,6 +97,10 @@ export type OcrResult = {
 
 const NAME_PARTICLES = new Set([
   "de", "del", "dela", "delas", "delos", "la", "las", "los", "san", "santa", "sta", "van", "von", "da", "dos", "y",
+]);
+
+const NAME_HONORIFICS = new Set([
+  "mr", "mrs", "ms", "miss", "mister", "madam", "sir", "dr", "doctor", "engr", "atty", "prof", "hon",
 ]);
 
 const NAME_STOPWORDS = new Set([
@@ -193,6 +202,10 @@ function splitNameTokens(value: string): string[] {
     .filter(Boolean);
 }
 
+function stripHonorifics(tokens: string[]): string[] {
+  return tokens.filter((token) => !NAME_HONORIFICS.has(token.toLowerCase()));
+}
+
 function isNameToken(token: string, index: number): boolean {
   if (!/^[A-Za-zÑñ]+(?:['-][A-Za-zÑñ]+)*$/.test(token)) return false;
   if (token.length === 1) return index > 0;
@@ -232,18 +245,32 @@ function trimNameNoise(tokens: string[]): string[] {
 
 function parseCommaName(line: string): ParsedName | null {
   const cleaned = line.replace(/[^A-Za-zÑñ'.,\-\s]/g, " ").replace(/\s+/g, " ").trim();
-  const parts = cleaned.split(",");
-  if (parts.length !== 2) return null;
+  const parts = cleaned
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length < 2 || parts.length > 3) return null;
 
-  const lastTokens = trimNameNoise(splitNameTokens(parts[0]));
-  const givenTokens = trimNameNoise(splitNameTokens(parts[1]));
+  const lastTokens = stripHonorifics(trimNameNoise(splitNameTokens(parts[0])));
+  const givenTokens = stripHonorifics(trimNameNoise(splitNameTokens(parts[1])));
   if (!isNamePart(lastTokens) || !isNamePart(givenTokens)) return null;
 
   const { first, middle } = splitGivenNames(givenTokens);
+  const middleTokens =
+    parts.length === 3 ? stripHonorifics(trimNameNoise(splitNameTokens(parts[2]))) : [];
+  const middleOk =
+    middleTokens.length > 0 &&
+    middleTokens.length <= 4 &&
+    middleTokens.every((token, index) => isNameToken(token, index + 1));
+
   return {
     lastName: titleCase(lastTokens.join(" ")),
     firstName: titleCase(first),
-    ...(middle ? { middleName: titleCase(middle) } : {}),
+    ...(middleOk
+      ? { middleName: titleCase(middleTokens.join(" ")) }
+      : middle
+        ? { middleName: titleCase(middle) }
+        : {}),
   };
 }
 
@@ -251,18 +278,39 @@ const FULL_NAME_HEADER = /(?:last\s*name|surname)[.,:\s]+(?:first\s*name|given\s
 const SURNAME_LABEL = /^(?:surname|last\s*name|apelyido)\b/i;
 const GIVEN_LABEL = /^(?:given\s*name|first\s*name|pangalan)\b/i;
 const MIDDLE_LABEL = /^(?:middle\s*name|gitnang\s*apelyido)\b/i;
-const GENERIC_NAME_LABEL = /^(?:full\s*name|name|pangalan|student\s*name|holder(?:'s)?\s*name|cardholder)\b/i;
+const GENERIC_NAME_LABEL =
+  /^(?:full\s*name|name\s+of\s+(?:the\s+)?(?:student|employee|holder|cardholder|visitor|owner)|name|pangalan|student\s*name|employee\s*name|holder(?:'s)?\s*name|cardholder)\b/i;
 
 const NAME_SUFFIXES = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
 const INSTITUTION_WORDS =
-  /\b(?:university|college|institute|campus|school|academy|republic|government|city|municipality|province|barangay|street|address|course|program|student|employee|company|corporation|department|office|semester|bachelor|science|technology)\b/i;
+  /\b(?:university|college|institute|campus|school|academy|republic|government|city|municipality|province|barangay|street|address|course|program|student|employee|company|corporation|corp|inc|ltd|limited|co|enterprise|enterprises|trading|services|industries|industrial|group|holdings|business|store|shop|restaurant|hotel|bank|agency|center|centre|foundation|association|organization|solutions|systems|logistics|construction|marketing|ventures|realty|manufacturing|publishing|hospital|clinic|pharmacy|salon|bakery|cafe|department|office|semester|bachelor|science|technology)\b/i;
 const NAME_ANCHOR = /\b(?:student|learner|lrn|grade|name|pangalan|holder|cardholder)\b/i;
 const NAME_TITLE =
   /\b(?:principal|teacher|adviser|advisor|registrar|guard|student|grade|section|year|school|course|program|office|department)\b/i;
 
-/** "Juan Dela Cruz" -> last name Dela Cruz, first Juan (no comma on the card). */
+/**
+ * "Juan Dela Cruz" -> last name Dela Cruz, first Juan (no comma on the card).
+ * A line that starts with a particle ("Dela Cruz Juan P.") is surname-first.
+ */
 function parseFreeName(tokens: string[]): ParsedName | null {
   if (tokens.length < 2) return null;
+
+  if (NAME_PARTICLES.has(tokens[0].toLowerCase())) {
+    let surnameEnd = 0;
+    while (surnameEnd < tokens.length - 1 && NAME_PARTICLES.has(tokens[surnameEnd].toLowerCase())) {
+      surnameEnd += 1;
+    }
+    const last = tokens.slice(0, surnameEnd + 1);
+    const given = tokens.slice(surnameEnd + 1);
+    if (given.length === 0 || last.length === 0) return null;
+
+    const { first, middle } = splitGivenNames(given);
+    return {
+      lastName: titleCase(last.join(" ")),
+      firstName: titleCase(first),
+      ...(middle ? { middleName: titleCase(middle) } : {}),
+    };
+  }
 
   let split = tokens.length - 1;
   if (NAME_SUFFIXES.has(tokens[split].toLowerCase())) split -= 1;
@@ -286,7 +334,7 @@ function parseNameValue(value: string): ParsedName | null {
   if (!cleaned) return null;
   if (cleaned.includes(",")) return parseCommaName(cleaned);
 
-  const tokens = splitNameTokens(cleaned);
+  const tokens = stripHonorifics(splitNameTokens(cleaned));
   if (tokens.length < 2 || tokens.length > 6) return null;
   if (!tokens.every((token, index) => isNameToken(token, index))) return null;
   return parseFreeName(tokens);
@@ -301,6 +349,22 @@ function isLabelLike(value: string): boolean {
   );
 }
 
+/** A short standalone line that reads like a middle name or initial. */
+function middleFromLine(line: string): string | undefined {
+  if (!line || /\d/.test(line) || INSTITUTION_WORDS.test(line)) return undefined;
+
+  const tokens = stripHonorifics(splitNameTokens(line));
+  if (tokens.length === 0 || tokens.length > 3) return undefined;
+  if (!tokens.every((token, index) => isNameToken(token, index + 1))) return undefined;
+  return titleCase(tokens.join(" "));
+}
+
+function withMiddleFromNextLine(parsed: ParsedName, lines: string[], index: number): ParsedName {
+  if (parsed.middleName) return parsed;
+  const middle = middleFromLine(lines[index + 1] ?? "");
+  return middle ? { ...parsed, middleName: middle } : parsed;
+}
+
 function findCommaName(lines: string[]): ParsedName | null {
   const headerIndex = lines.findIndex((line) => FULL_NAME_HEADER.test(line));
 
@@ -308,18 +372,18 @@ function findCommaName(lines: string[]): ParsedName | null {
     const inline = lines[headerIndex].replace(FULL_NAME_HEADER, "");
     if (inline.includes(",")) {
       const parsed = parseCommaName(inline);
-      if (parsed) return parsed;
+      if (parsed) return withMiddleFromNextLine(parsed, lines, headerIndex);
     }
     for (let i = headerIndex + 1; i <= Math.min(headerIndex + 3, lines.length - 1); i += 1) {
       const parsed = parseCommaName(lines[i]);
-      if (parsed) return parsed;
+      if (parsed) return withMiddleFromNextLine(parsed, lines, i);
     }
     return null;
   }
 
-  for (const line of lines) {
-    const parsed = parseCommaName(line);
-    if (parsed) return parsed;
+  for (let i = 0; i < lines.length; i += 1) {
+    const parsed = parseCommaName(lines[i]);
+    if (parsed) return withMiddleFromNextLine(parsed, lines, i);
   }
   return null;
 }
@@ -409,7 +473,7 @@ function parseLabelledName(lines: string[]): ParsedName | null {
   const middleValue = valueAfterLabel(lines, MIDDLE_LABEL);
   if (middleValue) {
     const middleTokens = splitNameTokens(middleValue);
-    if (middleTokens.length > 0 && middleTokens.length <= 4 && middleTokens.every((token, i) => isNameToken(token, i))) {
+    if (middleTokens.length > 0 && middleTokens.length <= 4 && middleTokens.every((token, i) => isNameToken(token, i + 1))) {
       return {
         lastName: titleCase(lastTokens.join(" ")),
         firstName: titleCase(givenTokens.join(" ")),
@@ -436,6 +500,19 @@ function detectIdType(text: string): OcrIdType | undefined {
     return "NATIONAL_ID";
   }
   if (/\bpassport\b|paseport/i.test(normalized)) return "PASSPORT";
+  if (/professional\s+regulation\s+commission|\bprc\b|professional\s+identification\s+card/i.test(normalized)) {
+    return "PRC";
+  }
+  if (/postal\s+id|postal\s+identification|philippine\s+postal|\bphlpost\b/i.test(normalized)) {
+    return "POSTAL_ID";
+  }
+  if (/\bcompany\s+id\b|employee\s+(?:id|no\.?|number)|staff\s+(?:id|no\.?|number)|badge\s+(?:no\.?|number)/i.test(normalized)) {
+    return "COMPANY_ID";
+  }
+  if (/social\s+security\s+system|\bsss\b/i.test(normalized)) return "SSS";
+  if (/bureau\s+of\s+internal\s+revenue|\bbir\b|taxpayer\s+identification|\btin\b/i.test(normalized)) {
+    return "TIN";
+  }
   if (
     /\bstudent\b|\bevsu\b|eastern\s+visayas|\buniversity\b|\bcollege\b|\blrn\b|learner|national\s+high\s+school|junior\s+high|school\s+id|\bgrade\b/i.test(
       normalized
@@ -470,8 +547,62 @@ function parsePassportNumber(text: string): string | undefined {
   return candidate ? candidate[1].toUpperCase() : undefined;
 }
 
+/** SSS number: XX-XXXXXXX-X. */
+function parseSssNumber(text: string): string | undefined {
+  const fixed = fixDigits(text);
+  const labelled = fixed.match(
+    /(?:social\s+security\s+system|\bsss\b)[^0-9]{0,24}(\d{2})[ -]?(\d{7})[ -]?(\d)(?![0-9])/i
+  );
+  if (labelled) return `${labelled[1]}-${labelled[2]}-${labelled[3]}`;
+
+  const candidate = fixed.match(/(?:^|[^0-9])(\d{2})[ -]?(\d{7})[ -]?(\d)(?:$|[^0-9])/);
+  return candidate ? `${candidate[1]}-${candidate[2]}-${candidate[3]}` : undefined;
+}
+
+/** TIN: XXX-XXX-XXX or XXX-XXX-XXX-XXXXX with a branch code. */
+function parseTinNumber(text: string): string | undefined {
+  const fixed = fixDigits(text);
+  const labelled = fixed.match(
+    /(?:bureau\s+of\s+internal\s+revenue|\bbir\b|taxpayer\s+identification|\btin\b)[^0-9]{0,24}(\d{3})[ -]?(\d{3})[ -]?(\d{3})(?:[ -]?(\d{3,5}))?/i
+  );
+  const match =
+    labelled ??
+    fixed.match(/(?:^|[^0-9])(\d{3})[ -]?(\d{3})[ -]?(\d{3})(?:[ -]?(\d{3,5}))?(?:$|[^0-9])/);
+  if (!match) return undefined;
+  return [match[1], match[2], match[3], match[4]].filter(Boolean).join("-");
+}
+
+/** PRC licence number: six or seven digits, usually labelled "PRC No.". */
+function parsePrcNumber(text: string): string | undefined {
+  const fixed = fixDigits(text);
+  const labelled = fixed.match(
+    /(?:professional\s+regulation\s+commission|\bprc\b|professional\s+identification|registration)[^0-9]{0,24}(\d{6,7})(?![0-9])/i
+  );
+  if (labelled) return labelled[1];
+
+  const candidate = fixed.match(/(?:^|[^0-9])(\d{7})(?:$|[^0-9])/);
+  return candidate ? candidate[1] : undefined;
+}
+
+/** Postal ID: 12-digit or alphanumeric number, usually prefixed with "P". */
+function parsePostalNumber(text: string): string | undefined {
+  const labelled = text.match(
+    /(?:postal\s+id|postal\s+identification|philippine\s+postal|\bphlpost\b)[^A-Za-z0-9]{0,24}([A-Z]{0,3}[ -]?\d{6,14})(?![0-9])/i
+  );
+  if (labelled) return pickIdToken(labelled[1].replace(/\s+/g, ""));
+
+  const candidate = text.match(/(?:^|[^A-Za-z0-9])([A-Z]{1,2}[ -]?\d{8,14})(?:$|[^A-Za-z0-9])/);
+  if (candidate) return pickIdToken(candidate[1].replace(/\s+/g, ""));
+
+  for (const numeric of fixDigits(text).matchAll(/(?:^|[^0-9])(\d{8,14})(?:$|[^0-9])/g)) {
+    const token = pickIdToken(numeric[1]);
+    if (token) return token;
+  }
+  return undefined;
+}
+
 const ID_NUMBER_LABEL =
-  /\b(?:student\s*(?:id|no\.?|number)|employee\s*(?:id|no\.?|number)|id\s*(?:no\.?|number|#)|identification\s*(?:no\.?|number)|control\s*(?:no\.?|number)|card\s*(?:no\.?|number)|sss\s*(?:no\.?|number)|tin\s*(?:no\.?|number)|prc\s*(?:no\.?|number)|postal\s*id|umid\s*(?:no\.?|number)|lrn)\b/i;
+  /\b(?:student\s*(?:id|no\.?|number)|employee\s*(?:id|no\.?|number)|company\s*(?:id|no\.?|number)|staff\s*(?:id|no\.?|number)|badge\s*(?:no\.?|number)|id\s*(?:no\.?|number|#)|identification\s*(?:no\.?|number)|control\s*(?:no\.?|number)|card\s*(?:no\.?|number)|sss\s*(?:no\.?|number)|tin\s*(?:no\.?|number)|prc\s*(?:no\.?|number)|registration\s*(?:no\.?|number)|postal\s*id|umid\s*(?:no\.?|number)|lrn)\b/i;
 const GENERIC_ID_RE = /\b([A-Z]{2,8}(?:[- ]\d{2,12})+|\d{4}[- ]\d{4,10}|\d{6,14})\b/g;
 
 /** Keeps one plausible ID token; rejects dates, phone numbers and bare years. */
@@ -487,6 +618,7 @@ function pickIdToken(value: string | undefined): string | undefined {
     const digits = candidate.replace(/\D/g, "");
     if (compact.length < 4 || compact.length > 24 || digits.length < 4) continue;
     if (/^\d{4}$/.test(compact)) continue;
+    if (/^(\d)\1+$/.test(compact)) continue;
     if (/^09\d{9}$/.test(compact)) continue;
     if (/^(?:19|20)\d{2}[- ](?:19|20)\d{2}$/.test(candidate)) continue;
     if (parseDateToken(candidate)) continue;
@@ -500,6 +632,26 @@ function extractIdNumber(
   type?: OcrIdType,
   lines: string[] = []
 ): { value: string; type: OcrIdType } | undefined {
+  if (type === "SSS") {
+    const sss = parseSssNumber(text);
+    if (sss) return { value: sss, type: "SSS" };
+  }
+
+  if (type === "TIN") {
+    const tin = parseTinNumber(text);
+    if (tin) return { value: tin, type: "TIN" };
+  }
+
+  if (type === "PRC") {
+    const prc = parsePrcNumber(text);
+    if (prc) return { value: prc, type: "PRC" };
+  }
+
+  if (type === "POSTAL_ID") {
+    const postal = parsePostalNumber(text);
+    if (postal) return { value: postal, type: "POSTAL_ID" };
+  }
+
   if (type === "DRIVERS_LICENSE" || /driver'?s?\s+licen[cs]e|licen[cs]e\s*(?:no\.?|number)/i.test(text)) {
     const license = parseLicenseNumber(text);
     if (license) return { value: license, type: "DRIVERS_LICENSE" };
@@ -532,14 +684,17 @@ function extractIdNumber(
     }
   }
 
-  const pcn = fixDigits(text).match(/(?:^|[^0-9])(\d{4})[ -]?(\d{4})[ -]?(\d{4})[ -]?(\d{4})(?:$|[^0-9])/);
-  if (pcn) {
-    return { value: `${pcn[1]} ${pcn[2]} ${pcn[3]} ${pcn[4]}`, type: "NATIONAL_ID" };
-  }
+  const allowNational = type === undefined || type === "NATIONAL_ID" || type === "OTHER";
+  if (allowNational) {
+    const pcn = fixDigits(text).match(/(?:^|[^0-9])(\d{4})[ -]?(\d{4})[ -]?(\d{4})[ -]?(\d{4})(?:$|[^0-9])/);
+    if (pcn) {
+      return { value: `${pcn[1]} ${pcn[2]} ${pcn[3]} ${pcn[4]}`, type: "NATIONAL_ID" };
+    }
 
-  const philSys = fixDigits(text).match(/(?:^|[^0-9])(\d{4})[ -]?(\d{4})[ -]?(\d{4})(?:$|[^0-9])/);
-  if (philSys) {
-    return { value: `${philSys[1]} ${philSys[2]} ${philSys[3]}`, type: "NATIONAL_ID" };
+    const philSys = fixDigits(text).match(/(?:^|[^0-9])(\d{4})[ -]?(\d{4})[ -]?(\d{4})(?:$|[^0-9])/);
+    if (philSys) {
+      return { value: `${philSys[1]} ${philSys[2]} ${philSys[3]}`, type: "NATIONAL_ID" };
+    }
   }
 
   const license = parseLicenseNumber(text);

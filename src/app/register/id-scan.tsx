@@ -98,7 +98,7 @@ export default function IdScan({
     setStatus("reading");
     setProgress(0);
     try {
-      const { createWorker } = await import("tesseract.js");
+      const { createWorker, PSM } = await import("tesseract.js");
       const worker = await createWorker("eng", 1, {
         logger: (log) => {
           if (log.status === "recognizing text" && typeof log.progress === "number") {
@@ -108,10 +108,21 @@ export default function IdScan({
       });
       try {
         const enhanced = await enhanceImage(file);
-        const { data } = await worker.recognize(enhanced, {}, { text: true, tsv: true });
-        const raw = parseIdCardText(data.text);
-        const filtered = parseIdCardText(filterOcrTextByConfidence(data.tsv));
-        onExtract(mergeResults(raw, filtered));
+        const read = async () => {
+          const { data } = await worker.recognize(enhanced, { rotateAuto: true }, { text: true, tsv: true });
+          return mergeResults(
+            parseIdCardText(data.text),
+            parseIdCardText(filterOcrTextByConfidence(data.tsv))
+          );
+        };
+
+        let extracted = await read();
+        if (!extracted.firstName && !extracted.lastName && !extracted.idNumber) {
+          await worker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT });
+          extracted = mergeResults(extracted, await read());
+        }
+
+        onExtract(extracted);
         setStatus("done");
         setMessage("We filled in what we could read. Please check every field.");
       } finally {

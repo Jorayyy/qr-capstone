@@ -245,6 +245,119 @@ describe("parseIdCardText", () => {
     });
   });
 
+  it("reads a PRC ID", () => {
+    const result = parseIdCardText(`
+      PROFESSIONAL REGULATION COMMISSION
+      PROFESSIONAL IDENTIFICATION CARD
+      DELA CRUZ, JUAN P.
+      PRC No. 0123456
+    `);
+    expect(result).toEqual({
+      lastName: "Dela Cruz",
+      firstName: "Juan",
+      middleName: "P",
+      idType: "PRC",
+      idNumber: "0123456",
+    });
+  });
+
+  it("reads a Postal ID", () => {
+    const result = parseIdCardText(`
+      PHILIPPINE POSTAL CORPORATION
+      POSTAL ID
+      DELA CRUZ, JUAN P.
+      Postal ID No. P123456789012
+    `);
+    expect(result.idType).toBe("POSTAL_ID");
+    expect(result.idNumber).toBe("P123456789012");
+  });
+
+  it("reads an SSS ID", () => {
+    const result = parseIdCardText(`
+      SOCIAL SECURITY SYSTEM
+      DELA CRUZ, JUAN P.
+      SSS No. 34-1234567-8
+      Date of Birth 2001/05/05
+    `);
+    expect(result.idType).toBe("SSS");
+    expect(result.idNumber).toBe("34-1234567-8");
+  });
+
+  it("reads a TIN ID with a branch code", () => {
+    const result = parseIdCardText(`
+      BUREAU OF INTERNAL REVENUE
+      TIN: 123-456-789-00000
+      DELA CRUZ, JUAN P.
+    `);
+    expect(result.idType).toBe("TIN");
+    expect(result.idNumber).toBe("123-456-789-00000");
+  });
+
+  it("reads a company ID", () => {
+    const result = parseIdCardText(`
+      NORTHWIND TRADING CORPORATION
+      DELA CRUZ, JUAN P.
+      EMPLOYEE ID: EMP-00123
+    `);
+    expect(result.idType).toBe("COMPANY_ID");
+    expect(result.idNumber).toBe("EMP-00123");
+  });
+
+  it("reads a three-part comma name and drops honorifics", () => {
+    const result = parseIdCardText(`
+      PHILIPPINE IDENTIFICATION CARD
+      MR. DELA CRUZ, JUAN, SANTOS
+      1234 5678 9012
+    `);
+    expect(result.firstName).toBe("Juan");
+    expect(result.middleName).toBe("Santos");
+    expect(result.lastName).toBe("Dela Cruz");
+  });
+
+  it("reads a surname-first name without a comma", () => {
+    const result = parseIdCardText(`
+      DELA CRUZ JUAN P.
+      ID NO. 2024-00987
+    `);
+    expect(result.lastName).toBe("Dela Cruz");
+    expect(result.firstName).toBe("Juan");
+    expect(result.middleName).toBe("P");
+  });
+
+  it("recovers a middle initial printed on the next line", () => {
+    const result = parseIdCardText(`
+      DELA CRUZ, JUAN
+      P.
+      PHILIPPINE IDENTIFICATION CARD
+      1234 5678 9012
+    `);
+    expect(result.lastName).toBe("Dela Cruz");
+    expect(result.firstName).toBe("Juan");
+    expect(result.middleName).toBe("P");
+    expect(result.idNumber).toBe("1234 5678 9012");
+  });
+
+  it("does not mistake a company heading for the visitor name", () => {
+    const result = parseIdCardText(`
+      NORTHWIND TRADING
+      JUAN DELA CRUZ
+      ID NO. CT-45821
+    `);
+    expect(result.firstName).toBe("Juan");
+    expect(result.lastName).toBe("Dela Cruz");
+    expect(result.idNumber).toBe("CT-45821");
+  });
+
+  it("reads a name printed under a longer label", () => {
+    const result = parseIdCardText(`
+      NAME OF STUDENT: JUAN DELA CRUZ
+      STUDENT ID NO. 2023-00123
+    `);
+    expect(result.firstName).toBe("Juan");
+    expect(result.lastName).toBe("Dela Cruz");
+    expect(result.idType).toBe("STUDENT_ID");
+  });
+
   it("returns an empty result instead of guessing", () => {
     expect(parseIdCardText("no readable text")).toEqual({});
   });
