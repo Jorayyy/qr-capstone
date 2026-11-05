@@ -19,7 +19,7 @@ function expectedLabel(expectedArrival: Date | null, method: string): string {
 export async function MyOfficeVisitors({ departmentId }: { departmentId: string | null }) {
   if (!departmentId) {
     return (
-      <Card className="mb-6">
+      <Card>
         <CardHeader title="My Office Visitors" subtitle="Today" />
         <EmptyState
           title="No office assigned"
@@ -40,7 +40,7 @@ export async function MyOfficeVisitors({ departmentId }: { departmentId: string 
     }),
     db.visit.findMany({
       where: {
-        status: { in: ["PENDING", "CHECKED_IN"] },
+        status: { in: ["PENDING", "CHECKED_IN", "CHECKED_OUT"] },
         AND: [
           { OR: [{ departmentId }, { stops: { some: { departmentId } } }] },
           {
@@ -72,8 +72,10 @@ export async function MyOfficeVisitors({ departmentId }: { departmentId: string 
     }),
   ]);
 
-  const expected = visits.filter((visit) => visit.status === "PENDING").length;
-  const arrived = visits.length - expected;
+  const visitors = new Set(visits.map((visit) => visit.visitor.id)).size;
+  const pending = visits.filter((visit) => visit.status === "PENDING").length;
+  const arrived = visits.filter((visit) => visit.status === "CHECKED_IN").length;
+  const completed = visits.filter((visit) => visit.status === "CHECKED_OUT").length;
   const officeName = department?.name ?? "My office";
   const todayLabel = new Date().toLocaleDateString("en-PH", {
     timeZone: PH_TZ,
@@ -83,29 +85,39 @@ export async function MyOfficeVisitors({ departmentId }: { departmentId: string 
   });
 
   return (
-    <Card className="mb-6">
+    <Card>
       <CardHeader
         title="My Office Visitors"
         subtitle={`${officeName}${department?.building ? ` · ${department.building}` : ""} · ${todayLabel}`}
       />
 
-      <div className="grid grid-cols-1 divide-y divide-[var(--border)] border-b border-[var(--border)] sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+      <div className="flex flex-col divide-y divide-[var(--border)] border-b border-[var(--border)] sm:flex-row sm:divide-x sm:divide-y-0">
         <Metric
-          label="Expected today"
-          value={expected}
-          hint="Pending visits to your office that have not checked in yet."
+          label="Visitors"
+          value={visitors}
+          hint="Visitors scheduled for your office today."
         />
         <Metric
-          label="On site now"
+          label="Pending Visit"
+          value={pending}
+          hint="Registered but not yet checked in."
+        />
+        <Metric
+          label="Arrived Office"
           value={arrived}
-          hint="Visitors checked in for your office and not yet checked out."
+          hint="Checked in and not yet checked out."
+        />
+        <Metric
+          label="Complete Visit"
+          value={completed}
+          hint="Checked out today."
         />
       </div>
 
       {visits.length === 0 ? (
         <EmptyState
-          title="No visitors expected today"
-          hint={`No pending or checked-in visits for ${officeName} today.`}
+          title="No visitors today"
+          hint={`No visits for ${officeName} today.`}
         />
       ) : (
         <div className="overflow-x-auto">
@@ -144,9 +156,11 @@ export async function MyOfficeVisitors({ departmentId }: { departmentId: string 
                     </td>
                     <td className="px-5 py-3">
                       {visit.status === "PENDING" ? (
-                        <Badge tone="amber">Expected</Badge>
+                        <Badge tone="amber">Pending Visit</Badge>
+                      ) : visit.status === "CHECKED_IN" ? (
+                        <Badge tone="green">Arrived Office</Badge>
                       ) : (
-                        <Badge tone="green">Checked in</Badge>
+                        <Badge tone="gray">Complete Visit</Badge>
                       )}
                     </td>
                   </tr>
@@ -159,7 +173,7 @@ export async function MyOfficeVisitors({ departmentId }: { departmentId: string 
 
       <div className="border-t border-[var(--border)] px-5 py-3 text-right">
         <Link
-          href={`?dept=${departmentId}`}
+          href={`/staff/visitors?dept=${departmentId}`}
           className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--brand)] hover:underline"
         >
           <Building2 className="h-3.5 w-3.5" />

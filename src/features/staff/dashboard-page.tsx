@@ -1,12 +1,17 @@
 import Link from "next/link";
+import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth";
 import { PageHeader, Button } from "@/components/ui";
-import { DashboardOverview } from "@/components/dashboard-overview";
+import { MyOfficeVisitors } from "@/features/visitors/my-office-visitors";
 import { PH_TZ } from "@/lib/ph-time";
 import { QrCode, Plus } from "lucide-react";
 
 export default async function StaffDashboardPage() {
-  await requirePermission("visit:read");
+  const user = await requirePermission("visit:read");
+  const profile = await db.user.findUnique({
+    where: { id: user.userId },
+    select: { departmentId: true },
+  });
 
   const todayLabel = new Date().toLocaleDateString("en-PH", {
     timeZone: PH_TZ,
@@ -38,7 +43,7 @@ export default async function StaffDashboardPage() {
         }
       />
 
-      <DashboardOverview portal="staff" />
+      <MyOfficeVisitors departmentId={profile?.departmentId ?? null} />
     </div>
   );
 }
