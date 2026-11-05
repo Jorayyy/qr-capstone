@@ -8,6 +8,7 @@ import { searchQuerySchema, uuidSchema } from "@/lib/validation";
 import { PageHeader, Button, Card, Badge, EmptyState, Input, Select } from "@/components/ui";
 import { Plus, Search } from "lucide-react";
 import { DeleteVisitorButton } from "./actions-client";
+import { MyOfficeVisitors } from "./my-office-visitors";
 import { currentPortal } from "@/lib/portal-server";
 import { portalHref } from "@/lib/portal";
 
@@ -18,6 +19,10 @@ export default async function VisitorsPage({
 }) {
   const user = await requirePermission("visitor:read");
   const portal = await currentPortal();
+  const staffOffice = await db.user.findUnique({
+    where: { id: user.userId },
+    select: { departmentId: true },
+  });
   const mayDelete = can(user.role, "visitor:delete");
   const { q: rawQ, dept: rawDept } = await searchParams;
 
@@ -88,6 +93,8 @@ export default async function VisitorsPage({
           </Link>
         }
       />
+
+      <MyOfficeVisitors departmentId={staffOffice?.departmentId ?? null} />
 
       <Card>
         <div className="border-b border-[var(--border)] px-5 py-3">

@@ -267,6 +267,7 @@ export const createUserSchema = z
     name: requiredText(120, "Name"),
     role: z.enum(USER_ROLES),
     password: z.string().optional(),
+    departmentId: z.string().uuid().optional(),
   })
   .strict();
 
@@ -274,6 +275,13 @@ export const userRoleSchema = z
   .object({
     userId: z.string().uuid(),
     role: z.enum(USER_ROLES),
+  })
+  .strict();
+
+export const userDepartmentSchema = z
+  .object({
+    userId: z.string().uuid(),
+    departmentId: z.string().uuid().nullable(),
   })
   .strict();
 

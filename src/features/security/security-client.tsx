@@ -120,13 +120,58 @@ export function RoleSelect({
   );
 }
 
+/** Per-row office selector for staff/reception accounts. */
+export function DepartmentSelect({
+  action,
+  userId,
+  currentDepartmentId,
+  departments,
+}: {
+  action: (prev: AdminUserState, formData: FormData) => Promise<AdminUserState>;
+  userId: string;
+  currentDepartmentId: string | null;
+  departments: readonly { id: string; name: string }[];
+}) {
+  const [state, formAction, pending] = useActionState(action, null);
+
+  return (
+    <form action={formAction} className="inline-flex items-center gap-1.5">
+      <input type="hidden" name="userId" value={userId} />
+      <select
+        name="departmentId"
+        defaultValue={currentDepartmentId ?? ""}
+        disabled={pending}
+        className="max-w-44 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs focus:border-[var(--brand)] focus:outline-none disabled:opacity-50"
+      >
+        <option value="">No office</option>
+        {departments.map((department) => (
+          <option key={department.id} value={department.id}>
+            {department.name}
+          </option>
+        ))}
+      </select>
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)] disabled:opacity-50"
+      >
+        {pending ? "…" : "Set"}
+      </button>
+      {state?.error && <span className="text-xs text-[var(--danger)]">{state.error}</span>}
+      {state?.success && <span className="text-xs text-[var(--success)]">{state.success}</span>}
+    </form>
+  );
+}
+
 /** Admin create-user form with one-time password display. */
 export function CreateUserForm({
   action,
   roles,
+  departments,
 }: {
   action: (prev: AdminUserState, formData: FormData) => Promise<AdminUserState>;
   roles: readonly string[];
+  departments: readonly { id: string; name: string }[];
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const [dismissed, setDismissed] = useState(false);
@@ -152,7 +197,7 @@ export function CreateUserForm({
           </button>
         </div>
       )}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <input
           name="email"
           type="email"
@@ -176,6 +221,14 @@ export function CreateUserForm({
           {roles.map((role) => (
             <option key={role} value={role}>
               {role}
+            </option>
+          ))}
+        </select>
+        <select name="departmentId" defaultValue="" className="field" aria-label="Office">
+          <option value="">No office</option>
+          {departments.map((department) => (
+            <option key={department.id} value={department.id}>
+              {department.name}
             </option>
           ))}
         </select>

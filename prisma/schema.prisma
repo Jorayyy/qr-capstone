@@ -97,10 +97,13 @@ model User {
   mfaSecret          String?
   mfaRecoveryCodes   String?
   mfaEnrolledAt      DateTime?
+  departmentId       String?
 
-  sessions  Session[]
-  auditLogs AuditLog[]
+  sessions   Session[]
+  auditLogs  AuditLog[]
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
+  @@index([departmentId])
   @@map("users")
 }
 
@@ -169,6 +172,7 @@ model Department {
 
   visits     Visit[]
   visitStops VisitStop[]
+  users      User[]
 
   @@map("departments")
 }

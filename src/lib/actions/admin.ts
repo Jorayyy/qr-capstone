@@ -6,7 +6,13 @@ import { getRequestContext, requirePermission, revokeAllSessions } from "@/lib/a
 import { recordAudit } from "@/lib/audit";
 import { LIMITS, WINDOWS, rateLimit } from "@/lib/rate-limit";
 import { breachedPasswordCount, hashPassword, passwordSchemaFor } from "@/lib/password";
-import { createUserSchema, formString, userRoleSchema, uuidSchema } from "@/lib/validation";
+import {
+  createUserSchema,
+  formString,
+  userDepartmentSchema,
+  userRoleSchema,
+  uuidSchema,
+} from "@/lib/validation";
 import { randomBytes } from "crypto";
 
 export type AdminUserState = {
@@ -43,11 +49,12 @@ export async function createUserAction(
     name: formString(formData, "name"),
     role: formString(formData, "role"),
     password: formString(formData, "password") || undefined,
+    departmentId: formString(formData, "departmentId") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
-  const { email, name, role } = parsed.data;
+  const { email, name, role, departmentId } = parsed.data;
 
   try {
     const existing = await db.user.findUnique({ where: { email }, select: { id: true } });
@@ -74,6 +81,7 @@ export async function createUserAction(
         email,
         name,
         role,
+        departmentId: departmentId ?? null,
         passwordHash: await hashPassword(tempPassword),
         mustChangePassword: true,
       },
@@ -90,7 +98,7 @@ export async function createUserAction(
       ip: ctx.ip,
       userAgent: ctx.userAgent,
       requestId: ctx.requestId,
-      meta: { email, role },
+      meta: { email, role, departmentId: departmentId ?? null },
     });
 
     revalidatePath("/security");
@@ -168,6 +176,80 @@ export async function setUserRoleAction(
       })
     );
     return { error: "Could not update the role. Please try again." };
+  }
+}
+
+export async function setUserDepartmentAction(
+  _prev: AdminUserState,
+  formData: FormData
+): Promise<AdminUserState> {
+  const g = await guard("set-department");
+  if ("error" in g) return g;
+  const { actor, ctx } = g;
+
+  const targetId = parseTargetId(formData);
+  if (!targetId) return { error: "Invalid user." };
+
+  const parsed = userDepartmentSchema.safeParse({
+    userId: targetId,
+    departmentId: formString(formData, "departmentId") || null,
+  });
+  if (!parsed.success) return { error: "Invalid office." };
+
+  try {
+    const target = await db.user.findUnique({
+      where: { id: parsed.data.userId },
+      select: { id: true, email: true, departmentId: true },
+    });
+    if (!target) return { error: "User not found." };
+
+    const department = parsed.data.departmentId
+      ? await db.department.findUnique({
+          where: { id: parsed.data.departmentId },
+          select: { id: true, name: true },
+        })
+      : null;
+    if (parsed.data.departmentId && !department) return { error: "Office not found." };
+    if (target.departmentId === (department?.id ?? null)) return { success: "Office unchanged." };
+
+    await db.user.update({
+      where: { id: target.id },
+      data: { departmentId: department?.id ?? null },
+    });
+
+    await recordAudit({
+      actorId: actor.userId,
+      actorEmail: actor.email,
+      action: "USER_DEPARTMENT_CHANGED",
+      result: "SUCCESS",
+      targetType: "user",
+      targetId: target.id,
+      ip: ctx.ip,
+      userAgent: ctx.userAgent,
+      requestId: ctx.requestId,
+      meta: {
+        email: target.email,
+        from: target.departmentId,
+        to: department?.id ?? null,
+      },
+    });
+
+    revalidatePath("/admin/security");
+    return {
+      success: department
+        ? `${department.name} set as the office for ${target.email}.`
+        : `Office cleared for ${target.email}.`,
+    };
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "USER_DEPARTMENT_ERROR",
+        requestId: ctx.requestId,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    );
+    return { error: "Could not update the office. Please try again." };
   }
 }
 

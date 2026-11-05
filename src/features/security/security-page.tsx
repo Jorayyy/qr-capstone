@@ -10,12 +10,13 @@ import {
   revokeSessionAction,
   revokeUserSessionsAction,
   setUserActiveAction,
+  setUserDepartmentAction,
   setUserRoleAction,
   unlockUserAction,
 } from "@/lib/actions/admin";
 import { USER_ROLES } from "@/lib/validation";
 import { Badge, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
-import { CreateUserForm, RoleSelect, RowAction } from "./security-client";
+import { CreateUserForm, DepartmentSelect, RoleSelect, RowAction } from "./security-client";
 
 const TABS = [
   { key: "users", label: "Users", permission: "users:manage" as Permission },
@@ -77,36 +78,48 @@ export default async function SecurityPage({
 }
 
 async function UsersSection({ actorId }: { actorId: string }) {
-  const users = await db.user.findMany({
-    orderBy: { createdAt: "asc" },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      isActive: true,
-      failedLogins: true,
-      lockedUntil: true,
-      mfaEnabled: true,
-      mustChangePassword: true,
-      createdAt: true,
-    },
-  });
+  const [users, departments] = await Promise.all([
+    db.user.findMany({
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+        failedLogins: true,
+        lockedUntil: true,
+        mfaEnabled: true,
+        mustChangePassword: true,
+        createdAt: true,
+        departmentId: true,
+      },
+    }),
+    db.department.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
 
   const now = new Date();
 
   return (
     <div className="space-y-5">
-      <CreateUserForm action={createUserAction} roles={USER_ROLES} />
+      <CreateUserForm
+        action={createUserAction}
+        roles={USER_ROLES}
+        departments={departments}
+      />
 
       <Card>
         <CardHeader title="Accounts" subtitle={`${users.length} total`} />
         <div className="overflow-x-auto">
-          <table className="data-table min-w-[760px]">
+          <table className="data-table min-w-[920px]">
             <thead>
               <tr>
                 <th className="px-5 py-3">User</th>
                 <th className="px-5 py-3">Role</th>
+                <th className="px-5 py-3">Office</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">MFA</th>
                 <th className="px-5 py-3 text-right">Actions</th>
@@ -129,6 +142,14 @@ async function UsersSection({ actorId }: { actorId: string }) {
                         currentRole={u.role}
                         roles={USER_ROLES}
                         disabled={isSelf}
+                      />
+                    </td>
+                    <td className="px-5 py-3">
+                      <DepartmentSelect
+                        action={setUserDepartmentAction}
+                        userId={u.id}
+                        currentDepartmentId={u.departmentId}
+                        departments={departments}
                       />
                     </td>
                     <td className="px-5 py-3">
