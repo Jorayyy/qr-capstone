@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { Avatar, Badge, Card, CardHeader, EmptyState } from "@/components/ui";
+import { Avatar, Badge, Card, CardHeader, EmptyState, Metric } from "@/components/ui";
 import { manilaMidnight, manilaParts, PH_TZ } from "@/lib/ph-time";
-import { Building2, CalendarClock, Users } from "lucide-react";
+import { Building2 } from "lucide-react";
 
 function expectedLabel(expectedArrival: Date | null, method: string): string {
   if (!expectedArrival) return "—";
@@ -87,19 +87,20 @@ export async function MyOfficeVisitors({ departmentId }: { departmentId: string 
       <CardHeader
         title="My Office Visitors"
         subtitle={`${officeName}${department?.building ? ` · ${department.building}` : ""} · ${todayLabel}`}
-        action={
-          <span className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-            <span className="inline-flex items-center gap-1 rounded-md bg-[var(--warning-soft)] px-2 py-1 text-[var(--warning)]">
-              <CalendarClock className="h-3.5 w-3.5" />
-              {expected} expected
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-md bg-[var(--success-soft)] px-2 py-1 text-[var(--success)]">
-              <Users className="h-3.5 w-3.5" />
-              {arrived} on site
-            </span>
-          </span>
-        }
       />
+
+      <div className="grid grid-cols-1 divide-y divide-[var(--border)] border-b border-[var(--border)] sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+        <Metric
+          label="Expected today"
+          value={expected}
+          hint="Pending visits to your office that have not checked in yet."
+        />
+        <Metric
+          label="On site now"
+          value={arrived}
+          hint="Visitors checked in for your office and not yet checked out."
+        />
+      </div>
 
       {visits.length === 0 ? (
         <EmptyState
