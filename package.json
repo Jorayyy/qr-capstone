@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma migrate deploy && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "db:migrate": "prisma migrate deploy",
     "test": "vitest run",
     "test:watch": "vitest",
     "seed": "tsx prisma/seed.ts",
