@@ -36,6 +36,8 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+# private demo credentials handed to clients out-of-band
+demo.env
 
 # vercel
 .vercel

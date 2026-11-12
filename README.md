@@ -37,14 +37,23 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Setup
 
+Running on a laptop for a demo or defense? See **[docs/RUN-LOCALLY.md](docs/RUN-LOCALLY.md)**.
+With a `demo.env` in the project root, the whole setup is one command:
+
+```bash
+npm run client:setup
+```
+
+Manual / your own database:
+
 ```bash
 npm install
 cp .env.example .env        # then fill in DATABASE_URL and SESSION_SECRET
-npx prisma generate         # generate the Prisma client (src/generated/prisma)
-npx prisma migrate deploy   # apply migrations
-npm run seed                # creates initial admin/security users
+npm run db:setup            # generate + migrate + seed
 npm run dev
 ```
+
+`npm run setup` is an interactive helper that writes `.env` for you.
 
 Seeding prints one-time passwords to the terminal when `SEED_ADMIN_PASSWORD` /
 `SEED_SECURITY_PASSWORD` are unset. Users are forced to change their password at

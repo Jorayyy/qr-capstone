@@ -70,7 +70,8 @@ creates:
 - `security@university.edu` — password `Guard@EVSU2026` (unless overridden)
 - sample departments and visitors
 
-> Run it **once** per demo database. The seed is not idempotent.
+> The seed is idempotent: users and departments are upserted, and sample
+> visitors whose email already exists are skipped. Re-running it is safe.
 
 ---
 
@@ -92,21 +93,29 @@ then scan the QR. If all works, the demo credentials are good.
 
 ## 5. Give clients these items
 
-Send only:
+Create a `demo.env` file in the project root (it is **gitignored**) and send it
+to clients privately:
+
+```env
+DATABASE_URL="<DEMO_DATABASE_URL>"
+BLOB_READ_WRITE_TOKEN="<DEMO_BLOB_READ_WRITE_TOKEN>"
+```
+
+Then send only:
 
 1. Repository link: `https://github.com/Jorayyy/qr-capstone`
 2. `docs/RUN-LOCALLY.md`
-3. `DEMO_DATABASE_URL`
-4. `DEMO_BLOB_READ_WRITE_TOKEN`
+3. The `demo.env` file
 
-Their steps:
+Their steps are a single command:
 
 ```bash
-npm ci
-npm run setup     # paste the demo URL + demo Blob token
-npm run db:setup  # SKIP if the demo DB is already seeded
-npm run dev
+npm run client:setup
 ```
+
+That script reads `demo.env`, writes `.env`, installs dependencies if needed,
+runs `prisma generate` + `prisma migrate deploy` + the seed, and starts the dev
+server. Nothing else to type.
 
 > If multiple clients share one demo database, they will see each other's data.
 > For isolated demos, see the next section.

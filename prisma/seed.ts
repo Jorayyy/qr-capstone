@@ -199,6 +199,14 @@ async function main() {
 
   for (let i = 0; i < visitorData.length; i++) {
     const v = visitorData[i];
+    const existing = await prisma.visitor.findFirst({
+      where: { email: v.email },
+      select: { id: true },
+    });
+    if (existing) {
+      console.log(`  visitor ${v.firstName} ${v.lastName} already exists (skipped)`);
+      continue;
+    }
     const visitor = await prisma.visitor.create({
       data: {
         ...v,
