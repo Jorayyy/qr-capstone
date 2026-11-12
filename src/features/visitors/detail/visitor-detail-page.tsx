@@ -169,7 +169,7 @@ export default async function VisitorDetailPage({
             </div>
             <div className="flex items-center gap-3 text-sm">
               <CreditCard className="h-4 w-4 text-[var(--muted)]" />
-              <span>{visitor.idType.replace("_", " ")}{visitor.idNumber ? ` — ${visitor.idNumber}` : ""}</span>
+              <span>{visitor.idType === "OTHER" && visitor.idTypeOther ? visitor.idTypeOther : visitor.idType.replace("_", " ")}{visitor.idNumber ? ` — ${visitor.idNumber}` : ""}</span>
             </div>
 
             {(visitor.photoUrl || visitor.idPhotoUrl) && (
@@ -226,7 +226,7 @@ export default async function VisitorDetailPage({
                     <span className="font-medium">{formatDate(v.createdAt)}</span>
                     <span className="font-mono text-xs font-semibold text-[var(--brand)]">{v.referenceCode}</span>
                     <span className="text-[var(--muted)]">{v.department.name}</span>
-                    <span className="text-[var(--muted)]">{v.purpose.replace("_", " ")}</span>
+                    <span className="text-[var(--muted)]">{v.purpose === "OTHER" && v.purposeOther ? v.purposeOther : v.purpose.replace("_", " ")}</span>
                     <Badge tone={STATUS_BADGE[v.status]?.tone}>{v.status.replace("_", " ")}</Badge>
                   </div>
 

@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useRef, useState, useTransition } from "react";
 import { Card, CardHeader, Input, Button, Badge, Select, buttonClass } from "@/components/ui";
 import { checkInAction, checkOutAction, addVisitStopAction, checkInStopAction, checkOutStopAction } from "@/lib/actions/visitors";
 import { PH_TZ } from "@/lib/ph-time";
+import type { Portal } from "@/lib/portal";
 import { QrCode, Search, CheckCircle, XCircle, LogIn, LogOut, Camera, X, Keyboard, MapPin, Plus, Upload } from "lucide-react";
 import { CameraViewport, type CameraState } from "@/components/camera-viewport";
 
@@ -20,10 +21,13 @@ type VisitResult = {
   id: string;
   status?: string;
   purpose?: string;
+  purposeOther?: string | null;
   hostName?: string | null;
   actualArrival?: string | null;
   actualDeparture?: string | null;
   qrCode?: string;
+  viewerDepartmentId?: string | null;
+  viewerDepartmentName?: string | null;
   visitor?: {
     firstName?: string;
     lastName?: string;
@@ -85,7 +89,7 @@ async function decodeQrFromImage(file: File): Promise<string | null> {
   }
 }
 
-export default function ScannerPage() {
+export default function ScannerPage({ portal }: { portal: Portal }) {
   const [mode, setMode] = useState<"camera" | "manual" | "upload">("camera");
   const [qrInput, setQrInput] = useState("");
   const [result, setResult] = useState<VisitResult | null>(null);
@@ -98,25 +102,84 @@ export default function ScannerPage() {
   const [departments, setDepartments] = useState<Array<{ id: string; name: string; building: string | null }>>([]);
   const [stopDept, setStopDept] = useState("");
   const [stopBuilding, setStopBuilding] = useState("");
+  const [autoBusy, setAutoBusy] = useState(false);
+  const autoScanRef = useRef<string | null>(null);
 
-  const lookupVisit = useCallback(async (qrCode: string) => {
-    setCameraOn(false);
-    setError("");
-    setResult(null);
-    setFeedback("");
-    try {
-      const res = await fetch(`/api/visits/lookup?qr=${encodeURIComponent(qrCode.trim())}`);
-      if (!res.ok) {
-        setError("No visit found with this QR code.");
-        return;
+  /**
+   * Staff portal: scanning at the office IS the check-in. Flip a PENDING visit
+   * to CHECKED_IN and mark this staff member's own office stop, then confirm.
+   */
+  const autoCheckIn = useCallback(async (visit: VisitResult): Promise<VisitResult> => {
+    if (visit.status !== "PENDING" && visit.status !== "CHECKED_IN") return visit;
+    if (autoScanRef.current === visit.id) return visit;
+
+    let working = visit;
+    if (working.status === "PENDING") {
+      const res = await checkInAction(working.id);
+      if (!res.success) {
+        setFeedback(res.message);
+        return working;
       }
-      const data = await res.json();
-      setResult(data);
-      fetch("/api/departments").then((r) => r.json()).then(setDepartments);
+      working = { ...working, status: "CHECKED_IN", actualArrival: new Date().toISOString() };
+    }
+
+    const departmentId = working.viewerDepartmentId;
+    const atOffice = working.viewerDepartmentName ? ` at ${working.viewerDepartmentName}` : "";
+    let note = `Checked in successfully${atOffice}!`;
+
+    if (departmentId) {
+      const stop = await addVisitStopAction(working.id, departmentId);
+      if (!stop.success) {
+        note = /already/i.test(stop.message)
+          ? `Already checked in${atOffice}.`
+          : `Checked in${atOffice}. ${stop.message}`;
+      }
+    }
+    autoScanRef.current = visit.id;
+    setFeedback(note);
+
+    try {
+      const fresh = await fetch(
+        `/api/visits/lookup?qr=${encodeURIComponent(working.qrCode ?? "")}`
+      ).then((r) => r.json());
+      return fresh as VisitResult;
     } catch {
-      setError("Failed to look up QR code.");
+      return working;
     }
   }, []);
+
+  const lookupVisit = useCallback(
+    async (qrCode: string) => {
+      setCameraOn(false);
+      setError("");
+      setResult(null);
+      setFeedback("");
+      autoScanRef.current = null;
+      try {
+        const res = await fetch(`/api/visits/lookup?qr=${encodeURIComponent(qrCode.trim())}`);
+        if (!res.ok) {
+          setError("No visit found with this QR code.");
+          return;
+        }
+        const data = (await res.json()) as VisitResult;
+        setResult(data);
+        fetch("/api/departments").then((r) => r.json()).then(setDepartments);
+
+        if (portal === "staff") {
+          setAutoBusy(true);
+          try {
+            const updated = await autoCheckIn(data);
+            setResult(updated);
+          } finally {
+            setAutoBusy(false);
+          }
+        }
+      } catch {
+        setError("Failed to look up QR code.");
+      }
+    },
+    [autoCheckIn, portal]
+  );
 
   async function handleManualLookup(e: React.FormEvent) {
     e.preventDefault();
@@ -380,7 +443,11 @@ export default function ScannerPage() {
               </div>
               <div>
                 <span className="text-[var(--muted)]">Purpose:</span>
-                <p className="font-medium">{result.purpose?.replace("_", " ")}</p>
+                <p className="font-medium">
+                  {result.purpose === "OTHER" && result.purposeOther
+                    ? result.purposeOther
+                    : result.purpose?.replace("_", " ")}
+                </p>
               </div>
               <div>
                 <span className="text-[var(--muted)]">Status:</span>
@@ -435,6 +502,13 @@ export default function ScannerPage() {
               </div>
             )}
 
+            {autoBusy && (
+              <div className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-3 text-sm text-[var(--muted)]">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--muted)]/30 border-t-[var(--muted)]" />
+                Checking in at your office…
+              </div>
+            )}
+
             {feedback && (
               <div className="flex items-center gap-2 rounded-lg border border-[var(--success)]/20 bg-[var(--success-soft)] p-3 text-sm text-[var(--success)]">
                 <CheckCircle className="h-4 w-4" />
@@ -443,7 +517,7 @@ export default function ScannerPage() {
             )}
 
             {result.status === "PENDING" && (
-              <Button onClick={handleCheckIn} disabled={isPending} className="w-full">
+              <Button onClick={handleCheckIn} disabled={isPending || autoBusy} className="w-full">
                 <LogIn className="h-4 w-4" />
                 {isPending ? "Processing..." : "Check In"}
               </Button>
@@ -468,10 +542,10 @@ export default function ScannerPage() {
                           {!stop.checkedInAt ? (
                             <button
                               onClick={() => handleCheckInStop(stop.id)}
-                              disabled={isPending}
+                              disabled={isPending || autoBusy}
                               className="text-xs font-medium text-[var(--success)] hover:underline disabled:opacity-50"
                             >
-                              Mark arrived
+                              Check In
                             </button>
                           ) : !stop.checkedOutAt ? (
                             <button onClick={() => handleCheckoutStop(stop.id)} className="text-xs text-[var(--danger)] hover:underline">

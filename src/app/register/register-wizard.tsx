@@ -32,6 +32,7 @@ type Department = { id: string; name: string; building: string | null };
 type OfficeChoice = {
   departmentId: string;
   purpose: string;
+  purposeOther: string;
   hostName: string;
   hostPreference: "SPECIFIC" | "ANY";
 };
@@ -105,8 +106,10 @@ export default function RegisterWizard({ departments }: { departments: Departmen
     email: "",
     phone: "",
     idType: "NATIONAL_ID",
+    idTypeOther: "",
     idNumber: "",
     affiliation: "VISITOR",
+    affiliationOther: "",
     visitType: "ONE_DAY" as "ONE_DAY" | "MULTIPLE",
     validFrom: todayIso(),
     validUntil: "",
@@ -166,6 +169,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
         [department.id]: {
           departmentId: department.id,
           purpose: "MEETING",
+          purposeOther: "",
           hostName: "",
           hostPreference: "ANY",
         },
@@ -186,9 +190,15 @@ export default function RegisterWizard({ departments }: { departments: Departmen
       if (!EMAIL.test(form.email.trim())) return "Enter a valid email address — the pass is emailed there.";
       if (form.phone.trim().length < 7) return "Enter a contact number.";
       if (!form.idType) return "Choose the ID you presented.";
+      if (form.idType === "OTHER" && !form.idTypeOther.trim()) return "Please specify the ID type.";
+      if (form.affiliation === "OTHER" && !form.affiliationOther.trim()) return "Please specify your affiliation.";
     }
     if (index === 3) {
       if (officeList.length === 0) return "Choose at least one office to visit.";
+      const missingPurpose = officeList.find(
+        (office) => office.purpose === "OTHER" && !office.purposeOther.trim()
+      );
+      if (missingPurpose) return "Please specify the purpose of visit for each office marked “Other”.";
       const missingHost = officeList.find(
         (office) => office.hostPreference === "SPECIFIC" && !office.hostName.trim()
       );
@@ -240,13 +250,18 @@ export default function RegisterWizard({ departments }: { departments: Departmen
       email: form.email.trim(),
       phone: form.phone.trim(),
       idType: form.idType,
+      idTypeOther: form.idType === "OTHER" ? form.idTypeOther.trim() || undefined : undefined,
       idNumber: form.idNumber.trim() || undefined,
       affiliation: form.affiliation,
+      affiliationOther:
+        form.affiliation === "OTHER" ? form.affiliationOther.trim() || undefined : undefined,
       photoUrl: photoPath || undefined,
       idPhotoUrl: idPhotoPath || undefined,
       offices: officeList.map((office) => ({
         departmentId: office.departmentId,
         purpose: office.purpose,
+        purposeOther:
+          office.purpose === "OTHER" ? office.purposeOther.trim() || undefined : undefined,
         hostName: office.hostName.trim() || undefined,
         hostPreference: office.hostPreference,
       })),
@@ -282,8 +297,10 @@ export default function RegisterWizard({ departments }: { departments: Departmen
       email: "",
       phone: "",
       idType: "NATIONAL_ID",
+      idTypeOther: "",
       idNumber: "",
       affiliation: "VISITOR",
+      affiliationOther: "",
       visitType: "ONE_DAY",
       validFrom: todayIso(),
       validUntil: "",
@@ -583,6 +600,19 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                 </div>
               </div>
 
+              {form.idType === "OTHER" && (
+                <div>
+                  <label className="label" htmlFor="idTypeOther">Please specify the ID type *</label>
+                  <Input
+                    id="idTypeOther"
+                    value={form.idTypeOther}
+                    onChange={(event) => setField("idTypeOther", event.target.value)}
+                    maxLength={120}
+                    placeholder="e.g. Barangay ID"
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="label" htmlFor="affiliation">Affiliation *</label>
                 <Select id="affiliation" value={form.affiliation} onChange={(event) => setField("affiliation", event.target.value)}>
@@ -591,6 +621,19 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                   ))}
                 </Select>
               </div>
+
+              {form.affiliation === "OTHER" && (
+                <div>
+                  <label className="label" htmlFor="affiliationOther">Please specify your affiliation *</label>
+                  <Input
+                    id="affiliationOther"
+                    value={form.affiliationOther}
+                    onChange={(event) => setField("affiliationOther", event.target.value)}
+                    maxLength={120}
+                    placeholder="e.g. Researcher"
+                  />
+                </div>
+              )}
 
               <p className="flex items-center gap-2 rounded-lg bg-[var(--brand-soft)]/50 px-3 py-2 text-xs text-[var(--brand)]">
                 <Mail className="h-4 w-4 shrink-0" />
@@ -685,6 +728,20 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                               ))}
                             </Select>
                           </div>
+
+                          {office.purpose === "OTHER" && (
+                            <div>
+                              <label className="label">Please specify the purpose *</label>
+                              <Input
+                                value={office.purposeOther}
+                                onChange={(event) =>
+                                  updateOffice(office.departmentId, { purposeOther: event.target.value })
+                                }
+                                maxLength={120}
+                                placeholder="e.g. Document follow-up"
+                              />
+                            </div>
+                          )}
 
                           <div>
                             <span className="label">Who are you going to visit? *</span>
@@ -878,12 +935,16 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                     <dt className="text-xs text-[var(--muted)]">ID</dt>
                     <dd className="font-semibold">
                       {ID_TYPES.find((type) => type.value === form.idType)?.label ?? form.idType}
+                      {form.idType === "OTHER" && form.idTypeOther ? ` · ${form.idTypeOther}` : ""}
                       {form.idNumber ? ` · ${form.idNumber}` : ""}
                     </dd>
                   </div>
                   <div>
                     <dt className="text-xs text-[var(--muted)]">Affiliation</dt>
-                    <dd className="font-semibold">{AFFILIATIONS.find((item) => item.value === form.affiliation)?.label}</dd>
+                    <dd className="font-semibold">
+                      {AFFILIATIONS.find((item) => item.value === form.affiliation)?.label}
+                      {form.affiliation === "OTHER" && form.affiliationOther ? ` · ${form.affiliationOther}` : ""}
+                    </dd>
                   </div>
                 </dl>
               </div>
@@ -901,6 +962,7 @@ export default function RegisterWizard({ departments }: { departments: Departmen
                         <span className="font-semibold">{department?.name}</span>
                         <span className="text-xs text-[var(--muted)]">
                           {PURPOSES.find((purpose) => purpose.value === office.purpose)?.label}
+                          {office.purpose === "OTHER" && office.purposeOther ? ` · ${office.purposeOther}` : ""}
                           {office.hostPreference === "SPECIFIC" && office.hostName ? ` · ${office.hostName}` : ""}
                         </span>
                       </li>

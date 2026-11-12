@@ -133,13 +133,16 @@ export const registerVisitorSchema = z
     phone: optionalText(32),
     company: optionalText(120),
     affiliation: z.enum(AFFILIATIONS).optional(),
+    affiliationOther: optionalText(120),
     dateOfBirth: optionalIsoDate,
     idType: z.enum(ID_TYPES),
+    idTypeOther: optionalText(120),
     idNumber: optionalText(64),
     photoUrl: optionalPhotoPath,
     idPhotoUrl: optionalPhotoPath,
     departmentId: z.string().uuid("Invalid department."),
     purpose: z.enum(PURPOSES),
+    purposeOther: optionalText(120),
     hostName: optionalText(120),
     hostDepartment: optionalText(120),
     vehicleType: optionalText(64),
@@ -147,7 +150,15 @@ export const registerVisitorSchema = z
     vehiclePlateNumber: optionalText(64),
     notes: optionalText(500),
   })
-  .strict();
+  .strict()
+  .refine((value) => value.idType !== "OTHER" || Boolean(value.idTypeOther), {
+    message: "Please specify the ID type.",
+    path: ["idTypeOther"],
+  })
+  .refine((value) => value.purpose !== "OTHER" || Boolean(value.purposeOther), {
+    message: "Please specify the purpose.",
+    path: ["purposeOther"],
+  });
 
 export type RegisterVisitorInput = z.infer<typeof registerVisitorSchema>;
 
@@ -155,11 +166,16 @@ export const officeStopSchema = z
   .object({
     departmentId: z.string().uuid("Invalid office."),
     purpose: z.enum(PURPOSES),
+    purposeOther: optionalText(120),
     hostName: optionalText(120),
     hostPreference: z.enum(HOST_PREFERENCES).default("ANY"),
     notes: optionalText(300),
   })
-  .strict();
+  .strict()
+  .refine((value) => value.purpose !== "OTHER" || Boolean(value.purposeOther), {
+    message: "Please specify the purpose.",
+    path: ["purposeOther"],
+  });
 
 /**
  * Public pre-registration. Email and phone are required because the pass is
@@ -173,8 +189,10 @@ export const publicRegistrationSchema = z
     email: emailField,
     phone: requiredText(32, "Contact number"),
     idType: z.enum(ID_TYPES),
+    idTypeOther: optionalText(120),
     idNumber: optionalText(64),
     affiliation: z.enum(AFFILIATIONS),
+    affiliationOther: optionalText(120),
     photoUrl: optionalPhotoPath,
     idPhotoUrl: requiredPhotoPath,
     offices: z
@@ -190,7 +208,15 @@ export const publicRegistrationSchema = z
     validUntil: optionalIsoDate,
     agree: z.literal("on", { message: "Please confirm that the details are correct." }),
   })
-  .strict();
+  .strict()
+  .refine((value) => value.idType !== "OTHER" || Boolean(value.idTypeOther), {
+    message: "Please specify the ID type.",
+    path: ["idTypeOther"],
+  })
+  .refine((value) => value.affiliation !== "OTHER" || Boolean(value.affiliationOther), {
+    message: "Please specify your affiliation.",
+    path: ["affiliationOther"],
+  });
 
 export type PublicRegistrationInput = z.infer<typeof publicRegistrationSchema>;
 

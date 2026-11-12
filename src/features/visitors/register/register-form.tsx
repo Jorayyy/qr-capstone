@@ -122,6 +122,8 @@ export default function RegisterVisitorPage({ portal }: { portal: Portal }) {
   const [departments, setDepartments] = useState<Array<{ id: string; name: string; building: string | null }>>([]);
   const [facePath, setFacePath] = useState<string | null>(null);
   const [idPath, setIdPath] = useState<string | null>(null);
+  const [idType, setIdType] = useState("");
+  const [purpose, setPurpose] = useState("");
 
   useEffect(() => {
     fetch("/api/departments").then((r) => r.json()).then(setDepartments);
@@ -222,7 +224,7 @@ export default function RegisterVisitorPage({ portal }: { portal: Portal }) {
             </div>
             <div>
               <label className="label">ID Type *</label>
-              <Select name="idType" required>
+              <Select name="idType" required value={idType} onChange={(e) => setIdType(e.target.value)}>
                 <option value="">Select ID type</option>
                 {ID_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>
@@ -232,6 +234,13 @@ export default function RegisterVisitorPage({ portal }: { portal: Portal }) {
               </Select>
             </div>
           </div>
+
+          {idType === "OTHER" && (
+            <div>
+              <label className="label">Please specify the ID type *</label>
+              <Input name="idTypeOther" required maxLength={120} placeholder="e.g. Barangay ID" />
+            </div>
+          )}
 
           <div>
             <label className="label">ID Number (Optional)</label>
@@ -259,7 +268,7 @@ export default function RegisterVisitorPage({ portal }: { portal: Portal }) {
             </div>
             <div>
               <label className="label">Purpose *</label>
-              <Select name="purpose" required>
+              <Select name="purpose" required value={purpose} onChange={(e) => setPurpose(e.target.value)}>
                 <option value="">Select purpose</option>
                 {PURPOSES.map((p) => (
                   <option key={p.value} value={p.value}>
@@ -269,6 +278,13 @@ export default function RegisterVisitorPage({ portal }: { portal: Portal }) {
               </Select>
             </div>
           </div>
+
+          {purpose === "OTHER" && (
+            <div>
+              <label className="label">Please specify the purpose *</label>
+              <Input name="purposeOther" required maxLength={120} placeholder="e.g. Document follow-up" />
+            </div>
+          )}
 
           <div>
             <label className="label">Vehicle (Optional)</label>

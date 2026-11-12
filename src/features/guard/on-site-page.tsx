@@ -37,6 +37,7 @@ export default async function GuardOnSitePage() {
       id: true,
       status: true,
       purpose: true,
+      purposeOther: true,
       actualArrival: true,
       validFrom: true,
       visitor: { select: { firstName: true, lastName: true } },
@@ -70,7 +71,10 @@ export default async function GuardOnSitePage() {
                       {visit.visitor.firstName} {visit.visitor.lastName}
                     </p>
                     <p className="truncate text-xs text-[var(--muted)]">
-                      {visit.department.name} · {visit.purpose.replaceAll("_", " ").toLowerCase()}
+                      {visit.department.name} ·{" "}
+                      {(visit.purpose === "OTHER" && visit.purposeOther
+                        ? visit.purposeOther
+                        : visit.purpose.replaceAll("_", " ").toLowerCase())}
                     </p>
                   </div>
                   <div className="text-right text-xs text-[var(--muted)]">

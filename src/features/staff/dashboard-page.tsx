@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/auth";
 import { PageHeader, Button } from "@/components/ui";
 import { MyOfficeVisitors } from "@/features/visitors/my-office-visitors";
 import { PH_TZ } from "@/lib/ph-time";
-import { QrCode, Plus } from "lucide-react";
+import { QrCode } from "lucide-react";
 
 export default async function StaffDashboardPage() {
   const user = await requirePermission("visit:read");
@@ -26,20 +26,12 @@ export default async function StaffDashboardPage() {
         title="Dashboard"
         subtitle={todayLabel}
         actions={
-          <div className="flex gap-2">
-            <Link href="/staff/visitors/register">
-              <Button>
-                <Plus className="h-4 w-4" />
-                Register Visitor
-              </Button>
-            </Link>
-            <Link href="/staff/scanner">
-              <Button variant="secondary">
-                <QrCode className="h-4 w-4" />
-                Scan QR
-              </Button>
-            </Link>
-          </div>
+          <Link href="/staff/scanner">
+            <Button variant="secondary">
+              <QrCode className="h-4 w-4" />
+              Scan QR
+            </Button>
+          </Link>
         }
       />
 

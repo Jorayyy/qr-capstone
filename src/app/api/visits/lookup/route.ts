@@ -15,6 +15,7 @@ function staffProjection(visit: {
   id: string;
   status: string;
   purpose: string;
+  purposeOther: string | null;
   qrCode: string;
   qrExpiresAt: Date | null;
   qrRevokedAt: Date | null;
@@ -49,6 +50,7 @@ function staffProjection(visit: {
     referenceCode: visit.referenceCode,
     status: visit.status,
     purpose: visit.purpose,
+    purposeOther: visit.purposeOther,
     qrCode: visit.qrCode,
     validFrom: visit.validFrom,
     qrExpiresAt: visit.qrExpiresAt,
@@ -170,7 +172,15 @@ export async function GET(req: NextRequest) {
     });
 
     const body = staffProjection(visit);
-    const res = jsonOk(body);
+    const profile = await db.user.findUnique({
+      where: { id: user.userId },
+      select: { departmentId: true, department: { select: { name: true } } },
+    });
+    const res = jsonOk({
+      ...body,
+      viewerDepartmentId: profile?.departmentId ?? null,
+      viewerDepartmentName: profile?.department?.name ?? null,
+    });
     for (const [key, value] of Object.entries(NO_STORE)) res.headers.set(key, value);
     return res;
   });

@@ -6,7 +6,7 @@ import { can } from "@/lib/rbac";
 import { LIMITS, WINDOWS, rateLimit } from "@/lib/rate-limit";
 import { searchQuerySchema, uuidSchema } from "@/lib/validation";
 import { PageHeader, Button, Card, Badge, EmptyState, Input, Select } from "@/components/ui";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { DeleteVisitorButton } from "./actions-client";
 import { currentPortal } from "@/lib/portal-server";
 import { portalHref } from "@/lib/portal";
@@ -79,14 +79,6 @@ export default async function VisitorsPage({
       <PageHeader
         title="Visitors"
         subtitle="Manage registered visitors"
-        actions={
-          <Link href={portalHref(portal, "/visitors/register")}>
-            <Button>
-              <Plus className="h-4 w-4" />
-              Register Visitor
-            </Button>
-          </Link>
-        }
       />
 
       <Card>
@@ -166,7 +158,7 @@ export default async function VisitorsPage({
                       <td className="px-5 py-3 text-[var(--muted)]">{v.phone ?? "—"}</td>
                       <td className="px-5 py-3 text-[var(--muted)]">{v.company ?? "—"}</td>
                       <td className="px-5 py-3">
-                        <Badge>{v.idType.replace("_", " ")}</Badge>
+                        <Badge>{v.idType === "OTHER" && v.idTypeOther ? v.idTypeOther : v.idType.replace("_", " ")}</Badge>
                       </td>
                       <td className="px-5 py-3">
                         {offices.length === 0 ? (

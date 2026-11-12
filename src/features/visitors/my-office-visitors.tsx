@@ -57,6 +57,7 @@ export async function MyOfficeVisitors({ departmentId }: { departmentId: string 
         id: true,
         status: true,
         purpose: true,
+        purposeOther: true,
         method: true,
         hostName: true,
         expectedArrival: true,
@@ -66,7 +67,7 @@ export async function MyOfficeVisitors({ departmentId }: { departmentId: string 
         },
         stops: {
           where: { departmentId },
-          select: { purpose: true, hostName: true },
+          select: { purpose: true, purposeOther: true, hostName: true },
         },
       },
     }),
@@ -146,7 +147,12 @@ export async function MyOfficeVisitors({ departmentId }: { departmentId: string 
                     </td>
                     <td className="px-5 py-3 text-[var(--muted)]">{visit.visitor.company ?? "—"}</td>
                     <td className="px-5 py-3 text-[var(--muted)]">
-                      {(stop?.purpose ?? visit.purpose).replace("_", " ")}
+                      {(stop?.purpose === "OTHER" && stop.purposeOther
+                        ? stop.purposeOther
+                        : stop?.purpose === "OTHER" && visit.purposeOther
+                          ? visit.purposeOther
+                          : stop?.purpose ?? visit.purpose
+                      ).replaceAll("_", " ")}
                     </td>
                     <td className="px-5 py-3 text-[var(--muted)]">
                       {stop?.hostName ?? visit.hostName ?? "—"}

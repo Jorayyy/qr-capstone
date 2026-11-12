@@ -22,8 +22,7 @@ type NavItem = { href: string; label: string; icon: LucideIcon; exclude?: string
 const NAV_ITEMS: Record<Portal, NavItem[]> = {
   admin: [
     { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/admin/visitors", label: "Visitors", icon: Users, exclude: ["/admin/visitors/register"] },
-    { href: "/admin/visitors/register", label: "Register Walk-in", icon: UserPlus },
+    { href: "/admin/visitors", label: "Visitors", icon: Users },
     { href: "/admin/scanner", label: "Scan QR", icon: ScanLine },
     { href: "/admin/departments", label: "Departments", icon: Building2 },
     { href: "/admin/reports", label: "Reports", icon: FileBarChart },
@@ -31,8 +30,7 @@ const NAV_ITEMS: Record<Portal, NavItem[]> = {
   ],
   staff: [
     { href: "/staff/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/staff/visitors", label: "Visitors", icon: Users, exclude: ["/staff/visitors/register"] },
-    { href: "/staff/visitors/register", label: "Register Walk-in", icon: UserPlus },
+    { href: "/staff/visitors", label: "Visitors", icon: Users },
     { href: "/staff/scanner", label: "Scan QR", icon: ScanLine },
     { href: "/staff/reports", label: "Reports", icon: FileBarChart },
   ],
