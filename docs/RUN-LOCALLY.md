@@ -1,7 +1,6 @@
 # Running the Visitor Management System locally
 
-This guide is for running the system on a laptop (Windows, macOS, or Linux) for a
-demo or final defense. Total setup time: about 10–15 minutes.
+For a laptop demo or final defense. Setup time: about 10–15 minutes.
 
 ---
 
@@ -12,8 +11,14 @@ demo or final defense. Total setup time: about 10–15 minutes.
 | **Node.js 22.12+ or 24 LTS** | Do **not** use Node 21 or 23. |
 | **Git** (or a ZIP copy of the project) | To download the code. |
 | **A PostgreSQL database** | Easiest: a free [Neon](https://neon.tech) database. |
-| **A Vercel Blob token** (for photos) | Free Vercel account. Needed because visitor registration uploads an ID photo. |
-| Internet connection | For installing packages and connecting to the cloud database. |
+| **A Vercel Blob token** (for photos) | Free Vercel account. Needed because registration uploads an ID photo. |
+| Internet connection | For installing packages and connecting to the database. |
+
+> ### ❌ XAMPP will not work
+> XAMPP provides **MySQL/MariaDB**. This system requires **PostgreSQL** — it uses
+> the `pg` driver and PostgreSQL-specific migrations. A `mysql://` connection
+> string is rejected by the setup script. Use Neon (recommended), the PostgreSQL
+> installer, or Docker instead.
 
 ---
 
@@ -21,10 +26,10 @@ demo or final defense. Total setup time: about 10–15 minutes.
 
 Download the **LTS** installer from <https://nodejs.org> and install it.
 
-Verify in a terminal (Command Prompt / PowerShell / Terminal):
+Verify in a terminal:
 
 ```bash
-node --version    # should print v22.x or v24.x
+node --version    # v22.x or v24.x
 npm --version
 ```
 
@@ -37,7 +42,7 @@ git clone https://github.com/Jorayyy/qr-capstone.git
 cd qr-capstone
 ```
 
-If Git is not available, download the repository as a ZIP from GitHub and extract it.
+No Git? Download the ZIP from GitHub and extract it.
 
 ---
 
@@ -47,98 +52,133 @@ If Git is not available, download the repository as a ZIP from GitHub and extrac
 npm ci
 ```
 
-This takes 1–3 minutes the first time.
+Takes 1–3 minutes the first time.
 
 ---
 
-## 5. Create the database
+## 5. Create the PostgreSQL database
 
-### Option A — Neon (recommended, no install)
+### Option A — Neon (recommended: no install, works on any laptop)
 
-1. Sign up at <https://neon.tech>.
-2. Create a project (any name, nearest region).
-3. Copy the **pooled** connection string. It looks like:
+1. Open <https://neon.tech> and sign up (Google, GitHub, or email).
+2. Click **New Project**.
+   - Name: `qr-capstone`
+   - Region: pick the closest to you (e.g. **Singapore** for the Philippines).
+3. Wait for the project to finish provisioning.
+4. On the project dashboard, click **Connect** (top-right).
+5. In the connection dialog:
+   - Turn **Connection pooling** **ON**.
+   - Select **Prisma** if the toggle is shown.
+   - Copy the string that starts with `postgresql://`.
+6. It will look like this (yours will differ):
 
    ```
-   postgresql://USER:PASSWORD@ep-xxxx-pooler.REGION.aws.neon.tech/neondb?sslmode=require
+   postgresql://neondb_owner:AbCdEf123456@ep-cool-name-123456-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
    ```
 
-   Keep `?sslmode=require` at the end.
+7. Keep that string — it goes into `.env` in the next step. Treat it like a password.
 
-### Option B — Local PostgreSQL
+> **Why Neon?** Nothing to install, no port conflicts, and it survives a laptop
+> restart. The free tier is more than enough for a defense.
 
-1. Install PostgreSQL 16 or newer.
-2. Create a database named `qr`.
-3. Your connection string will be:
+### Option B — Local PostgreSQL (fully offline)
+
+1. Install **PostgreSQL 16+** from <https://www.postgresql.org/download/>.
+2. During install, set a password for the `postgres` user (remember it).
+3. Keep port `5432`.
+4. Create a database named `qr` (using pgAdmin or `createdb qr`).
+5. Your connection string is:
 
    ```
    postgresql://postgres:YOUR_PASSWORD@localhost:5432/qr?schema=public
    ```
 
----
-
-## 6. Create the `.env` file
-
-Copy the example file:
+### Option C — Docker (if Docker is already installed)
 
 ```bash
-# Windows (Command Prompt)
-copy .env.example .env
-
-# macOS / Linux / Git Bash
-cp .env.example .env
+docker run --name qr-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=qr -p 5432:5432 -d postgres:16
 ```
 
-Open `.env` in a text editor and set these values:
+Connection string:
 
-```env
-DATABASE_URL="<your connection string from step 5>"
-
-# Generate one with:
-#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-SESSION_SECRET="<paste the 64-character random string here>"
-
-BLOB_READ_WRITE_TOKEN="<your Vercel Blob token>"
-
-APP_URL="http://localhost:3000"
-
-# Optional but recommended for the demo — makes the login passwords predictable.
-SEED_ADMIN_PASSWORD="Admin@EVSU2026"
-SEED_SECURITY_PASSWORD="Guard@EVSU2026"
+```
+postgresql://postgres:postgres@localhost:5432/qr?schema=public
 ```
 
-### Getting the Blob token
+---
+
+## 6. Create the `.env` file (the setup script does it for you)
+
+Run:
+
+```bash
+npm run setup
+```
+
+It asks 5 questions and writes `.env` automatically, including a randomly
+generated `SESSION_SECRET`:
+
+| Question | What to enter |
+|---|---|
+| PostgreSQL DATABASE_URL | Paste the `postgresql://…` string from step 5. |
+| Vercel Blob token | Paste the token from below, or press **Enter** to skip. |
+| App URL | Press **Enter** for `http://localhost:3000`. |
+| Admin password | Press **Enter** for `Admin@EVSU2026`, or type your own. |
+| Guard password | Press **Enter** for `Guard@EVSU2026`, or type your own. |
+
+If `.env` already exists, it refuses to overwrite. Use `npm run setup -- --force`
+to replace it.
+
+### Getting the Blob token (for visitor photos)
 
 1. Sign in at <https://vercel.com>.
-2. Go to **Storage → Blob → Create Database/Store**.
-3. Choose **Private** access.
-4. Copy the `BLOB_READ_WRITE_TOKEN` value into `.env`.
+2. Open **Storage** in the left sidebar.
+3. Click **Create Database** → **Blob**.
+4. Name it (e.g. `qr-photos`) and set access to **Private**.
+5. Open the new store → **Quickstart** / **`.env`** tab.
+6. Copy the value of `BLOB_READ_WRITE_TOKEN` (starts with `vercel_blob_rw_…`).
+7. Paste it when `npm run setup` asks for it.
 
-> Email is optional. Leave `SMTP_*` and `RESEND_API_KEY` unset — the QR code
-> will simply be shown and downloadable on screen instead of emailed.
+> Skipping the Blob token is allowed, but photo uploads (including the public
+> pre-registration ID photo) will fail. Staff/guard registration without photos
+> still works.
+
+### Manual alternative
+
+If you prefer to edit by hand:
+
+```bash
+copy .env.example .env      # Windows
+cp .env.example .env        # macOS / Linux
+```
+
+Then set `DATABASE_URL`, `SESSION_SECRET`, `BLOB_READ_WRITE_TOKEN`, and
+`APP_URL`. Generate a secret with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
 ---
 
 ## 7. Prepare the database
 
-Run these three commands **once**, in order:
+One command does all three steps:
 
 ```bash
-npx prisma generate
-npx prisma migrate deploy
-npm run seed
+npm run db:setup
 ```
 
-What they do:
+It runs:
 
-- `generate` — builds the Prisma client used by the app.
-- `migrate deploy` — creates all database tables.
-- `seed` — creates the initial users and sample data.
+- `prisma generate` — builds the Prisma client.
+- `prisma migrate deploy` — creates all tables.
+- `tsx prisma/seed.ts` — creates the initial users, departments, and sample data.
 
-> ⚠️ Run `npm run seed` **only once**. It is not idempotent; running it again
-> will fail on duplicate sample records.
+> ⚠️ Run this **once**. `seed` is not idempotent; a second run fails on duplicate
+> sample records.
 
-If you did **not** set `SEED_ADMIN_PASSWORD` / `SEED_SECURITY_PASSWORD`, the seed
+If you did not set `SEED_ADMIN_PASSWORD` / `SEED_SECURITY_PASSWORD`, the seed
 prints the generated passwords to the terminal **once**. Copy them immediately.
 
 ---
@@ -149,9 +189,7 @@ prints the generated passwords to the terminal **once**. Copy them immediately.
 npm run dev
 ```
 
-Open <http://localhost:3000> in a browser.
-
-To stop the server, press `Ctrl + C` in the terminal.
+Open <http://localhost:3000>. Stop the server with `Ctrl + C`.
 
 ---
 
@@ -159,13 +197,12 @@ To stop the server, press `Ctrl + C` in the terminal.
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | `admin@university.edu` | `Admin@EVSU2026` (or the printed one) |
-| Guard / Security | `security@university.edu` | `Guard@EVSU2026` (or the printed one) |
+| Admin | `admin@university.edu` | `Admin@EVSU2026` (or what you entered) |
+| Guard / Security | `security@university.edu` | `Guard@EVSU2026` (or what you entered) |
 
-Both accounts are forced to change their password on first sign-in.
+Both accounts must change their password on first sign-in.
 
-Staff and receptionist accounts are created by the Admin under
-**Security → Users**.
+Create Staff/Receptionist accounts as Admin under **Security → Users**.
 
 ---
 
@@ -175,18 +212,20 @@ Staff and receptionist accounts are created by the Admin under
 |---|---|
 | `Node.js version is not supported` | Install Node 22.12+ or 24 LTS. |
 | `Can't reach database server` | Check `DATABASE_URL`, internet, and that it ends with `?sslmode=require`. |
-| `Environment variable not found: DATABASE_URL` | `.env` is missing or in the wrong folder. It must sit next to `package.json`. |
-| Photo upload fails / `BLOB_READ_WRITE_TOKEN` missing | Add the Vercel Blob token to `.env` and restart. |
-| Port 3000 already in use | Run `npm run dev -- -p 3001`, then open `http://localhost:3001`. |
-| Login says "invalid" after re-seeding | Seed only sets the initial password on the first run. Use the password you chose at first sign-in. |
+| `Environment variable not found: DATABASE_URL` | `.env` is missing or not next to `package.json`. Run `npm run setup`. |
+| `mysql://` rejected | XAMPP/MySQL is not supported. Use PostgreSQL (step 5). |
+| Photo upload fails | Add `BLOB_READ_WRITE_TOKEN` to `.env` and restart. |
+| Port 3000 already in use | `npm run dev -- -p 3001`, then open `http://localhost:3001`. |
+| Login "invalid" after re-seeding | Seed only sets the initial password on the first run. Use the password you chose at first sign-in. |
 
 ---
 
 ## 11. Restarting later
 
-You do **not** need to repeat steps 4–7. Just open the project folder and run:
+No need to repeat steps 4–7:
 
 ```bash
+cd qr-capstone
 npm run dev
 ```
 

@@ -9,6 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "db:migrate": "prisma migrate deploy",
+    "db:setup": "prisma generate && prisma migrate deploy && tsx prisma/seed.ts",
+    "setup": "node scripts/setup-local.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "seed": "tsx prisma/seed.ts",
