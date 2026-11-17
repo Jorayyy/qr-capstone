@@ -6,7 +6,7 @@ import CheckinForm from "./checkin-form";
 
 export const metadata = {
   title: `Self check-in · ${SITE.shortName} Visitor System`,
-  description: "Check yourself in or out using your visitor pass and ID number.",
+  description: "Check yourself in using your visitor pass. Check-out is done by scanning your pass at the exit.",
 };
 
 export default function CheckinPage() {
@@ -17,10 +17,10 @@ export default function CheckinPage() {
           <ScanLine className="h-3.5 w-3.5" />
           Self check-in
         </span>
-        <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight text-[var(--brand)]">Check in or out</h1>
+        <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight text-[var(--brand)]">Check in</h1>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-          Scan your pass or type the pass code, then enter the ID number you presented at the
-          Front Desk. Staff can help if you need assistance.
+          Scan your pass or type the pass code to record your arrival. At the exit, present the
+          same pass to the guard so it can be scanned out. Staff can help if you need assistance.
         </p>
 
         <div className="mt-6">

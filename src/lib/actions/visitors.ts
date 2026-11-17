@@ -10,7 +10,7 @@ import { emailEnabled, sendQrEmail } from "@/lib/email";
 import { can, type Permission } from "@/lib/rbac";
 import { LIMITS, WINDOWS, rateLimit } from "@/lib/rate-limit";
 import { isUniqueViolation, nextReferenceCode } from "@/lib/reference";
-import { formString, registerVisitorSchema, uuidSchema } from "@/lib/validation";
+import { formString, qrLookupSchema, registerVisitorSchema, uuidSchema } from "@/lib/validation";
 import { revalidatePortals } from "@/lib/revalidate";
 
 export type ActionState = {
@@ -400,19 +400,40 @@ export async function checkInAction(visitId: string): Promise<VisitActionState> 
   }
 }
 
-export async function checkOutAction(visitId: string): Promise<VisitActionState> {
+export async function checkOutAction(visitId: string, qrCode: string): Promise<VisitActionState> {
   const auth = await guard("visit:transition", "VISIT_CHECKED_OUT", visitId);
   if (!auth) return DENIED;
 
   const id = uuidSchema.safeParse(visitId);
   if (!id.success) return { success: false, message: "Invalid visit." };
 
+  const scanned = qrLookupSchema.safeParse(qrCode);
+  if (!scanned.success) {
+    return { success: false, message: "Scan the visitor's QR pass to check out." };
+  }
+
   try {
     const visit = await db.visit.findUnique({
       where: { id: id.data },
-      select: { id: true, status: true, qrRevokedAt: true },
+      select: { id: true, status: true, qrRevokedAt: true, qrCode: true },
     });
     if (!visit) return { success: false, message: "Visit not found." };
+
+    if (visit.qrCode !== scanned.data) {
+      await recordAudit({
+        actorId: auth.user.userId,
+        actorEmail: auth.user.email,
+        action: "VISIT_CHECKED_OUT",
+        result: "DENIED",
+        targetType: "visit",
+        targetId: visit.id,
+        ip: auth.ctx.ip,
+        userAgent: auth.ctx.userAgent,
+        requestId: auth.ctx.requestId,
+        meta: { reason: "qr_mismatch" },
+      });
+      return { success: false, message: "Scan the visitor's QR pass to check out." };
+    }
 
     const transition = await transitionVisit(visit, "CHECKED_OUT");
     if (!transition.ok) return { success: false, message: transition.message };

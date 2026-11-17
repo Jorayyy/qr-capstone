@@ -230,6 +230,14 @@ export const departmentSchema = z
   })
   .strict();
 
+export const departmentStatusSchema = z
+  .object({
+    departmentId: z.string().uuid("Invalid department."),
+    officeOpen: z.boolean(),
+    headInOffice: z.boolean(),
+  })
+  .strict();
+
 export const uuidSchema = z.string().uuid();
 
 export const qrLookupSchema = z

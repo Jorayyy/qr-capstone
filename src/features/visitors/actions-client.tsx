@@ -6,17 +6,17 @@ import { Button } from "@/components/ui";
 import {
   cancelVisitAction,
   checkInAction,
-  checkOutAction,
   deleteVisitorAction,
   type VisitActionState,
 } from "@/lib/actions/visitors";
-import { LogIn, LogOut, Ban } from "lucide-react";
+import { LogIn, Ban, ScanLine } from "lucide-react";
 
 type VisitStatus = "PENDING" | "CHECKED_IN" | "CHECKED_OUT" | "CANCELLED";
 
 /**
- * Manual visit transitions for the visitor profile â€” lets an admin/guard mark
- * entry or exit without scanning the QR. Server enforces the state machine.
+ * Manual check-in for the visitor profile. Check-out is deliberately absent:
+ * exits are recorded only by scanning the visitor's QR pass at the scanner.
+ * Server enforces the state machine.
  */
 export function VisitControls({
   visitId,
@@ -56,14 +56,10 @@ export function VisitControls({
       )}
 
       {status === "CHECKED_IN" && (
-        <Button
-          variant="secondary"
-          disabled={pending}
-          onClick={() => run(() => checkOutAction(visitId))}
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          {pending ? "Working..." : "Mark as Exited"}
-        </Button>
+        <p className="inline-flex items-center gap-1.5 text-xs text-[var(--muted)]">
+          <ScanLine className="h-3.5 w-3.5" />
+          Check-out is recorded by scanning this visitor&apos;s QR pass.
+        </p>
       )}
 
       <Button

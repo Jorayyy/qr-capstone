@@ -4,14 +4,39 @@ import { Card, Badge, Button, PageHeader, EmptyState, iconActionClass } from "@/
 import { Plus, Pencil, Landmark } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { ToggleForm, DeleteForm } from "./actions-client";
+import { OfficeStatusControl } from "./status-control";
 import { departmentPhotoSrc } from "@/lib/photos";
+import { PH_TZ } from "@/lib/ph-time";
+
+function elapsed(from: Date): string {
+  const minutes = Math.max(0, Math.floor((Date.now() - from.getTime()) / 60000));
+  const hours = Math.floor(minutes / 60);
+  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
+}
 
 export default async function DepartmentsPage() {
   await requirePermission("department:manage");
 
   const departments = await db.department.findMany({
     orderBy: { name: "asc" },
-    include: { _count: { select: { visits: true, visitStops: true } } },
+    include: {
+      _count: { select: { visits: true, visitStops: true } },
+      visitStops: {
+        where: {
+          checkedInAt: { not: null },
+          checkedOutAt: null,
+          visit: { status: "CHECKED_IN" },
+        },
+        orderBy: { checkedInAt: "asc" },
+        select: {
+          id: true,
+          checkedInAt: true,
+          visit: {
+            select: { visitor: { select: { firstName: true, lastName: true } } },
+          },
+        },
+      },
+    },
   });
 
   return (
@@ -66,6 +91,15 @@ export default async function DepartmentsPage() {
                     <p className="mt-0.5 truncate text-xs text-[var(--muted)]">{d.building}</p>
                   )}
 
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <Badge tone={d.officeOpen ? "green" : "red"}>
+                      {d.officeOpen ? "Office open" : "Office closed"}
+                    </Badge>
+                    <Badge tone={d.headInOffice ? "brand" : "amber"}>
+                      {d.headInOffice ? "Head in" : "Head out"}
+                    </Badge>
+                  </div>
+
                   {(d.contactPerson || d.contactEmail) && (
                     <div className="mt-3 space-y-1 text-xs text-[var(--muted)]">
                       {d.contactPerson && <p className="truncate">Contact: {d.contactPerson}</p>}
@@ -74,15 +108,51 @@ export default async function DepartmentsPage() {
                   )}
                 </div>
 
-                <div className="flex gap-5">
-                  <div>
-                    <p className="text-xl font-semibold leading-none tabular-nums text-[var(--foreground)]">{d._count.visits}</p>
-                    <p className="mt-1 text-xs text-[var(--muted)]">visit(s)</p>
+                <div className="space-y-3">
+                  <div className="flex gap-5">
+                    <div>
+                      <p className="text-xl font-semibold leading-none tabular-nums text-[var(--foreground)]">{d._count.visits}</p>
+                      <p className="mt-1 text-xs text-[var(--muted)]">visit(s)</p>
+                    </div>
+                    <div>
+                      <p className="text-xl font-semibold leading-none tabular-nums text-[var(--foreground)]">{d._count.visitStops}</p>
+                      <p className="mt-1 text-xs text-[var(--muted)]">stop(s)</p>
+                    </div>
+                    <div>
+                      <p className="text-xl font-semibold leading-none tabular-nums text-[var(--success)]">{d.visitStops.length}</p>
+                      <p className="mt-1 text-xs text-[var(--muted)]">inside now</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xl font-semibold leading-none tabular-nums text-[var(--foreground)]">{d._count.visitStops}</p>
-                    <p className="mt-1 text-xs text-[var(--muted)]">stop(s)</p>
-                  </div>
+
+                  {d.visitStops.length > 0 && (
+                    <div className="space-y-1 rounded-md bg-[var(--surface-muted)] px-3 py-2 text-xs">
+                      {d.visitStops.slice(0, 3).map((stop) => (
+                        <p key={stop.id} className="flex items-center justify-between gap-2">
+                          <span className="truncate font-medium">
+                            {stop.visit.visitor.firstName} {stop.visit.visitor.lastName}
+                          </span>
+                          <span className="shrink-0 tabular-nums text-[var(--muted)]">
+                            {stop.checkedInAt
+                              ? `${stop.checkedInAt.toLocaleTimeString("en-PH", {
+                                  timeZone: PH_TZ,
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                })} · ${elapsed(stop.checkedInAt)}`
+                              : "—"}
+                          </span>
+                        </p>
+                      ))}
+                      {d.visitStops.length > 3 && (
+                        <p className="text-[var(--muted)]">+{d.visitStops.length - 3} more inside</p>
+                      )}
+                    </div>
+                  )}
+
+                  <OfficeStatusControl
+                    departmentId={d.id}
+                    officeOpen={d.officeOpen}
+                    headInOffice={d.headInOffice}
+                  />
                 </div>
               </div>
 

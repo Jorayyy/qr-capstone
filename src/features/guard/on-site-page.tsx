@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/auth";
 import { PH_TZ } from "@/lib/ph-time";
 import { manilaDayBounds, todayIso } from "@/lib/registration";
 import { Badge, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
+import { AutoRefresh } from "@/components/auto-refresh";
 
 const STATUS: Record<string, { label: string; tone: "green" | "amber" | "gray" }> = {
   CHECKED_IN: { label: "Inside", tone: "green" },
@@ -54,6 +55,7 @@ export default async function GuardOnSitePage() {
 
   return (
     <div>
+      <AutoRefresh />
       <PageHeader title="On-site visitors" subtitle={today} />
 
       <Card>

@@ -22,7 +22,7 @@ Public:
 - `/` - public entry page
 - `/register` - pre-registration; creates Visitor + Visit + planned VisitStops
 - `/pass/[code]` - visitor pass with QR
-- `/checkin` - public self check-in/out by pass code
+- `/checkin` - public self check-in by pass code (check-out is scanner-only)
 - `/office/[id]` - public office preview
 - `/privacy` - privacy notice
 
@@ -51,18 +51,19 @@ Core Prisma models: `User`, `Session`, `AuditLog`, `RateLimit`, `Department`, `V
 - `UserRole`: `ADMIN`, `STAFF`, `SECURITY`, `RECEPTIONIST`
 - `Visit` holds the pass QR, reference code, visitor, primary department, purpose, and actual arrival/departure.
 - `VisitStop` is one office on the trip; `checkedInAt`/`checkedOutAt` are nullable. Registration pre-creates planned rows with both null.
+- `Department` carries live office status: `officeOpen` and `headInOffice`, with `statusUpdatedAt`/`statusUpdatedBy` for the last reporter.
 - Migrations live in `prisma/migrations`; use `npx prisma migrate deploy`, not `db push`, for this repo.
 
 ## Visit and stop flow
 
 1. Public `/register` creates the Visitor, a `PENDING` Visit, and one planned `VisitStop` per selected office.
 2. Visitor gets `/pass/[code]` with the QR.
-3. Visitor may self check in/out at `/checkin`; this only changes the whole Visit, never stops.
+3. Visitor may self check in at `/checkin`; this only changes the whole Visit, never stops.
 4. Staff scans at `/scanner`:
    - `PENDING` -> Check In
    - planned stops show **Mark arrived**, then **Check Out**
    - unplanned offices use the dropdown; `addVisitStopAction` updates a matching planned stop instead of duplicating
-   - visit Check Out closes the visit and any active stops
+   - visit Check Out requires the scanned QR credential and closes the visit and any active stops
 5. `/visitors/[id]` shows stop statuses; its controls are visit-level only.
 
 Server actions are in `src/lib/actions/visitors.ts` (`checkInAction`, `checkOutAction`, `cancelVisitAction`, `addVisitStopAction`, `checkInStopAction`, `checkOutStopAction`, `revokeQrAction`). Public registration is `src/lib/actions/public-registration.ts`.
@@ -71,7 +72,8 @@ Server actions are in `src/lib/actions/visitors.ts` (`checkInAction`, `checkOutA
 
 - `src/lib/auth.ts`: `getSession`, `requireSession`, `requirePermission`, session revoke helpers.
 - Every server action/API route enforces its own permission; the UI is not the authority.
-- `visit:transition` covers scanner, visit transitions, and stop actions.
+- `visit:transition` covers scanner, visit transitions, and stop actions. Visit check-out additionally requires the visit's QR code.
+- `department:status` lets admin, staff, and receptionist report office open/closed and head-in/out; non-admins can only change their own office.
 - `visitor:delete`, `department:manage`, `users:manage`, `sessions:manage` are admin-only.
 - `report:read`: admin, staff, receptionist (read-only export); not security.
 - `visit:revoke-qr` and `audit:read`: admin/security.

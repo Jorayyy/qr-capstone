@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { Card, CardHeader, EmptyState, Avatar, cx } from "@/components/ui";
+import { Card, CardHeader, EmptyState, Avatar, Badge, cx } from "@/components/ui";
 import { RelativeTime } from "@/components/relative-time";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { manilaMidnight, manilaParts } from "@/lib/ph-time";
 import { portalHref, type Portal } from "@/lib/portal";
 import { ArrowRight, Building2, CalendarClock, CheckCircle2, Users } from "lucide-react";
@@ -89,6 +90,7 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
     todaysVisits,
     openStops,
     recentVisits,
+    officeNotices,
   ] = await Promise.all([
       db.visit.count({ where: { createdAt: { gte: today } } }),
       db.visit.count({ where: { status: "PENDING" } }),
@@ -107,6 +109,18 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
         take: 10,
         orderBy: { createdAt: "desc" },
         include: { visitor: true, department: true },
+      }),
+      db.department.findMany({
+        where: { isActive: true, OR: [{ officeOpen: false }, { headInOffice: false }] },
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          officeOpen: true,
+          headInOffice: true,
+          statusUpdatedAt: true,
+          statusUpdatedBy: true,
+        },
       }),
     ]);
 
@@ -139,6 +153,7 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
 
   return (
     <>
+      <AutoRefresh />
       <Card className="mb-6 overflow-hidden">
         <div className="grid grid-cols-1 gap-px bg-[var(--border)] sm:grid-cols-2 lg:grid-cols-4">
           <div className="bg-[var(--surface)] p-5">
@@ -187,6 +202,29 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
           </div>
         </div>
       </Card>
+
+      {officeNotices.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader title="Office notices" subtitle="Offices reported closed or with the head out" />
+          <ul className="divide-y divide-[var(--border)]">
+            {officeNotices.map((office) => (
+              <li key={office.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">{office.name}</span>
+                <Badge tone={office.officeOpen ? "green" : "red"}>
+                  {office.officeOpen ? "Office open" : "Office closed"}
+                </Badge>
+                <Badge tone={office.headInOffice ? "brand" : "amber"}>
+                  {office.headInOffice ? "Head in" : "Head out"}
+                </Badge>
+                <span className="text-xs text-[var(--muted)]">
+                  {office.statusUpdatedAt ? <RelativeTime value={office.statusUpdatedAt} /> : "—"}
+                  {office.statusUpdatedBy ? ` · ${office.statusUpdatedBy}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">

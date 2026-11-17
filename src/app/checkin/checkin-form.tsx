@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { buttonClass } from "@/components/ui";
 import { CameraViewport } from "@/components/camera-viewport";
-import { LogIn, LogOut, ScanLine } from "lucide-react";
+import { LogIn, ScanLine } from "lucide-react";
 
 const CARD = "rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs";
 const LABEL = "label";
 const INPUT = "field";
 
-type Result = { action: "CHECKED_IN" | "CHECKED_OUT"; visitorName: string; departmentName: string; at: string };
+type Result = { action: "CHECKED_IN"; visitorName: string; departmentName: string; at: string };
 
 export default function CheckinForm() {
   const [qr, setQr] = useState("");
@@ -40,27 +40,26 @@ export default function CheckinForm() {
   }
 
   if (result) {
-    const checkedIn = result.action === "CHECKED_IN";
     return (
       <div className={`${CARD} p-8 text-center`}>
         <div className="mb-4 flex justify-center">
           <div className="rounded-xl bg-[var(--success-soft)] p-3">
-            {checkedIn ? (
-              <LogIn className="h-7 w-7 text-[var(--success)]" />
-            ) : (
-              <LogOut className="h-7 w-7 text-[var(--success)]" />
-            )}
+            <LogIn className="h-7 w-7 text-[var(--success)]" />
           </div>
         </div>
-        <h2 className="text-xl font-semibold tracking-tight">
-          {checkedIn ? "You are checked in" : "You are checked out"}
-        </h2>
+        <h2 className="text-xl font-semibold tracking-tight">You are checked in</h2>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Welcome, {result.visitorName}. Your {checkedIn ? "arrival at" : "exit from"}{" "}
-          {result.departmentName} is recorded.
+          Welcome, {result.visitorName}. Your arrival at {result.departmentName} is recorded.
         </p>
         <p className="mt-3 text-xs text-[var(--muted)]">
-          {new Date(result.at).toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" })}
+          {new Date(result.at).toLocaleString("en-PH", {
+            dateStyle: "medium",
+            timeStyle: "short",
+            timeZone: "Asia/Manila",
+          })}
+        </p>
+        <p className="mt-2 text-xs text-[var(--muted)]">
+          At the exit, present your pass to the guard so it can be scanned out.
         </p>
         <button
           type="button"
@@ -129,7 +128,7 @@ export default function CheckinForm() {
         disabled={busy}
         className={buttonClass("primary", "w-full")}
       >
-        {busy ? "Checking…" : "Check in / out"}
+        {busy ? "Checking…" : "Check in"}
       </button>
     </form>
   );

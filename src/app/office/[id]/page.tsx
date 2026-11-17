@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Building2, Clock, Landmark, Mail, User } from "l
 import { db } from "@/lib/db";
 import { PublicShell } from "@/components/public-shell";
 import { departmentPhotoSrc } from "@/lib/photos";
-import { buttonClass } from "@/components/ui";
+import { buttonClass, Badge } from "@/components/ui";
 import { SITE } from "@/lib/site-info";
 
 type Props = { params: Promise<{ id: string }> };
@@ -21,6 +21,9 @@ async function loadDepartment(id: string) {
       contactPerson: true,
       contactEmail: true,
       photoPath: true,
+      officeOpen: true,
+      headInOffice: true,
+      statusUpdatedAt: true,
     },
   });
 }
@@ -78,6 +81,32 @@ export default async function DepartmentPreviewPage({ params }: Props) {
               <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-[var(--muted)]">
                 <Building2 className="h-4 w-4" />
                 {department.building}
+              </p>
+            )}
+
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <Badge tone={department.officeOpen ? "green" : "red"}>
+                {department.officeOpen ? "Office open" : "Office closed"}
+              </Badge>
+              <Badge tone={department.headInOffice ? "brand" : "amber"}>
+                {department.headInOffice ? "Head of office in" : "Head of office out"}
+              </Badge>
+            </div>
+            {(!department.officeOpen || !department.headInOffice) && (
+              <p className="mt-3 rounded-lg border border-[var(--warning)]/20 bg-[var(--warning-soft)] px-3 py-2 text-sm text-[var(--warning)]">
+                {!department.officeOpen
+                  ? "This office is currently closed."
+                  : "The head of this office is currently out."}{" "}
+                Please check with the Front Desk before visiting.
+                {department.statusUpdatedAt
+                  ? ` Updated ${department.statusUpdatedAt.toLocaleString("en-PH", {
+                      timeZone: "Asia/Manila",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}.`
+                  : ""}
               </p>
             )}
 

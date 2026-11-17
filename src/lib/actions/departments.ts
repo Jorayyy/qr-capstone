@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { getRequestContext, getSession, type SessionUser } from "@/lib/auth";
 import { recordAudit } from "@/lib/audit";
 import { can, type Permission } from "@/lib/rbac";
-import { departmentSchema, formString, uuidSchema } from "@/lib/validation";
+import { departmentSchema, departmentStatusSchema, formString, uuidSchema } from "@/lib/validation";
+import { revalidatePortals } from "@/lib/revalidate";
 
 export type DepartmentActionState = {
   success: boolean;
@@ -219,6 +220,83 @@ export async function toggleDepartmentAction(id: string): Promise<DepartmentActi
       })
     );
     return { success: false, message: "Failed to toggle department status." };
+  }
+}
+
+/** Staff report office open/closed and whether the head of office is in. */
+export async function setDepartmentStatusAction(
+  departmentId: string,
+  officeOpen: boolean,
+  headInOffice: boolean
+): Promise<DepartmentActionState> {
+  const auth = await guard("department:status", "DEPARTMENT_STATUS_UPDATED", departmentId);
+  if (!auth) return { success: false, message: "You are not authorized to update office status." };
+
+  const parsed = departmentStatusSchema.safeParse({ departmentId, officeOpen, headInOffice });
+  if (!parsed.success) return { success: false, message: "Invalid office status." };
+
+  try {
+    const dept = await db.department.findUnique({
+      where: { id: parsed.data.departmentId },
+      select: { id: true, name: true },
+    });
+    if (!dept) return { success: false, message: "Department not found." };
+
+    if (auth.user.role !== "ADMIN") {
+      const profile = await db.user.findUnique({
+        where: { id: auth.user.userId },
+        select: { departmentId: true },
+      });
+      if (profile?.departmentId !== dept.id) {
+        return { success: false, message: "You can only update your own office." };
+      }
+    }
+
+    await db.department.update({
+      where: { id: dept.id },
+      data: {
+        officeOpen: parsed.data.officeOpen,
+        headInOffice: parsed.data.headInOffice,
+        statusUpdatedAt: new Date(),
+        statusUpdatedBy: auth.user.name,
+      },
+    });
+
+    await recordAudit({
+      actorId: auth.user.userId,
+      actorEmail: auth.user.email,
+      action: "DEPARTMENT_STATUS_UPDATED",
+      result: "SUCCESS",
+      targetType: "department",
+      targetId: dept.id,
+      ip: auth.ctx.ip,
+      userAgent: auth.ctx.userAgent,
+      requestId: auth.ctx.requestId,
+      meta: { officeOpen: parsed.data.officeOpen, headInOffice: parsed.data.headInOffice },
+    });
+
+    revalidatePortals();
+    revalidatePath("/departments");
+    revalidatePath("/office/[id]", "page");
+    revalidatePath("/");
+    return {
+      success: true,
+      message: parsed.data.officeOpen
+        ? parsed.data.headInOffice
+          ? "Office is open and the head is in."
+          : "Office is open; head of office marked out."
+        : "Office marked closed.",
+    };
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "DEPARTMENT_STATUS_ERROR",
+        requestId: auth.ctx.requestId,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    );
+    return { success: false, message: "Failed to update office status." };
   }
 }
 

@@ -74,20 +74,21 @@ export async function POST(req: NextRequest) {
       return jsonError(403, "This pass is no longer valid. Please see the Front Desk.", requestId);
     }
 
-    let nextStatus: "CHECKED_IN" | "CHECKED_OUT" | null = null;
-    if (visit.status === "PENDING") nextStatus = "CHECKED_IN";
-    else if (visit.status === "CHECKED_IN") nextStatus = "CHECKED_OUT";
-
-    if (!nextStatus) {
+    if (visit.status === "PENDING") {
+      // Self check-in only; check-out is recorded by scanning the pass at the exit.
+    } else if (visit.status === "CHECKED_IN") {
+      return jsonError(
+        409,
+        "Check-out is completed by scanning your pass at the exit.",
+        requestId
+      );
+    } else {
       return jsonError(409, `This pass is already ${visit.status.toLowerCase().replace("_", " ")}.`, requestId);
     }
 
     await db.visit.update({
       where: { id: visit.id },
-      data:
-        nextStatus === "CHECKED_IN"
-          ? { status: "CHECKED_IN", actualArrival: now }
-          : { status: "CHECKED_OUT", actualDeparture: now },
+      data: { status: "CHECKED_IN", actualArrival: now },
     });
 
     await recordAudit({
@@ -97,11 +98,11 @@ export async function POST(req: NextRequest) {
       targetId: visit.id,
       ip,
       requestId,
-      meta: { outcome: nextStatus },
+      meta: { outcome: "CHECKED_IN" },
     });
 
     return jsonOk({
-      action: nextStatus,
+      action: "CHECKED_IN",
       visitorName: visit.visitor.firstName,
       departmentName: visit.department.name,
       at: now,

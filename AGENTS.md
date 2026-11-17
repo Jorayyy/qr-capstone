@@ -27,7 +27,7 @@ Next.js 16 App Router, React 19, TypeScript, Tailwind v4, Prisma 7/PostgreSQL, V
 
 - Client data is sacred: never wipe, reset, or bulk-delete visitors, visits, stops, or departments; confirm destructive DB/ops commands first.
 - PH time: server is UTC; use `PH_TZ`/`src/lib/ph-time.ts` and en-PH for displayed times; format date-only values as calendar dates.
-- Visit flow: `PENDING -> CHECKED_IN -> CHECKED_OUT` (or `CANCELLED`); QR can expire/revoke. Transitions live in `src/lib/actions/visitors.ts`; RBAC is enforced server-side.
+- Visit flow: `PENDING -> CHECKED_IN -> CHECKED_OUT` (or `CANCELLED`); QR can expire/revoke. Transitions live in `src/lib/actions/visitors.ts`; RBAC is enforced server-side. Check-out requires the scanned QR credential.
 - Roles: `ADMIN`, `STAFF`, `SECURITY`, `RECEPTIONIST`. Scanner/transitions need `visit:transition`; see `src/lib/rbac.ts`.
 - Stops: registration pre-creates planned `VisitStop` rows; mark/check out those in `/scanner`, don't duplicate. `/checkin` only flips the visit, not stops.
 - OCR: strict parser in `src/lib/registration.ts`; tests in `tests/registration.test.ts`; don't loosen without tests.

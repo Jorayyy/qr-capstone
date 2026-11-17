@@ -379,12 +379,13 @@ export default async function Home() {
               Ready to check in?
             </h2>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              Scan your pass at the entrance, or self check-in with your pass code.
+              Scan your pass at the entrance, or self check-in with your pass code. At the exit,
+              the guard scans your pass to check you out.
             </p>
           </div>
           <Link href="/checkin" className={buttonClass("primary", "shrink-0")}>
             <LogIn className="h-4 w-4" />
-            Check in / out
+            Check in
           </Link>
         </div>
       </section>

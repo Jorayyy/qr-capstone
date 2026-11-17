@@ -11,6 +11,7 @@ export const PERMISSIONS = {
   "visit:transition": ["ADMIN", "STAFF", "SECURITY", "RECEPTIONIST"],
   "visit:revoke-qr": ["ADMIN", "SECURITY"],
   "department:read": ["ADMIN", "STAFF", "SECURITY", "RECEPTIONIST"],
+  "department:status": ["ADMIN", "STAFF", "RECEPTIONIST"],
   "department:manage": ["ADMIN"],
   "users:manage": ["ADMIN"],
   "sessions:manage": ["ADMIN"],

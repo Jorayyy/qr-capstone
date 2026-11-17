@@ -160,15 +160,19 @@ model RateLimit {
 }
 
 model Department {
-  id            String   @id @default(uuid())
-  name          String   @unique
-  building      String?
-  contactPerson String?
-  contactEmail  String?
-  photoPath     String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String    @id @default(uuid())
+  name            String    @unique
+  building        String?
+  contactPerson   String?
+  contactEmail    String?
+  photoPath       String?
+  isActive        Boolean   @default(true)
+  officeOpen      Boolean   @default(true)
+  headInOffice    Boolean   @default(true)
+  statusUpdatedAt DateTime?
+  statusUpdatedBy String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   visits     Visit[]
   visitStops VisitStop[]
@@ -178,23 +182,23 @@ model Department {
 }
 
 model Visitor {
-  id          String      @id @default(uuid())
-  firstName   String
-  middleName  String?
-  lastName    String
-  email       String?
-  phone       String?
-  company     String?
-  affiliation Affiliation @default(VISITOR)
+  id               String      @id @default(uuid())
+  firstName        String
+  middleName       String?
+  lastName         String
+  email            String?
+  phone            String?
+  company          String?
+  affiliation      Affiliation @default(VISITOR)
   affiliationOther String?
-  dateOfBirth DateTime?
-  idType      IdType
-  idTypeOther String?
-  idNumber    String?
-  photoUrl    String?
-  idPhotoUrl  String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  dateOfBirth      DateTime?
+  idType           IdType
+  idTypeOther      String?
+  idNumber         String?
+  photoUrl         String?
+  idPhotoUrl       String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
   visits Visit[]
 
@@ -204,15 +208,15 @@ model Visitor {
 }
 
 model Visit {
-  id                 String      @id @default(uuid())
-  referenceCode      String      @unique
+  id                 String             @id @default(uuid())
+  referenceCode      String             @unique
   visitorId          String
   departmentId       String
   purpose            VisitPurpose
   purposeOther       String?
-  status             VisitStatus @default(PENDING)
+  status             VisitStatus        @default(PENDING)
   method             RegistrationMethod @default(WALK_IN)
-  visitType          VisitType  @default(ONE_DAY)
+  visitType          VisitType          @default(ONE_DAY)
   expectedArrival    DateTime?
   actualArrival      DateTime?
   actualDeparture    DateTime?
@@ -222,20 +226,20 @@ model Visit {
   vehicleModel       String?
   vehicleColor       String?
   vehiclePlateNumber String?
-  qrCode             String      @unique
+  qrCode             String             @unique
   validFrom          DateTime?
   qrExpiresAt        DateTime?
   qrRevokedAt        DateTime?
   consentVersion     String?
   consentedAt        DateTime?
-  checkedInById       String?
-  checkedOutById      String?
+  checkedInById      String?
+  checkedOutById     String?
   notes              String?
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
-  visitor    Visitor    @relation(fields: [visitorId], references: [id], onDelete: Cascade)
-  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  visitor    Visitor     @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  department Department  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   stops      VisitStop[]
 
   @@index([visitorId])
@@ -246,14 +250,14 @@ model Visit {
 }
 
 model VisitStop {
-  id             String          @id @default(uuid())
+  id             String         @id @default(uuid())
   visitId        String
   departmentId   String
   building       String?
   purpose        VisitPurpose?
   purposeOther   String?
   hostName       String?
-  hostPreference HostPreference  @default(ANY)
+  hostPreference HostPreference @default(ANY)
   checkedInAt    DateTime?
   checkedOutAt   DateTime?
   notes          String?

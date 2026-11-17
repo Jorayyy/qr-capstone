@@ -10,6 +10,23 @@ import { Search } from "lucide-react";
 import { DeleteVisitorButton } from "./actions-client";
 import { currentPortal } from "@/lib/portal-server";
 import { portalHref } from "@/lib/portal";
+import { PH_TZ } from "@/lib/ph-time";
+
+function timeLabel(value: Date | null | undefined): string {
+  if (!value) return "—";
+  return value.toLocaleTimeString("en-PH", {
+    timeZone: PH_TZ,
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function elapsed(from: Date | null | undefined): string {
+  if (!from) return "";
+  const minutes = Math.max(0, Math.floor((Date.now() - from.getTime()) / 60000));
+  const hours = Math.floor(minutes / 60);
+  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
+}
 
 export default async function VisitorsPage({
   searchParams,
@@ -56,7 +73,25 @@ export default async function VisitorsPage({
         orderBy: { createdAt: "desc" },
         include: {
           visits: {
-            select: { id: true, departmentId: true, department: { select: { name: true } } },
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              status: true,
+              departmentId: true,
+              expectedArrival: true,
+              actualArrival: true,
+              method: true,
+              department: { select: { name: true } },
+              stops: {
+                where: { checkedInAt: { not: null } },
+                select: {
+                  departmentId: true,
+                  checkedInAt: true,
+                  checkedOutAt: true,
+                  department: { select: { name: true } },
+                },
+              },
+            },
           },
         },
       })
@@ -139,6 +174,7 @@ export default async function VisitorsPage({
                   <th className="px-5 py-3 font-semibold">Company</th>
                   <th className="px-5 py-3 font-semibold">ID Type</th>
                   <th className="px-5 py-3 font-semibold">Offices Visited</th>
+                  <th className="px-5 py-3 font-semibold">Tracked now</th>
                   <th className="px-5 py-3 text-center">Total Visits</th>
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
@@ -149,6 +185,12 @@ export default async function VisitorsPage({
                     ? v.visits.filter((visit) => visit.departmentId === departmentId)
                     : v.visits;
                   const offices = [...new Set(v.visits.map((visit) => visit.department?.name).filter(Boolean))] as string[];
+                  const active =
+                    v.visits.find((visit) => visit.status === "CHECKED_IN") ??
+                    v.visits.find((visit) => visit.status === "PENDING");
+                  const openStop = active?.stops.find((stop) => !stop.checkedOutAt);
+                  const locationName = openStop?.department.name ?? active?.department.name;
+                  const since = openStop?.checkedInAt ?? active?.actualArrival ?? null;
                   return (
                     <tr key={v.id}>
                       <td className="px-5 py-3 font-medium">
@@ -174,6 +216,27 @@ export default async function VisitorsPage({
                               <Badge>+{offices.length - 2}</Badge>
                             )}
                           </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3">
+                        {active ? (
+                          <div className="space-y-1">
+                            <Badge tone={active.status === "CHECKED_IN" ? "green" : "amber"}>
+                              {active.status === "CHECKED_IN" ? "Inside" : "In queue"}
+                            </Badge>
+                            <p className="text-xs text-[var(--muted)]">
+                              {locationName ?? "—"}
+                              {active.status === "CHECKED_IN"
+                                ? since
+                                  ? ` · ${timeLabel(since)} (${elapsed(since)})`
+                                  : ""
+                                : active.expectedArrival
+                                  ? ` · expected ${timeLabel(active.expectedArrival)}`
+                                  : ""}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-[var(--muted)]">—</span>
                         )}
                       </td>
                       <td className="px-5 py-3 text-center font-medium">{visits.length}</td>

@@ -228,7 +228,7 @@ export default function ScannerPage({ portal }: { portal: Portal }) {
     if (!result) return;
     setFeedback("");
     startTransition(async () => {
-      const res = await checkOutAction(result.id);
+      const res = await checkOutAction(result.id, result.qrCode ?? "");
       if (res.success) {
         setFeedback("Checked out successfully!");
         setResult({ ...result, status: "CHECKED_OUT", actualDeparture: new Date().toISOString() });

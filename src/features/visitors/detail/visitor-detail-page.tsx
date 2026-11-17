@@ -91,6 +91,12 @@ export default async function VisitorDetailPage({
 
   if (!visitor) notFound();
 
+  const activeVisit =
+    visitor.visits.find((v) => v.status === "CHECKED_IN") ??
+    visitor.visits.find((v) => v.status === "PENDING") ??
+    null;
+  const activeStop = activeVisit?.stops.find((stop) => stop.checkedInAt && !stop.checkedOutAt) ?? null;
+
   const qrImages = new Map(
     await Promise.all(
       visitor.visits.map(
@@ -150,6 +156,68 @@ export default async function VisitorDetailPage({
           )
         }
       />
+
+      <Card className="mb-6">
+        <CardHeader title="Current transaction" subtitle="Live visit status and location" />
+        {!activeVisit ? (
+          <EmptyState title="No active visit" hint="This visitor is not expected or checked in right now." />
+        ) : (
+          <div className="grid gap-4 p-5 text-sm sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <p className="text-xs text-[var(--muted)]">Status</p>
+              <p className="mt-1">
+                <Badge tone={STATUS_BADGE[activeVisit.status]?.tone}>
+                  {activeVisit.status.replace("_", " ")}
+                </Badge>
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-[var(--muted)]">Reference</p>
+              <p className="mt-1 font-mono text-xs font-semibold text-[var(--brand)]">
+                {activeVisit.referenceCode}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-[var(--muted)]">
+                {activeVisit.status === "CHECKED_IN" ? "Current office" : "Expected office"}
+              </p>
+              <p className="mt-1 font-medium">
+                {activeStop?.department.name ?? activeVisit.department.name}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-[var(--muted)]">
+                {activeVisit.status === "CHECKED_IN" ? "Inside for" : "Checked in"}
+              </p>
+              <p className="mt-1 font-medium">
+                {activeVisit.status === "CHECKED_IN"
+                  ? formatDuration(activeStop?.checkedInAt ?? activeVisit.actualArrival, null)
+                  : formatDate(activeVisit.actualArrival)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-[var(--muted)]">Host</p>
+              <p className="mt-1 font-medium">{activeStop?.hostName ?? activeVisit.hostName ?? "Any"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-[var(--muted)]">Purpose</p>
+              <p className="mt-1 font-medium">
+                {activeVisit.purpose === "OTHER" && activeVisit.purposeOther
+                  ? activeVisit.purposeOther
+                  : activeVisit.purpose.replace("_", " ")}
+              </p>
+            </div>
+            <div className="sm:col-span-2">
+              <p className="text-xs text-[var(--muted)]">Next step</p>
+              <p className="mt-1 font-medium">
+                {activeVisit.status === "PENDING"
+                  ? "Waiting for check-in at the office scanner."
+                  : "Check-out is recorded by scanning this pass at the scanner."}
+              </p>
+            </div>
+          </div>
+        )}
+      </Card>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">
