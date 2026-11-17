@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Select } from "@/components/ui";
+import { CardHeader, Select } from "@/components/ui";
 
 export function VisitHistory({
   items,
@@ -14,24 +14,28 @@ export function VisitHistory({
   if (!selected) return null;
 
   return (
-    <div>
-      <div className="border-b border-[var(--border)] px-5 py-4">
-        <label htmlFor="visit-history-select" className="label">
-          Showing visit
-        </label>
-        <Select
-          id="visit-history-select"
-          value={selected.id}
-          onChange={(event) => setSelectedId(event.target.value)}
-        >
-          {items.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.label}
-            </option>
-          ))}
-        </Select>
-      </div>
+    <>
+      <CardHeader
+        title="Visit History"
+        subtitle={`${items.length} visit(s)`}
+        action={
+          items.length > 1 ? (
+            <Select
+              aria-label="Select visit"
+              value={selected.id}
+              onChange={(event) => setSelectedId(event.target.value)}
+              className="h-9 min-h-9 w-36 shrink-0 py-1.5 text-xs sm:w-52"
+            >
+              {items.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
+                </option>
+              ))}
+            </Select>
+          ) : undefined
+        }
+      />
       {selected.content}
-    </div>
+    </>
   );
 }

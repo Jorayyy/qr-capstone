@@ -281,17 +281,18 @@ export default async function VisitorDetailPage({
         </Card>
 
         <Card className="lg:col-span-1">
-          <CardHeader title="Visit History" subtitle={`${visitor.visits.length} visit(s)`} />
           {visitor.visits.length === 0 ? (
-            <EmptyState title="No visits yet" hint="This visitor has no recorded visits." />
+            <>
+              <CardHeader title="Visit History" subtitle="0 visit(s)" />
+              <EmptyState title="No visits yet" hint="This visitor has no recorded visits." />
+            </>
           ) : (
-            <div className="divide-y divide-[var(--border)]">
               <VisitHistory
                 items={visitor.visits.map((v) => {
                 const qr = qrImages.get(v.id);
                 return {
                 id: v.id,
-                label: `${formatDate(v.createdAt)} — ${v.referenceCode} — ${v.department.name}`,
+                label: `${formatDate(v.createdAt)} — ${v.referenceCode}`,
                 content: (
                 <div key={v.id} className="p-5">
                   {/* Header row: date, dept, purpose, status */}
@@ -429,7 +430,6 @@ export default async function VisitorDetailPage({
                 };
                 })}
               />
-            </div>
           )}
         </Card>
       </div>
