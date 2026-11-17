@@ -6,6 +6,7 @@ import { MyOfficeVisitors } from "@/features/visitors/my-office-visitors";
 import { OfficeQueue } from "@/features/visitors/office-queue";
 import { OfficeStatusControl } from "@/features/departments/status-control";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { VisitorCharts } from "@/components/visitor-charts";
 import { PH_TZ } from "@/lib/ph-time";
 import { QrCode } from "lucide-react";
 
@@ -99,6 +100,8 @@ export default async function StaffDashboardPage() {
       )}
 
       {departmentId ? <OfficeQueue departmentId={departmentId} /> : null}
+
+      <VisitorCharts departmentId={departmentId} />
 
       <MyOfficeVisitors departmentId={departmentId} />
     </div>

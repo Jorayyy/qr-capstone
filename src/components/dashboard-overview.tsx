@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { Card, CardHeader, EmptyState, Avatar, Badge, cx } from "@/components/ui";
 import { RelativeTime } from "@/components/relative-time";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { VisitorCharts } from "@/components/visitor-charts";
 import { manilaMidnight, manilaParts } from "@/lib/ph-time";
 import { portalHref, type Portal } from "@/lib/portal";
 import { ArrowRight, Building2, CalendarClock, CheckCircle2, Users } from "lucide-react";
@@ -265,6 +266,8 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
           </div>
         </Card>
       </div>
+
+      <VisitorCharts />
 
       <Card>
         <CardHeader
