@@ -20,6 +20,7 @@ import {
   QrCode,
   Clock,
   Download,
+  ChevronDown,
 } from "lucide-react";
 
 function formatDate(d: Date | null) {
@@ -285,20 +286,26 @@ export default async function VisitorDetailPage({
             <EmptyState title="No visits yet" hint="This visitor has no recorded visits." />
           ) : (
             <div className="divide-y divide-[var(--border)]">
-              {visitor.visits.map((v) => {
+              {visitor.visits.map((v, index) => {
                 const qr = qrImages.get(v.id);
                 return (
-                <div key={v.id} className="p-5">
+                <details
+                  key={v.id}
+                  name="visit-history"
+                  open={index === 0}
+                  className="group p-5"
+                >
                   {/* Header row: date, dept, purpose, status */}
-                  <div className="flex flex-wrap items-center gap-4 text-sm">
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center gap-4 text-sm [&::-webkit-details-marker]:hidden">
                     <span className="font-medium">{formatDate(v.createdAt)}</span>
                     <span className="font-mono text-xs font-semibold text-[var(--brand)]">{v.referenceCode}</span>
                     <span className="text-[var(--muted)]">{v.department.name}</span>
                     <span className="text-[var(--muted)]">{v.purpose === "OTHER" && v.purposeOther ? v.purposeOther : v.purpose.replace("_", " ")}</span>
                     <Badge tone={STATUS_BADGE[v.status]?.tone}>{v.status.replace("_", " ")}</Badge>
-                  </div>
+                    <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[var(--muted)] transition-transform group-open:rotate-180" />
+                  </summary>
 
-                  <div className="mt-1 text-xs text-[var(--muted)]">
+                  <div className="mt-3 text-xs text-[var(--muted)]">
                     Pass valid {formatDate(v.validFrom)} — {formatDate(v.qrExpiresAt)}
                     {v.consentedAt && (
                       <span className="ml-2">
@@ -419,7 +426,7 @@ export default async function VisitorDetailPage({
                       </div>
                     </div>
                   )}
-                </div>
+                </details>
                 );
               })}
             </div>
