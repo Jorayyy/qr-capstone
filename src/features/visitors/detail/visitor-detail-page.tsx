@@ -20,8 +20,8 @@ import {
   QrCode,
   Clock,
   Download,
-  ChevronDown,
 } from "lucide-react";
+import { VisitHistory } from "./visit-history";
 
 function formatDate(d: Date | null) {
   if (!d) return "—";
@@ -286,26 +286,24 @@ export default async function VisitorDetailPage({
             <EmptyState title="No visits yet" hint="This visitor has no recorded visits." />
           ) : (
             <div className="divide-y divide-[var(--border)]">
-              {visitor.visits.map((v, index) => {
+              <VisitHistory
+                items={visitor.visits.map((v) => {
                 const qr = qrImages.get(v.id);
-                return (
-                <details
-                  key={v.id}
-                  name="visit-history"
-                  open={index === 0}
-                  className="group p-5"
-                >
+                return {
+                id: v.id,
+                label: `${formatDate(v.createdAt)} — ${v.referenceCode} — ${v.department.name}`,
+                content: (
+                <div key={v.id} className="p-5">
                   {/* Header row: date, dept, purpose, status */}
-                  <summary className="flex cursor-pointer list-none flex-wrap items-center gap-4 text-sm [&::-webkit-details-marker]:hidden">
+                  <div className="flex flex-wrap items-center gap-4 text-sm">
                     <span className="font-medium">{formatDate(v.createdAt)}</span>
                     <span className="font-mono text-xs font-semibold text-[var(--brand)]">{v.referenceCode}</span>
                     <span className="text-[var(--muted)]">{v.department.name}</span>
                     <span className="text-[var(--muted)]">{v.purpose === "OTHER" && v.purposeOther ? v.purposeOther : v.purpose.replace("_", " ")}</span>
                     <Badge tone={STATUS_BADGE[v.status]?.tone}>{v.status.replace("_", " ")}</Badge>
-                    <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[var(--muted)] transition-transform group-open:rotate-180" />
-                  </summary>
+                  </div>
 
-                  <div className="mt-3 text-xs text-[var(--muted)]">
+                  <div className="mt-1 text-xs text-[var(--muted)]">
                     Pass valid {formatDate(v.validFrom)} — {formatDate(v.qrExpiresAt)}
                     {v.consentedAt && (
                       <span className="ml-2">
@@ -426,9 +424,11 @@ export default async function VisitorDetailPage({
                       </div>
                     </div>
                   )}
-                </details>
-                );
-              })}
+                </div>
+                ),
+                };
+                })}
+              />
             </div>
           )}
         </Card>
