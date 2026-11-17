@@ -11,19 +11,24 @@ import { ArrowRight, Building2, CalendarClock, CheckCircle2, Users } from "lucid
 const DAY_START_HOUR = 7;
 const DAY_END_HOUR = 19;
 
-const STATUS_TEXT: Record<string, string> = {
-  PENDING: "Pending",
-  CHECKED_IN: "Inside",
-  CHECKED_OUT: "Checked out",
-  CANCELLED: "Cancelled",
+const STATUS_BADGE: Record<string, { tone: "gray" | "green" | "red" | "amber"; label: string }> = {
+  PENDING: { tone: "amber", label: "Pending" },
+  CHECKED_IN: { tone: "green", label: "Inside" },
+  CHECKED_OUT: { tone: "gray", label: "Checked out" },
+  CANCELLED: { tone: "red", label: "Cancelled" },
 };
 
-const STATUS_DOT: Record<string, string> = {
-  PENDING: "bg-[var(--warning)]",
-  CHECKED_IN: "bg-[var(--success)]",
-  CHECKED_OUT: "bg-[var(--border-strong)]",
-  CANCELLED: "bg-[var(--danger)]",
+const PURPOSE_LABEL: Record<string, string> = {
+  ATTENDANCE: "Attendance",
+  DELIVERY: "Delivery",
+  INTERVIEW: "Interview",
+  MEETING: "Meeting",
+  SCHOOL_VISIT: "School visit",
+  OTHER: "Other",
 };
+
+const MOBILE_LABEL =
+  "mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] sm:hidden";
 
 
 
@@ -286,49 +291,72 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
         {recentVisits.length === 0 ? (
           <EmptyState title="No visits yet" hint="Visits appear here once visitors are registered." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table min-w-[680px]">
-              <thead>
-                <tr>
-                  <th className="px-5 py-2.5 font-semibold">Visitor</th>
-                  <th className="px-5 py-2.5 font-semibold">Destination</th>
-                  <th className="px-5 py-2.5 font-semibold">Purpose</th>
-                  <th className="px-5 py-2.5 font-semibold">Status</th>
-                  <th className="px-5 py-2.5 font-semibold">Registered</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentVisits.map((v) => (
-                  <tr key={v.id}>
-                    <td className="px-5 py-3">
-                      {portal === "guard" ? (
-                        <span className="flex items-center gap-3">
-                          <Avatar name={`${v.visitor.firstName} ${v.visitor.lastName}`} />
-                          <span className="font-medium">{`${v.visitor.firstName} ${v.visitor.lastName}`}</span>
-                        </span>
-                      ) : (
-                        <Link href={portalHref(portal, `/visitors/${v.visitor.id}`)} className="flex items-center gap-3">
-                          <Avatar name={`${v.visitor.firstName} ${v.visitor.lastName}`} />
-                          <span className="font-medium">{`${v.visitor.firstName} ${v.visitor.lastName}`}</span>
-                        </Link>
-                      )}
-                    </td>
-                    <td className="px-5 py-3 text-[var(--muted)]">{v.department.name}</td>
-                    <td className="px-5 py-3 text-[var(--muted)]">{v.purpose.replace("_", " ")}</td>
-                    <td className="px-5 py-3">
-                      <span className="inline-flex items-center gap-2">
-                        <span className={cx("h-2 w-2 rounded-full", STATUS_DOT[v.status] ?? "bg-[var(--border-strong)]")} />
-                        <span className="text-sm">{STATUS_TEXT[v.status] ?? v.status}</span>
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-[var(--muted)]">
-                      <RelativeTime value={v.createdAt} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto_auto] items-center gap-4 border-b border-[var(--border)] bg-[var(--surface-muted)]/50 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] sm:grid">
+              <span>Visitor</span>
+              <span>Destination</span>
+              <span>Purpose</span>
+              <span>Status</span>
+              <span className="text-right">Registered</span>
+            </div>
+            <ul className="divide-y divide-[var(--border)]">
+              {recentVisits.map((v) => {
+                const name = `${v.visitor.firstName} ${v.visitor.lastName}`;
+                const status = STATUS_BADGE[v.status] ?? { tone: "gray" as const, label: v.status };
+                const purpose =
+                  v.purpose === "OTHER" && v.purposeOther
+                    ? v.purposeOther
+                    : PURPOSE_LABEL[v.purpose] ?? v.purpose;
+                const row = (
+                  <div
+                    title={`Visit ${v.referenceCode}`}
+                    className="grid grid-cols-2 items-center gap-x-4 gap-y-3 px-5 py-4 sm:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto_auto] sm:gap-4"
+                  >
+                    <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1">
+                      <Avatar name={name} />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{name}</p>
+                        <p className="truncate text-xs text-[var(--muted)]">
+                          {v.visitor.company ?? v.visitor.email ?? "—"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className={MOBILE_LABEL}>Destination</p>
+                      <p className="truncate text-sm text-[var(--muted)]">{v.department.name}</p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className={MOBILE_LABEL}>Purpose</p>
+                      <p className="truncate text-sm text-[var(--muted)]">{purpose}</p>
+                    </div>
+                    <div>
+                      <p className={MOBILE_LABEL}>Status</p>
+                      <Badge tone={status.tone}>{status.label}</Badge>
+                    </div>
+                    <div className="sm:text-right">
+                      <p className={MOBILE_LABEL}>Registered</p>
+                      <RelativeTime value={v.createdAt} className="text-xs text-[var(--muted)]" />
+                    </div>
+                  </div>
+                );
+
+                return (
+                  <li key={v.id}>
+                    {portal === "guard" ? (
+                      row
+                    ) : (
+                      <Link
+                        href={portalHref(portal, `/visitors/${v.visitor.id}`)}
+                        className="block transition-colors hover:bg-[var(--surface-muted)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand)]"
+                      >
+                        {row}
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
       </Card>
     </>
