@@ -292,7 +292,7 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
           <EmptyState title="No visits yet" hint="Visits appear here once visitors are registered." />
         ) : (
           <>
-            <div className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto_auto] items-center gap-4 border-b border-[var(--border)] bg-[var(--surface-muted)]/50 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] sm:grid">
+            <div className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,0.9fr)_6.5rem_7rem] items-center gap-4 border-b border-[var(--border)] bg-[var(--surface-muted)]/50 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] sm:grid">
               <span>Visitor</span>
               <span>Destination</span>
               <span>Purpose</span>
@@ -310,7 +310,7 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
                 const row = (
                   <div
                     title={`Visit ${v.referenceCode}`}
-                    className="grid grid-cols-2 items-center gap-x-4 gap-y-3 px-5 py-4 sm:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto_auto] sm:gap-4"
+                    className="grid grid-cols-2 items-center gap-x-4 gap-y-3 px-5 py-4 sm:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,0.9fr)_6.5rem_7rem] sm:gap-4"
                   >
                     <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1">
                       <Avatar name={name} />
