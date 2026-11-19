@@ -227,6 +227,23 @@ export const departmentSchema = z
     contactPerson: optionalText(120),
     contactEmail: optionalText(254),
     photoPath: optionalDepartmentPhotoPath,
+    closingTime: z
+      .string()
+      .trim()
+      .refine(
+        (value) => value === "" || /^([01]\d|2[0-3]):[0-5]\d$/.test(value),
+        "Enter a valid closing time."
+      )
+      .optional(),
+  })
+  .strict();
+
+export const campusClosingSchema = z
+  .object({
+    closingTime: z
+      .string()
+      .trim()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Enter a valid closing time."),
   })
   .strict();
 

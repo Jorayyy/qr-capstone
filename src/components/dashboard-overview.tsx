@@ -5,6 +5,8 @@ import { RelativeTime } from "@/components/relative-time";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { VisitorCharts } from "@/components/visitor-charts";
 import { PeriodFilter } from "@/components/period-filter";
+import { AutoCheckoutNotice } from "@/components/auto-checkout-notice";
+import { autoCheckOutOverdueVisits } from "@/lib/auto-checkout";
 import { portalHref, type Portal } from "@/lib/portal";
 import {
   DASHBOARD_PERIODS,
@@ -95,6 +97,8 @@ export async function DashboardOverview({
   const { start, end, label: rangeLabel } = resolveDashboardRange(period);
   const range = { gte: start, lt: end };
 
+  await autoCheckOutOverdueVisits();
+
   const [
     pending,
     registered,
@@ -179,6 +183,7 @@ export async function DashboardOverview({
   return (
     <>
       <AutoRefresh />
+      <AutoCheckoutNotice className="mb-6" />
       <Card className="mb-6 overflow-hidden">
         <div className="grid grid-cols-1 gap-px bg-[var(--border)] sm:grid-cols-2 lg:grid-cols-4">
           <div className="bg-[var(--surface)] p-5">

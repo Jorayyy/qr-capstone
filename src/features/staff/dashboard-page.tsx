@@ -6,12 +6,15 @@ import { MyOfficeVisitors } from "@/features/visitors/my-office-visitors";
 import { OfficeQueue } from "@/features/visitors/office-queue";
 import { OfficeStatusControl } from "@/features/departments/status-control";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { AutoCheckoutNotice } from "@/components/auto-checkout-notice";
+import { autoCheckOutOverdueVisits } from "@/lib/auto-checkout";
 import { VisitorCharts } from "@/components/visitor-charts";
 import { PH_TZ } from "@/lib/ph-time";
 import { QrCode } from "lucide-react";
 
 export default async function StaffDashboardPage() {
   const user = await requirePermission("visit:read");
+  await autoCheckOutOverdueVisits();
   const profile = await db.user.findUnique({
     where: { id: user.userId },
     select: {
@@ -54,6 +57,8 @@ export default async function StaffDashboardPage() {
           </Link>
         }
       />
+
+      <AutoCheckoutNotice />
 
       {department ? (
         <Card>

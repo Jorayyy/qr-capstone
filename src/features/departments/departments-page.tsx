@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { Card, Badge, Button, PageHeader, EmptyState, iconActionClass } from "@/components/ui";
+import { Card, CardHeader, Badge, Button, PageHeader, EmptyState, iconActionClass } from "@/components/ui";
 import { Plus, Pencil, Landmark } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { ToggleForm, DeleteForm } from "./actions-client";
 import { OfficeStatusControl } from "./status-control";
+import { CampusClosingForm } from "./campus-closing-form";
 import { departmentPhotoSrc } from "@/lib/photos";
 import { PH_TZ } from "@/lib/ph-time";
+import { formatClosingTime } from "@/lib/closing-time";
+import { getCampusClosingMinute } from "@/lib/auto-checkout";
 
 function elapsed(from: Date): string {
   const minutes = Math.max(0, Math.floor((Date.now() - from.getTime()) / 60000));
@@ -38,6 +41,7 @@ export default async function DepartmentsPage() {
       },
     },
   });
+  const campusClosingMinute = await getCampusClosingMinute();
 
   return (
     <div>
@@ -53,6 +57,16 @@ export default async function DepartmentsPage() {
           </Link>
         }
       />
+
+      <Card className="mb-6">
+        <CardHeader
+          title="Campus closing time"
+          subtitle="Visitors still inside are automatically checked out after closing. Each office can set its own time."
+        />
+        <div className="p-5">
+          <CampusClosingForm initialTime={formatClosingTime(campusClosingMinute)} />
+        </div>
+      </Card>
 
       {departments.length === 0 ? (
         <Card>
@@ -90,6 +104,9 @@ export default async function DepartmentsPage() {
                   {d.building && (
                     <p className="mt-0.5 truncate text-xs text-[var(--muted)]">{d.building}</p>
                   )}
+                  <p className="mt-0.5 text-xs text-[var(--muted)]">
+                    Closing: {d.closingMinute != null ? formatClosingTime(d.closingMinute) : "Campus time"}
+                  </p>
 
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <Badge tone={d.officeOpen ? "green" : "red"}>

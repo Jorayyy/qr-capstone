@@ -5,8 +5,15 @@ import { db } from "@/lib/db";
 import { getRequestContext, getSession, type SessionUser } from "@/lib/auth";
 import { recordAudit } from "@/lib/audit";
 import { can, type Permission } from "@/lib/rbac";
-import { departmentSchema, departmentStatusSchema, formString, uuidSchema } from "@/lib/validation";
+import {
+  campusClosingSchema,
+  departmentSchema,
+  departmentStatusSchema,
+  formString,
+  uuidSchema,
+} from "@/lib/validation";
 import { revalidatePortals } from "@/lib/revalidate";
+import { CAMPUS_CLOSING_KEY, formatClosingTime, parseClosingTime } from "@/lib/closing-time";
 
 export type DepartmentActionState = {
   success: boolean;
@@ -50,6 +57,7 @@ function readDepartmentForm(formData: FormData) {
     contactPerson: formString(formData, "contactPerson"),
     contactEmail: formString(formData, "contactEmail"),
     photoPath: formString(formData, "photoPath"),
+    closingTime: formString(formData, "closingTime"),
   });
 }
 
@@ -68,6 +76,12 @@ export async function createDepartmentAction(
     };
   }
 
+  const { closingTime, ...fields } = parsed.data;
+  const closingMinute = closingTime ? parseClosingTime(closingTime) : null;
+  if (closingTime && closingMinute === null) {
+    return { success: false, message: "Enter a valid closing time." };
+  }
+
   try {
     const existing = await db.department.findFirst({ where: { name: parsed.data.name } });
     if (existing) {
@@ -75,7 +89,7 @@ export async function createDepartmentAction(
     }
 
     const department = await db.department.create({
-      data: { ...parsed.data, photoPath: parsed.data.photoPath ?? null },
+      data: { ...fields, photoPath: fields.photoPath ?? null, closingMinute },
     });
 
     await recordAudit({
@@ -126,6 +140,12 @@ export async function updateDepartmentAction(
     };
   }
 
+  const { closingTime, ...fields } = parsed.data;
+  const closingMinute = closingTime ? parseClosingTime(closingTime) : null;
+  if (closingTime && closingMinute === null) {
+    return { success: false, message: "Enter a valid closing time." };
+  }
+
   try {
     const target = await db.department.findUnique({ where: { id: departmentId.data } });
     if (!target) return { success: false, message: "Department not found." };
@@ -139,7 +159,7 @@ export async function updateDepartmentAction(
 
     await db.department.update({
       where: { id: departmentId.data },
-      data: { ...parsed.data, photoPath: parsed.data.photoPath ?? null },
+      data: { ...fields, photoPath: fields.photoPath ?? null, closingMinute },
     });
 
     await recordAudit({
@@ -351,5 +371,61 @@ export async function deleteDepartmentAction(id: string): Promise<DepartmentActi
       })
     );
     return { success: false, message: "Failed to delete department." };
+  }
+}
+
+export async function updateCampusClosingAction(
+  _prev: DepartmentActionState,
+  formData: FormData
+): Promise<DepartmentActionState> {
+  const auth = await guard("department:manage", "CAMPUS_CLOSING_UPDATED");
+  if (!auth) return DENIED;
+
+  const parsed = campusClosingSchema.safeParse({ closingTime: formString(formData, "closingTime") });
+  if (!parsed.success) {
+    return { success: false, message: parsed.error.issues[0]?.message ?? "Enter a closing time." };
+  }
+
+  const closingMinute = parseClosingTime(parsed.data.closingTime);
+  if (closingMinute === null) {
+    return { success: false, message: "Enter a valid closing time." };
+  }
+
+  try {
+    await db.setting.upsert({
+      where: { key: CAMPUS_CLOSING_KEY },
+      update: { value: String(closingMinute) },
+      create: { key: CAMPUS_CLOSING_KEY, value: String(closingMinute) },
+    });
+
+    await recordAudit({
+      actorId: auth.user.userId,
+      actorEmail: auth.user.email,
+      action: "CAMPUS_CLOSING_UPDATED",
+      result: "SUCCESS",
+      targetType: "setting",
+      targetId: CAMPUS_CLOSING_KEY,
+      ip: auth.ctx.ip,
+      userAgent: auth.ctx.userAgent,
+      requestId: auth.ctx.requestId,
+      meta: { closingTime: formatClosingTime(closingMinute) },
+    });
+
+    revalidatePortals();
+    revalidatePath("/admin/departments");
+    return {
+      success: true,
+      message: `Campus closing time set to ${formatClosingTime(closingMinute)}.`,
+    };
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "CAMPUS_CLOSING_ERROR",
+        requestId: auth.ctx.requestId,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    );
+    return { success: false, message: "Failed to update the campus closing time." };
   }
 }

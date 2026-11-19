@@ -66,6 +66,8 @@ Core Prisma models: `User`, `Session`, `AuditLog`, `RateLimit`, `Department`, `V
    - visit Check Out requires the scanned QR credential and closes the visit and any active stops
 5. `/visitors/[id]` shows stop statuses; its controls are visit-level only.
 
+Closing times: `Department.closingMinute` overrides the campus default stored in `settings` (`campus_closing_minute`, minutes from Manila midnight). Admin manages both on `/admin/departments`. Dashboard loads run `autoCheckOutOverdueVisits()` (`src/lib/auto-checkout.ts`), which closes overdue stops and visits at their scheduled closing instant (never the sweep time), writes `VISIT_AUTO_CHECKED_OUT` audits, and `AutoCheckoutNotice` shows the last 24 hours. Set times with `npx prisma migrate deploy`; there is no cron.
+
 Server actions are in `src/lib/actions/visitors.ts` (`checkInAction`, `checkOutAction`, `cancelVisitAction`, `addVisitStopAction`, `checkInStopAction`, `checkOutStopAction`, `revokeQrAction`). Public registration is `src/lib/actions/public-registration.ts`.
 
 ## Auth and RBAC

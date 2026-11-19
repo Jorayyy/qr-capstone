@@ -65,6 +65,14 @@ export default function NewDepartmentPage() {
             <Input name="building" placeholder="e.g. Tech Building" />
           </div>
 
+          <div>
+            <label className="label">Closing time (Optional)</label>
+            <Input name="closingTime" type="time" />
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              Visitors are auto-checked out after this time. Leave blank to use the campus closing time.
+            </p>
+          </div>
+
           <DepartmentPhotoField />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Card, CardHeader, Input, Button } from "@/components/ui";
 import { DepartmentPhotoField } from "@/components/department-photo-field";
 import { updateDepartmentAction, type DepartmentActionState } from "@/lib/actions/departments";
+import { formatClosingTime } from "@/lib/closing-time";
 import { ArrowLeft, CheckCircle } from "lucide-react";
 import Link from "next/link";
 
@@ -14,6 +15,7 @@ type Department = {
   contactPerson: string | null;
   contactEmail: string | null;
   photoPath: string | null;
+  closingMinute: number | null;
 };
 
 export default function EditDepartmentForm({ department }: { department: Department }) {
@@ -70,6 +72,18 @@ export default function EditDepartmentForm({ department }: { department: Departm
           <div>
             <label className="label">Building (Optional)</label>
             <Input name="building" defaultValue={department.building ?? ""} />
+          </div>
+
+          <div>
+            <label className="label">Closing time (Optional)</label>
+            <Input
+              name="closingTime"
+              type="time"
+              defaultValue={department.closingMinute != null ? formatClosingTime(department.closingMinute) : ""}
+            />
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              Visitors are auto-checked out after this time. Leave blank to use the campus closing time.
+            </p>
           </div>
 
           <DepartmentPhotoField initialPath={department.photoPath} />
