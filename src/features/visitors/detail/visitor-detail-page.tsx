@@ -7,7 +7,7 @@ import { getRequestContext, requirePermission } from "@/lib/auth";
 import { currentPortal } from "@/lib/portal-server";
 import { portalHref } from "@/lib/portal";
 import { recordAudit } from "@/lib/audit";
-import { Card, CardHeader, Badge, EmptyState, PageHeader, Avatar, buttonClass } from "@/components/ui";
+import { Card, CardHeader, Badge, EmptyState, PageHeader, Avatar, buttonClass, cx } from "@/components/ui";
 import { VisitControls } from "../actions-client";
 import {
   Mail,
@@ -20,6 +20,9 @@ import {
   QrCode,
   Clock,
   Download,
+  CalendarDays,
+  Inbox,
+  type LucideIcon,
 } from "lucide-react";
 import { VisitHistory } from "./visit-history";
 
@@ -35,10 +38,17 @@ function formatDate(d: Date | null) {
   });
 }
 
-function formatDuration(start: Date | null, end: Date | null): string {
-  if (!start) return "—";
-  const endTime = end ? new Date(end).getTime() : Date.now();
-  const diffMs = endTime - new Date(start).getTime();
+function formatDay(d: Date | null) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-PH", {
+    timeZone: PH_TZ,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatSpan(diffMs: number): string {
   if (diffMs < 0) return "—";
   const totalMinutes = Math.floor(diffMs / 60000);
   const hours = Math.floor(totalMinutes / 60);
@@ -47,6 +57,26 @@ function formatDuration(start: Date | null, end: Date | null): string {
   if (minutes === 0) return `${hours}h`;
   return `${hours}h ${minutes}m`;
 }
+
+function formatDuration(start: Date | null, end: Date | null): string {
+  if (!start) return "—";
+  const endTime = end ? new Date(end).getTime() : Date.now();
+  return formatSpan(endTime - new Date(start).getTime());
+}
+
+/** One labelled metadata row in the profile card. */
+function InfoRow({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 px-5 py-3 text-sm">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--muted)]" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted)]">{label}</p>
+        <div className="mt-0.5 break-words">{value}</div>
+      </div>
+    </div>
+  );
+}
+
 
 const STATUS_BADGE: Record<string, { tone: "brand" | "green" | "red" | "gray" }> = {
   PENDING: { tone: "brand" },
@@ -117,6 +147,30 @@ export default async function VisitorDetailPage({
     )
   );
 
+  const completedVisits = visitor.visits.filter((v) => v.actualArrival && v.actualDeparture);
+  const durations = completedVisits.map(
+    (v) => v.actualDeparture!.getTime() - v.actualArrival!.getTime()
+  );
+  const avgMs = durations.length ? durations.reduce((sum, d) => sum + d, 0) / durations.length : null;
+  const officesVisited = new Set(visitor.visits.map((v) => v.department.name)).size;
+  const lastVisitAt = visitor.visits[0]?.createdAt ?? null;
+  const affiliation =
+    visitor.affiliation === "OTHER" && visitor.affiliationOther
+      ? visitor.affiliationOther
+      : visitor.affiliation.replace("_", " ");
+
+  const summary = [
+    { label: "Total visits", value: visitor.visits.length },
+    { label: "Completed", value: completedVisits.length },
+    { label: "Offices visited", value: officesVisited },
+    { label: "Avg visit", value: avgMs === null ? "—" : formatSpan(avgMs) },
+  ];
+
+  const photos = [
+    visitor.photoUrl && { label: "Visitor Photo", path: visitor.photoUrl, fit: "object-cover" },
+    visitor.idPhotoUrl && { label: "ID Photo", path: visitor.idPhotoUrl, fit: "object-contain" },
+  ].filter(Boolean) as Array<{ label: string; path: string; fit: string }>;
+
   // Audit access to a visitor's personal record (PII).
   const ctx = await getRequestContext();
   await recordAudit({
@@ -158,129 +212,81 @@ export default async function VisitorDetailPage({
         }
       />
 
-      <Card className="mb-6">
-        <CardHeader title="Current transaction" subtitle="Live visit status and location" />
-        {!activeVisit ? (
-          <EmptyState title="No active visit" hint="This visitor is not expected or checked in right now." />
-        ) : (
-          <div className="grid gap-4 p-5 text-sm sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <p className="text-xs text-[var(--muted)]">Status</p>
-              <p className="mt-1">
-                <Badge tone={STATUS_BADGE[activeVisit.status]?.tone}>
-                  {activeVisit.status.replace("_", " ")}
-                </Badge>
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-[var(--muted)]">Reference</p>
-              <p className="mt-1 font-mono text-xs font-semibold text-[var(--brand)]">
-                {activeVisit.referenceCode}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-[var(--muted)]">
-                {activeVisit.status === "CHECKED_IN" ? "Current office" : "Expected office"}
-              </p>
-              <p className="mt-1 font-medium">
-                {activeStop?.department.name ?? activeVisit.department.name}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-[var(--muted)]">
-                {activeVisit.status === "CHECKED_IN" ? "Inside for" : "Checked in"}
-              </p>
-              <p className="mt-1 font-medium">
-                {activeVisit.status === "CHECKED_IN"
-                  ? formatDuration(activeStop?.checkedInAt ?? activeVisit.actualArrival, null)
-                  : formatDate(activeVisit.actualArrival)}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-[var(--muted)]">Host</p>
-              <p className="mt-1 font-medium">{activeStop?.hostName ?? activeVisit.hostName ?? "Any"}</p>
-            </div>
-            <div>
-              <p className="text-xs text-[var(--muted)]">Purpose</p>
-              <p className="mt-1 font-medium">
-                {activeVisit.purpose === "OTHER" && activeVisit.purposeOther
-                  ? activeVisit.purposeOther
-                  : activeVisit.purpose.replace("_", " ")}
-              </p>
-            </div>
-            <div className="sm:col-span-2">
-              <p className="text-xs text-[var(--muted)]">Next step</p>
-              <p className="mt-1 font-medium">
-                {activeVisit.status === "PENDING"
-                  ? "Waiting for check-in at the office scanner."
-                  : "Check-out is recorded by scanning this pass at the scanner."}
-              </p>
-            </div>
-          </div>
-        )}
-      </Card>
-
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
-          <CardHeader title="Visitor Info" />
-          <div className="space-y-4 p-5">
-            <div className="flex items-center gap-3 text-sm">
-              <Mail className="h-4 w-4 text-[var(--muted)]" />
-              <span>{visitor.email ?? "No email"}</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <Phone className="h-4 w-4 text-[var(--muted)]" />
-              <span>{visitor.phone ?? "No phone"}</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <Building2 className="h-4 w-4 text-[var(--muted)]" />
-              <span>{visitor.company ?? "No company"}</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <CreditCard className="h-4 w-4 text-[var(--muted)]" />
-              <span>{visitor.idType === "OTHER" && visitor.idTypeOther ? visitor.idTypeOther : visitor.idType.replace("_", " ")}{visitor.idNumber ? ` — ${visitor.idNumber}` : ""}</span>
-            </div>
-
-            {(visitor.photoUrl || visitor.idPhotoUrl) && (
-              <div className="grid grid-cols-2 gap-3 border-t border-[var(--border)] pt-4">
-                {visitor.photoUrl && (
-                  <div>
-                    <p className="mb-1 text-xs text-[var(--muted)]">Visitor Photo</p>
-                    <a
-                      href={`/api/visitor-photo?path=${encodeURIComponent(visitor.photoUrl)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <img
-                        src={`/api/visitor-photo?path=${encodeURIComponent(visitor.photoUrl)}`}
-                        alt="Visitor photo"
-                        className="h-40 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] object-cover"
-                      />
-                    </a>
-                  </div>
-                )}
-                {visitor.idPhotoUrl && (
-                  <div>
-                    <p className="mb-1 text-xs text-[var(--muted)]">ID Photo</p>
-                    <a
-                      href={`/api/visitor-photo?path=${encodeURIComponent(visitor.idPhotoUrl)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <img
-                        src={`/api/visitor-photo?path=${encodeURIComponent(visitor.idPhotoUrl)}`}
-                        alt="ID photo"
-                        className="h-40 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] object-contain"
-                      />
-                    </a>
-                  </div>
-                )}
+        <div className="space-y-6 lg:order-2 lg:col-span-2">
+          <Card>
+            <CardHeader title="Current transaction" subtitle="Live visit status and location" />
+            {!activeVisit ? (
+              <div className="flex items-center gap-3 px-5 py-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-muted)] text-[var(--brand)]">
+                  <Inbox className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">No active visit</p>
+                  <p className="text-xs text-[var(--muted)]">
+                    Not expected or checked in right now. Past visits are listed below.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-4 p-5 text-sm sm:grid-cols-2 xl:grid-cols-4">
+                <div>
+                  <p className="text-xs text-[var(--muted)]">Status</p>
+                  <p className="mt-1">
+                    <Badge tone={STATUS_BADGE[activeVisit.status]?.tone}>
+                      {activeVisit.status.replace("_", " ")}
+                    </Badge>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--muted)]">Reference</p>
+                  <p className="mt-1 font-mono text-xs font-semibold text-[var(--brand)]">
+                    {activeVisit.referenceCode}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--muted)]">
+                    {activeVisit.status === "CHECKED_IN" ? "Current office" : "Expected office"}
+                  </p>
+                  <p className="mt-1 font-medium">
+                    {activeStop?.department.name ?? activeVisit.department.name}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--muted)]">
+                    {activeVisit.status === "CHECKED_IN" ? "Inside for" : "Checked in"}
+                  </p>
+                  <p className="mt-1 font-medium">
+                    {activeVisit.status === "CHECKED_IN"
+                      ? formatDuration(activeStop?.checkedInAt ?? activeVisit.actualArrival, null)
+                      : formatDate(activeVisit.actualArrival)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--muted)]">Host</p>
+                  <p className="mt-1 font-medium">{activeStop?.hostName ?? activeVisit.hostName ?? "Any"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--muted)]">Purpose</p>
+                  <p className="mt-1 font-medium">
+                    {activeVisit.purpose === "OTHER" && activeVisit.purposeOther
+                      ? activeVisit.purposeOther
+                      : activeVisit.purpose.replace("_", " ")}
+                  </p>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-xs text-[var(--muted)]">Next step</p>
+                  <p className="mt-1 font-medium">
+                    {activeVisit.status === "PENDING"
+                      ? "Waiting for check-in at the office scanner."
+                      : "Check-out is recorded by scanning this pass at the scanner."}
+                  </p>
+                </div>
               </div>
             )}
-          </div>
-        </Card>
+          </Card>
 
-        <Card className="lg:col-span-1">
+          <Card>
           {visitor.visits.length === 0 ? (
             <>
               <CardHeader title="Visit History" subtitle="0 visit(s)" />
@@ -431,7 +437,74 @@ export default async function VisitorDetailPage({
                 })}
               />
           )}
-        </Card>
+          </Card>
+        </div>
+
+        <div className="space-y-6 lg:order-1">
+          <Card>
+            <CardHeader title="Visitor Info" subtitle={affiliation} />
+            <div className="divide-y divide-[var(--border)]">
+              <InfoRow icon={Mail} label="Email" value={visitor.email ?? "No email"} />
+              <InfoRow icon={Phone} label="Phone" value={visitor.phone ?? "No phone"} />
+              <InfoRow icon={Building2} label="Company" value={visitor.company ?? "No company"} />
+              <InfoRow
+                icon={CreditCard}
+                label="ID"
+                value={`${visitor.idType === "OTHER" && visitor.idTypeOther ? visitor.idTypeOther : visitor.idType.replace("_", " ")}${
+                  visitor.idNumber ? ` — ${visitor.idNumber}` : ""
+                }`}
+              />
+              {visitor.dateOfBirth && (
+                <InfoRow icon={CalendarDays} label="Date of birth" value={formatDay(visitor.dateOfBirth)} />
+              )}
+              <InfoRow
+                icon={Clock}
+                label="Last visit"
+                value={lastVisitAt ? formatDate(lastVisitAt) : "No visits yet"}
+              />
+              <InfoRow icon={CalendarDays} label="Member since" value={formatDay(visitor.createdAt)} />
+            </div>
+            {photos.length > 0 && (
+              <div className={cx("grid gap-3 border-t border-[var(--border)] p-5", photos.length > 1 && "grid-cols-2")}>
+                {photos.map((photo) => (
+                  <div key={photo.label}>
+                    <p className="mb-1 text-xs text-[var(--muted)]">{photo.label}</p>
+                    <a
+                      href={`/api/visitor-photo?path=${encodeURIComponent(photo.path)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <img
+                        src={`/api/visitor-photo?path=${encodeURIComponent(photo.path)}`}
+                        alt={photo.label}
+                        className={cx(
+                          "h-40 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-muted)]",
+                          photo.fit
+                        )}
+                      />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card className="overflow-hidden">
+            <CardHeader title="Visit summary" subtitle="Lifetime activity" />
+            <div className="grid grid-cols-2 gap-px bg-[var(--border)]">
+              {summary.map((stat) => (
+                <div key={stat.label} className="bg-[var(--surface)] p-4">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted)]">
+                    {stat.label}
+                  </p>
+                  <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-[var(--foreground)]">
+                    {stat.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );
