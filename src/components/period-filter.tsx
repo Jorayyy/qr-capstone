@@ -1,28 +1,29 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Select } from "@/components/ui";
-import { REPORT_PERIODS, type ReportPeriod } from "@/lib/reports";
 
-const PERIOD_LABELS: Record<ReportPeriod, string> = {
-  day: "Today",
-  week: "This week",
-  month: "This month",
-  year: "This year",
-};
-
-export function PeriodFilter({ period }: { period: ReportPeriod }) {
+export function PeriodFilter<T extends string>({
+  value,
+  options,
+  label = "Period",
+}: {
+  value: T;
+  options: ReadonlyArray<{ value: T; label: string }>;
+  label?: string;
+}) {
   const router = useRouter();
+  const pathname = usePathname();
   return (
     <Select
-      aria-label="Report period"
-      value={period}
-      onChange={(e) => router.push(`/reports?period=${e.target.value}`)}
-      className="w-40"
+      aria-label={label}
+      value={value}
+      onChange={(e) => router.push(`${pathname}?period=${e.target.value}`)}
+      className="w-36"
     >
-      {REPORT_PERIODS.map((p) => (
-        <option key={p} value={p}>
-          {PERIOD_LABELS[p]}
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
         </option>
       ))}
     </Select>

@@ -4,12 +4,15 @@ import { Card, CardHeader, EmptyState, Avatar, Badge, cx } from "@/components/ui
 import { RelativeTime } from "@/components/relative-time";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { VisitorCharts } from "@/components/visitor-charts";
-import { manilaMidnight, manilaParts } from "@/lib/ph-time";
+import { PeriodFilter } from "@/components/period-filter";
 import { portalHref, type Portal } from "@/lib/portal";
+import {
+  DASHBOARD_PERIODS,
+  DASHBOARD_PERIOD_LABELS,
+  resolveDashboardRange,
+  type DashboardPeriod,
+} from "@/lib/reports";
 import { ArrowRight, Building2, CalendarClock, CheckCircle2, Users } from "lucide-react";
-
-const DAY_START_HOUR = 7;
-const DAY_END_HOUR = 19;
 
 const STATUS_BADGE: Record<string, { tone: "gray" | "green" | "red" | "amber"; label: string }> = {
   PENDING: { tone: "amber", label: "Pending" },
@@ -82,35 +85,48 @@ function ArrivalsChart({
 }
 
 /** Shared visitor overview — reused by the admin, staff and guard dashboards. */
-export async function DashboardOverview({ portal = "admin" }: { portal?: Portal }) {
-  const nowParts = manilaParts(new Date());
-  const today = manilaMidnight(nowParts.year, nowParts.month, nowParts.day);
-  const tomorrow = manilaMidnight(nowParts.year, nowParts.month, nowParts.day + 1);
+export async function DashboardOverview({
+  portal = "admin",
+  period = "day",
+}: {
+  portal?: Portal;
+  period?: DashboardPeriod;
+}) {
+  const { start, end, label: rangeLabel } = resolveDashboardRange(period);
+  const range = { gte: start, lt: end };
 
   const [
-    totalToday,
     pending,
-    totalAll,
+    registered,
     inCampus,
     visited,
-    todaysVisits,
+    hourly,
     openStops,
+    deptVisitCounts,
+    departments,
     recentVisits,
     officeNotices,
   ] = await Promise.all([
-      db.visit.count({ where: { createdAt: { gte: today } } }),
-      db.visit.count({ where: { status: "PENDING" } }),
-      db.visit.count(),
+      db.visit.count({ where: { createdAt: range, status: "PENDING" } }),
+      db.visit.count({ where: { createdAt: range } }),
       db.visit.count({ where: { status: "CHECKED_IN" } }),
-      db.visit.count({ where: { status: "CHECKED_OUT" } }),
-      db.visit.findMany({
-        where: { createdAt: { gte: today, lt: tomorrow } },
-        select: { actualArrival: true, createdAt: true },
-      }),
+      db.visit.count({ where: { createdAt: range, status: "CHECKED_OUT" } }),
+      db.$queryRaw<Array<{ hour: number; count: number }>>`
+        SELECT date_part('hour', COALESCE("actualArrival", "createdAt") + interval '8 hours')::int AS hour,
+               count(*)::int AS count
+        FROM visits
+        WHERE "createdAt" >= ${start} AND "createdAt" < ${end}
+        GROUP BY hour`,
       db.visitStop.findMany({
         where: { checkedInAt: { not: null }, checkedOutAt: null },
         select: { department: { select: { name: true } } },
       }),
+      db.visit.groupBy({
+        by: ["departmentId"],
+        where: { createdAt: range },
+        _count: { _all: true },
+      }),
+      db.department.findMany({ select: { id: true, name: true } }),
       db.visit.findMany({
         take: 10,
         orderBy: { createdAt: "desc" },
@@ -130,31 +146,34 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
       }),
     ]);
 
-  const buckets = Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => ({
-    hour: DAY_START_HOUR + i,
-    count: 0,
-  }));
-  for (const visit of todaysVisits) {
-    const at = visit.actualArrival ?? visit.createdAt;
-    const hour = manilaParts(at).hour;
-    const bucket = buckets.find((b) => b.hour === hour);
-    if (bucket) bucket.count += 1;
-  }
+  const buckets = Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 }));
+  for (const row of hourly) buckets[row.hour].count = row.count;
+  const totalInRange = buckets.reduce((sum, b) => sum + b.count, 0);
   const peakIndex = buckets.reduce(
     (best, b, i) => (b.count > buckets[best].count ? i : best),
     0
   );
 
-  const occupancyMap = new Map<string, number>();
+  const insideMap = new Map<string, number>();
   for (const stop of openStops) {
     const name = stop.department?.name ?? "Unassigned";
-    occupancyMap.set(name, (occupancyMap.get(name) ?? 0) + 1);
+    insideMap.set(name, (insideMap.get(name) ?? 0) + 1);
   }
-  const occupancy = [...occupancyMap.entries()]
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
+  const deptNames = new Map(departments.map((d) => [d.id, d.name]));
+  const rangeMap = new Map<string, number>();
+  for (const row of deptVisitCounts) {
+    const name = deptNames.get(row.departmentId) ?? "Unassigned";
+    rangeMap.set(name, (rangeMap.get(name) ?? 0) + row._count._all);
+  }
+  const occupancy = [...new Set([...rangeMap.keys(), ...insideMap.keys()])]
+    .map((name) => ({
+      name,
+      total: rangeMap.get(name) ?? 0,
+      inside: insideMap.get(name) ?? 0,
+    }))
+    .sort((a, b) => b.total - a.total || b.inside - a.inside)
     .slice(0, 6);
-  const occupancyMax = Math.max(1, ...occupancy.map((o) => o.count));
+  const occupancyMax = Math.max(1, ...occupancy.map((o) => o.total || o.inside));
   const visitorsHref = portalHref(portal, "/visitors");
 
   return (
@@ -166,18 +185,18 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
             <div className="flex items-start justify-between gap-2">
               <Users className="h-5 w-5 text-[var(--muted)]" />
               <span className="rounded-md bg-[var(--surface-muted)] px-2 py-0.5 text-[11px] font-semibold text-[var(--muted)]">
-                All registrations
+                {rangeLabel}
               </span>
             </div>
-            <p className="mt-3 text-3xl font-semibold tabular-nums text-[var(--foreground)]">{totalAll}</p>
+            <p className="mt-3 text-3xl font-semibold tabular-nums text-[var(--foreground)]">{registered}</p>
             <p className="mt-1 text-sm font-semibold">Registered Visitors</p>
-            <p className="mt-0.5 text-xs text-[var(--muted)]">All visitor registrations to date.</p>
+            <p className="mt-0.5 text-xs text-[var(--muted)]">Visitor registrations {rangeLabel.toLowerCase()}.</p>
           </div>
           <div className="bg-[var(--surface)] p-5">
             <div className="flex items-start justify-between gap-2">
               <Building2 className="h-5 w-5 text-[var(--muted)]" />
               <span className="rounded-md bg-[var(--success-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--success)]">
-                Active
+                Live
               </span>
             </div>
             <p className="mt-3 text-3xl font-semibold tabular-nums text-[var(--foreground)]">{inCampus}</p>
@@ -188,12 +207,12 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
             <div className="flex items-start justify-between gap-2">
               <CheckCircle2 className="h-5 w-5 text-[var(--muted)]" />
               <span className="rounded-md bg-[var(--surface-muted)] px-2 py-0.5 text-[11px] font-semibold text-[var(--muted)]">
-                Completed
+                {rangeLabel}
               </span>
             </div>
             <p className="mt-3 text-3xl font-semibold tabular-nums text-[var(--foreground)]">{visited}</p>
             <p className="mt-1 text-sm font-semibold">Visited</p>
-            <p className="mt-0.5 text-xs text-[var(--muted)]">Visits that have been completed.</p>
+            <p className="mt-0.5 text-xs text-[var(--muted)]">Visits completed {rangeLabel.toLowerCase()}.</p>
           </div>
           <div className="bg-[var(--surface)] p-5">
             <div className="flex items-start justify-between gap-2">
@@ -204,7 +223,7 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
             </div>
             <p className="mt-3 text-3xl font-semibold tabular-nums text-[var(--foreground)]">{pending}</p>
             <p className="mt-1 text-sm font-semibold">To Visit</p>
-            <p className="mt-0.5 text-xs text-[var(--muted)]">Expected visitors who have not yet checked in.</p>
+            <p className="mt-0.5 text-xs text-[var(--muted)]">Expected visitors {rangeLabel.toLowerCase()} who have not checked in.</p>
           </div>
         </div>
       </Card>
@@ -234,12 +253,22 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader title="Arrivals by hour" subtitle={`07:00 – 19:00 · ${totalToday} today`} />
+          <CardHeader
+            title="Arrivals by hour"
+            subtitle={`${rangeLabel} · ${totalInRange} arrival${totalInRange === 1 ? "" : "s"}`}
+            action={
+              <PeriodFilter
+                value={period}
+                label="Arrival period"
+                options={DASHBOARD_PERIODS.map((p) => ({ value: p, label: DASHBOARD_PERIOD_LABELS[p] }))}
+              />
+            }
+          />
           <div className="p-5">
-            {totalToday === 0 ? (
+            {totalInRange === 0 ? (
               <EmptyState
                 title="No arrivals yet"
-                hint="The chart fills in as visitors are checked in today."
+                hint="The chart fills in as visitors are checked in."
               />
             ) : (
               <ArrivalsChart buckets={buckets} peakIndex={peakIndex} />
@@ -248,21 +277,27 @@ export async function DashboardOverview({ portal = "admin" }: { portal?: Portal 
         </Card>
 
         <Card>
-          <CardHeader title="Inside right now" subtitle="By destination office" />
+          <CardHeader
+            title="Visits by office"
+            subtitle={`By destination office · ${rangeLabel}`}
+          />
           <div className="divide-y divide-[var(--border)]">
             {occupancy.length === 0 ? (
-              <EmptyState title="Building is empty" hint="Open visit stops appear here." />
+              <EmptyState title="No visits in this period" hint="Visits to each office appear here." />
             ) : (
               occupancy.map((o) => (
                 <div key={o.name} className="px-5 py-3.5">
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <span className="truncate font-medium">{o.name}</span>
-                    <span className="shrink-0 font-semibold tabular-nums">{o.count}</span>
+                    <span className="shrink-0 font-semibold tabular-nums">{o.total}</span>
                   </div>
+                  {o.inside > 0 && (
+                    <p className="mt-0.5 text-xs text-[var(--muted)]">{o.inside} inside now</p>
+                  )}
                   <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-muted)]">
                     <div
                       className="h-full rounded-full bg-[var(--brand)]"
-                      style={{ width: `${Math.round((o.count / occupancyMax) * 100)}%` }}
+                      style={{ width: `${Math.round(((o.total || o.inside) / occupancyMax) * 100)}%` }}
                     />
                   </div>
                 </div>

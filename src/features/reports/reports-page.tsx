@@ -5,7 +5,7 @@ import { PrintButton } from "@/components/print-button";
 import { PeriodFilter } from "@/components/period-filter";
 import { ReportView } from "@/components/report-view";
 import { buildReport } from "@/lib/report-data";
-import { isReportPeriod, type ReportPeriod } from "@/lib/reports";
+import { REPORT_PERIODS, REPORT_PERIOD_LABELS, isReportPeriod, type ReportPeriod } from "@/lib/reports";
 
 export default async function ReportsPage({
   searchParams,
@@ -26,7 +26,11 @@ export default async function ReportsPage({
           subtitle={data.label}
           actions={
             <div className="flex items-center gap-2">
-              <PeriodFilter period={period} />
+              <PeriodFilter
+                value={period}
+                label="Report period"
+                options={REPORT_PERIODS.map((p) => ({ value: p, label: REPORT_PERIOD_LABELS[p] }))}
+              />
               <PrintButton />
               <a href={`/reports/export?period=${period}`} className={buttonClass("secondary")} download>
                 <Download className="h-4 w-4" />

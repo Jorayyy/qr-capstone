@@ -2,11 +2,19 @@ import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
 import { PageHeader, Button } from "@/components/ui";
 import { DashboardOverview } from "@/components/dashboard-overview";
+import { isDashboardPeriod, type DashboardPeriod } from "@/lib/reports";
 import { PH_TZ } from "@/lib/ph-time";
 import { QrCode } from "lucide-react";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string }>;
+}) {
   await requirePermission("visit:read");
+
+  const { period: rawPeriod } = await searchParams;
+  const period: DashboardPeriod = isDashboardPeriod(rawPeriod) ? rawPeriod : "day";
 
   const todayLabel = new Date().toLocaleDateString("en-PH", {
     timeZone: PH_TZ,
@@ -30,7 +38,7 @@ export default async function DashboardPage() {
         }
       />
 
-      <DashboardOverview />
+      <DashboardOverview period={period} />
     </div>
   );
 }
